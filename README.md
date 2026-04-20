@@ -1,46 +1,63 @@
 # ⚡ Reactive Manifesto
 
-Aplicación web que implementa los principios del [Manifiesto Reactivo](https://www.reactivemanifesto.org/) con **Play Framework**, **Akka Typed** y **Scala**.
+Plataforma editorial reactiva que aplica los principios del [Reactive Manifesto](https://www.reactivemanifesto.org/) sobre **Play Framework**, **Akka Typed**, **Slick** y **PostgreSQL**.
+
+Combina un sitio público de publicaciones, un espacio de autor con trazabilidad completa y un backoffice editorial con RBAC, pipeline de revisión, mensajería interna y newsletter.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Stack
 
 | Capa | Tecnología |
 |------|-----------|
-| **Backend** | Play Framework 3.0.1 |
-| **Lenguaje** | Scala 2.13.12 |
-| **Sistema Reactivo** | Akka Typed 2.8.5 |
-| **Persistencia** | Slick 3 + H2 (dev) / PostgreSQL (prod) |
-| **Frontend** | Twirl templates, CSS3, Vanilla JS |
-| **DI** | Guice |
-| **Build** | SBT 1.9.7 |
+| Backend | Play Framework 3.0.1 |
+| Lenguaje | Scala 2.13.12 |
+| Sistema reactivo | Akka Typed 2.8.5 |
+| Persistencia | Slick 3 + PostgreSQL (H2 en dev) |
+| Frontend | Twirl + SCSS (sbt-sassify) + Vanilla JS |
+| DI | Guice |
+| Build | SBT 1.9.7 |
+| Email | JavaMail SMTP + Circuit Breaker |
 
 ---
 
-## 🚀 Inicio Rápido
+## 🚀 Inicio rápido
 
 ```bash
-# Clonar
-git clone https://github.com/federicopfund/Reactive-Manifiesto.git
-cd Reactive-Manifiesto
-
-# Ejecutar
+git clone https://github.com/federicopfund/Reactive-Manifesto.git
+cd Reactive-Manifesto
 sbt run
 ```
 
-Disponible en **http://localhost:9000**
+Disponible en **http://localhost:9000**.
 
 ```bash
-# Comando todo-en-uno (limpia, compila e inicia)
+# Limpiar puerto + ciclo completo
 fuser -k 9000/tcp 2>/dev/null && sbt clean compile run
 ```
+
+```bash
+# Compilar y empaquetar assets (SCSS → main.css)
+sbt webStage
+```
+
+---
+
+## 🧭 Mapa funcional
+
+| Área | Rutas | Vistas | Roles |
+|------|-------|--------|-------|
+| **Público** | `/`, `/publicaciones`, `/portafolio`, `/articles/:slug` | `index`, `publicaciones`, `editorialArticleView` | anónimo |
+| **Autenticación** | `/login`, `/register`, `/verify-email` | `auth/*` | anónimo |
+| **Espacio de autor** | `/user/dashboard`, `/user/publications/*`, `/user/inbox`, `/user/bookmarks`, `/user/notifications` | `user/*` | autenticado |
+| **Backoffice editorial** | `/admin/*` | `admin/*` | `super_admin`, `editor_jefe`, `revisor`, `moderador`, `newsletter`, `analista` |
+| **Errores** | — | `errors/notFound`, `errors/serverError` | global |
 
 ---
 
 ## 🏗️ Arquitectura de Agentes
 
-El proyecto sigue una **arquitectura de agentes reactivos** con **9 actores Akka Typed** organizados en capas desacopladas, comunicados mediante **EventBus (Pub/Sub)** y **Saga Orchestrator**:
+9 actores **Akka Typed** organizados en 3 capas, comunicados por **EventBus (Pub/Sub)** y un **Saga Orchestrator** (PipelineEngine).
 
 ```mermaid
 graph TB
@@ -50,7 +67,7 @@ graph TB
         B3["Administrador"]
     end
 
-    subgraph Controllers["Controllers (Play Framework)"]
+    subgraph Controllers["Controllers (Play)"]
         HC["HomeController"]
         UPC["UserPublicationController"]
         AC["AdminController"]
@@ -69,281 +86,308 @@ graph TB
         RPLA["ReactivePipelineAdapter"]
     end
 
-    subgraph ActorSystem["Akka Typed Actor System (9 Agents)"]
-        CE["🔵 ContactEngine\n(contact-core)"]
-        ME["🔵 MessageEngine\n(message-core)"]
-        PE["🟢 PublicationEngine\n(publication-core)"]
-        GE["🟢 GamificationEngine\n(gamification-core)"]
-        NE["🟢 NotificationEngine\n(notification-core)\n⚡ Circuit Breaker"]
-        MOE["🟢 ModerationEngine\n(moderation-core)"]
-        AE["🟢 AnalyticsEngine\n(analytics-core)"]
-        EB["🟡 EventBusEngine\n(eventbus-core)\nPub/Sub"]
-        PL["🟡 PipelineEngine\n(pipeline-core)\nSaga Orchestrator"]
+    subgraph ActorSystem["Akka Typed Actor System (9 agentes)"]
+        CE["🔵 ContactEngine"]
+        ME["🔵 MessageEngine"]
+        PE["🟢 PublicationEngine"]
+        GE["🟢 GamificationEngine"]
+        NE["🟢 NotificationEngine ⚡CB"]
+        MOE["🟢 ModerationEngine"]
+        AE["🟢 AnalyticsEngine"]
+        EB["🟡 EventBusEngine (Pub/Sub)"]
+        PL["🟡 PipelineEngine (Saga)"]
     end
 
-    subgraph Repositories["Repositories (Async / Slick)"]
-        CR["ContactRepo"]
-        PMR["PrivateMessageRepo"]
-        UNR["UserNotificationRepo"]
-        PR["PublicationRepo"]
-        BR["BadgeRepo"]
-    end
-
-    subgraph ExternalServices["External Services"]
-        ES["EmailService (SMTP)"]
+    subgraph Repositories["Repositories (Slick async)"]
+        REPOS[("13 repositorios")]
     end
 
     subgraph DB["PostgreSQL"]
-        DBIcon[("Base de Datos")]
+        DBIcon[("22 tablas")]
     end
 
-    %% Client → Controller
-    B2 -- "POST /contact" --> HC
-    B1 -- "POST /send-message" --> UPC
-    B1 -- "POST /publication" --> UPC
-    B3 -- "POST /approve" --> AC
-    B1 -- "POST /register" --> AUC
+    B1 --> UPC
+    B2 --> HC
+    B3 --> AC
+    B1 --> AUC
 
-    %% Controller → Adapter
-    HC -- "submitContact()" --> RCA
-    HC -- "trackPageView()" --> RAA
-    UPC -- "sendMessage()" --> RMA
-    UPC -- "moderate()" --> RMOA
-    UPC -- "checkBadges()" --> RGA
-    UPC -- "trackEvent()" --> RAA
-    UPC -- "notify()" --> RNA
-    AC -- "approve/reject()" --> RPA
-    AC -- "notify()" --> RNA
-    AC -- "trackEvent()" --> RAA
-    AUC -- "trackEvent()" --> RAA
-    AUC -- "notify()" --> RNA
+    HC --> RCA
+    HC --> RAA
+    UPC --> RMA
+    UPC --> RMOA
+    UPC --> RGA
+    UPC --> RNA
+    AC --> RPA
+    AC --> RNA
+    AUC --> RAA
 
-    %% Adapter → Actor (Ask/Tell)
-    RCA -- "ask" --> CE
-    RMA -- "ask" --> ME
-    RPA -- "ask" --> PE
-    RGA -- "tell ⚡" --> GE
-    RNA -- "tell ⚡" --> NE
-    RMOA -- "ask" --> MOE
-    RAA -- "tell ⚡" --> AE
-    REBA -- "tell/ask" --> EB
-    RPLA -- "ask" --> PL
+    RCA --> CE
+    RMA --> ME
+    RPA --> PE
+    RGA --> GE
+    RNA --> NE
+    RMOA --> MOE
+    RAA --> AE
+    REBA --> EB
+    RPLA --> PL
 
-    %% Pipeline Saga (inter-agent orchestration)
-    PL == "1. Ask: ModerateContent" ==> MOE
-    PL == "2. Ask: CreatePublication" ==> PE
-    PL == "3. Tell: SendNotification" ==> NE
-    PL == "4. Tell: CheckBadges" ==> GE
-    PL == "5. Tell: TrackEvent" ==> AE
+    PL == "Ask" ==> MOE
+    PL == "Ask" ==> PE
+    PL == "Tell" ==> NE
+    PL == "Tell" ==> GE
+    PL == "Tell" ==> AE
+    PL -. "publish" .-> EB
 
-    %% EventBus (Pub/Sub broadcast)
-    PL -. "publish: DomainEvent" .-> EB
-    EB -. "broadcast" .-> AE
-    EB -. "broadcast" .-> GE
-
-    %% Actor → Repository
-    CE --> CR
-    ME --> PMR
-    PE --> PR
-    GE --> BR
-    NE --> UNR
-    NE -- "⚡ Circuit Breaker" --> ES
-
-    %% Repository → DB
-    CR --> DBIcon
-    PMR --> DBIcon
-    UNR --> DBIcon
-    PR --> DBIcon
-    BR --> DBIcon
+    CE --> REPOS
+    ME --> REPOS
+    PE --> REPOS
+    GE --> REPOS
+    NE --> REPOS
+    REPOS --> DBIcon
 
     style ActorSystem fill:#1a365d,stroke:#2b6cb0,color:#fff
     style Adapters fill:#2c5282,stroke:#3182ce,color:#fff
     style Controllers fill:#2d3748,stroke:#4a5568,color:#fff
     style Repositories fill:#1c4532,stroke:#276749,color:#fff
-    style ExternalServices fill:#744210,stroke:#975a16,color:#fff
     style DB fill:#553c9a,stroke:#6b46c1,color:#fff
 ```
 
-### Los 9 Agentes
+### Los 9 agentes
 
 | # | Agente | Sistema | Patrón | Responsabilidad |
 |---|--------|---------|--------|-----------------|
-| 🔵 | **ContactEngine** | `contact-core` | Ask | Formularios de contacto: persiste y responde |
-| 🔵 | **MessageEngine** | `message-core` | Ask | Mensajería privada + notificaciones al receptor |
-| 🟢 | **PublicationEngine** | `publication-core` | Ask | Ciclo de vida: crear → revisar → aprobar/rechazar |
-| 🟢 | **GamificationEngine** | `gamification-core` | Tell | Verificación y otorgamiento de badges (fire-and-forget) |
-| 🟢 | **NotificationEngine** | `notification-core` | Tell | Hub multi-canal con **Circuit Breaker** en email |
-| 🟢 | **ModerationEngine** | `moderation-core` | Ask | Auto-filtrado de contenido + cola de revisión manual |
-| 🟢 | **AnalyticsEngine** | `analytics-core` | Tell | Tracking de métricas in-memory (zero-latency) |
-| 🟡 | **EventBusEngine** | `eventbus-core` | Pub/Sub | Bus de eventos de dominio con topic filtering + DeathWatch |
-| 🟡 | **PipelineEngine** | `pipeline-core` | Saga | Orquestador: Moderate → Create → Notify → Gamify → Track |
+| 🔵 | ContactEngine | `contact-core` | Ask | Formularios de contacto |
+| 🔵 | MessageEngine | `message-core` | Ask | Mensajería privada + notificación al receptor |
+| 🟢 | PublicationEngine | `publication-core` | Ask | Ciclo de vida de publicaciones |
+| 🟢 | GamificationEngine | `gamification-core` | Tell | Otorgamiento de badges |
+| 🟢 | NotificationEngine | `notification-core` | Tell | Hub multicanal con **Circuit Breaker** SMTP |
+| 🟢 | ModerationEngine | `moderation-core` | Ask | Auto-moderación + cola manual |
+| 🟢 | AnalyticsEngine | `analytics-core` | Tell | Métricas en memoria (zero-latency) |
+| 🟡 | EventBusEngine | `eventbus-core` | Pub/Sub | Bus de domain events + DeathWatch |
+| 🟡 | PipelineEngine | `pipeline-core` | Saga | Orquesta Moderate → Create → Notify → Gamify → Track |
 
-> 🔵 = dominio (core) &nbsp; 🟢 = cross-cutting &nbsp; 🟡 = infraestructura
+> 🔵 dominio · 🟢 cross-cutting · 🟡 infraestructura
 
-### Taxonomía del Module (DI)
+---
 
-El `Module.scala` organiza los 9 agentes en **3 capas concéntricas** inyectadas por Guice. Cada capa tiene un propósito claro y dependencias unidireccionales (las capas externas dependen de las internas, nunca al revés):
+## 📰 Pipeline Editorial (9 etapas)
+
+Cada publicación recorre un workflow gobernado por la tabla `editorial_stages` y un **trigger de PostgreSQL** que mantiene la invariante `exited_at IS NULL` por publicación.
 
 ```mermaid
-graph TB
-    subgraph Guice["Module.scala — Guice DI Provider"]
-        direction TB
+flowchart LR
+    S1[draft] --> S2[submitted]
+    S2 --> S3[in_review]
+    S3 --> S4[changes_requested]
+    S4 --> S2
+    S3 --> S5[approved]
+    S5 --> S6[scheduled]
+    S6 --> S7[published]
+    S3 --> S8[rejected]
+    S7 --> S9[archived]
 
-        subgraph L1["LAYER 1 — DOMAIN AGENTS\n(core business logic)"]
-            direction LR
-
-            subgraph CE_GROUP["ContactEngine"]
-                CE_AS["ActorSystem&lt;ContactCommand&gt;\n<i>contact-core</i>"]
-                CE_AD["ReactiveContactAdapter"]
-                CE_AS --> CE_AD
-            end
-
-            subgraph ME_GROUP["MessageEngine"]
-                ME_AS["ActorSystem&lt;MessageCommand&gt;\n<i>message-core</i>"]
-                ME_AD["ReactiveMessageAdapter"]
-                ME_AS --> ME_AD
-            end
-
-            subgraph PE_GROUP["PublicationEngine"]
-                PE_AS["ActorSystem&lt;PublicationCommand&gt;\n<i>publication-core</i>"]
-                PE_AD["ReactivePublicationAdapter"]
-                PE_AS --> PE_AD
-            end
-
-            subgraph GE_GROUP["GamificationEngine"]
-                GE_AS["ActorSystem&lt;GamificationCommand&gt;\n<i>gamification-core</i>"]
-                GE_AD["ReactiveGamificationAdapter"]
-                GE_AS --> GE_AD
-            end
-        end
-
-        subgraph L2["LAYER 2 — CROSS-CUTTING AGENTS\n(notificaciones, moderación, analytics)"]
-            direction LR
-
-            subgraph NE_GROUP["NotificationEngine\n⚡ Circuit Breaker"]
-                NE_AS["ActorSystem&lt;NotificationCommand&gt;\n<i>notification-core</i>"]
-                NE_AD["ReactiveNotificationAdapter"]
-                NE_AS --> NE_AD
-            end
-
-            subgraph MOE_GROUP["ModerationEngine"]
-                MOE_AS["ActorSystem&lt;ModerationCommand&gt;\n<i>moderation-core</i>"]
-                MOE_AD["ReactiveModerationAdapter"]
-                MOE_AS --> MOE_AD
-            end
-
-            subgraph AE_GROUP["AnalyticsEngine"]
-                AE_AS["ActorSystem&lt;AnalyticsCommand&gt;\n<i>analytics-core</i>"]
-                AE_AD["ReactiveAnalyticsAdapter"]
-                AE_AS --> AE_AD
-            end
-        end
-
-        subgraph L3["LAYER 3 — INFRASTRUCTURE AGENTS\n(orquestación inter-agente)"]
-            direction LR
-
-            subgraph EB_GROUP["EventBusEngine\nPub/Sub + DeathWatch"]
-                EB_AS["ActorSystem&lt;EventBusCommand&gt;\n<i>eventbus-core</i>"]
-                EB_AD["ReactiveEventBusAdapter"]
-                EB_AS --> EB_AD
-            end
-
-            subgraph PL_GROUP["PipelineEngine\nSaga Orchestrator"]
-                PL_AS["ActorSystem&lt;PipelineCommand&gt;\n<i>pipeline-core</i>"]
-                PL_AD["ReactivePipelineAdapter"]
-                PL_AS --> PL_AD
-            end
-        end
-    end
-
-    %% ── Layer Dependencies (Guice injection graph) ──
-    CE_AS -. "ContactRepository" .-> REPOS
-    ME_AS -. "PrivateMessageRepo\nUserNotificationRepo" .-> REPOS
-    PE_AS -. "PublicationRepo\nUserNotificationRepo" .-> REPOS
-    GE_AS -. "BadgeRepository" .-> REPOS
-    NE_AS -. "UserNotificationRepo\nEmailService" .-> REPOS
-    
-    %% ── Pipeline depends on L1 + L2 agents ──
-    PL_AS == "inject\nActorSystem" ==> MOE_AS
-    PL_AS == "inject" ==> PE_AS
-    PL_AS == "inject" ==> NE_AS
-    PL_AS == "inject" ==> GE_AS
-    PL_AS == "inject" ==> AE_AS
-    PL_AS == "inject" ==> EB_AS
-
-    subgraph REPOS["Repositories + Services"]
-        direction LR
-        R1["ContactRepo"]
-        R2["PrivateMessageRepo"]
-        R3["UserNotificationRepo"]
-        R4["PublicationRepo"]
-        R5["BadgeRepo"]
-        R6["EmailService"]
-    end
-
-    %% Styles
-    style L1 fill:#1a365d,stroke:#63b3ed,color:#fff,stroke-width:2px
-    style L2 fill:#2c5282,stroke:#90cdf4,color:#fff,stroke-width:2px
-    style L3 fill:#1c4532,stroke:#68d391,color:#fff,stroke-width:2px
-    style Guice fill:#171923,stroke:#a0aec0,color:#fff,stroke-width:3px
-    style REPOS fill:#553c9a,stroke:#b794f4,color:#fff,stroke-width:2px
-
-    style CE_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
-    style ME_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
-    style PE_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
-    style GE_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
-    style NE_GROUP fill:#285e61,stroke:#81e6d9,color:#fff
-    style MOE_GROUP fill:#285e61,stroke:#81e6d9,color:#fff
-    style AE_GROUP fill:#285e61,stroke:#81e6d9,color:#fff
-    style EB_GROUP fill:#276749,stroke:#68d391,color:#fff
-    style PL_GROUP fill:#276749,stroke:#68d391,color:#fff
+    style S1 fill:#cbd5e0,stroke:#2d3748
+    style S7 fill:#48bb78,color:#fff
+    style S8 fill:#e53e3e,color:#fff
+    style S9 fill:#a0aec0
 ```
 
-**Leyenda de la taxonomía:**
+Cada transición:
 
-| Capa | Propósito | Dependencias | Agentes |
-|------|-----------|-------------|---------|
-| **Layer 1 — Domain** | Lógica de negocio pura: contacto, mensajería, publicaciones, gamificación | Repositories (Slick) | Contact, Message, Publication, Gamification |
-| **Layer 2 — Cross-Cutting** | Capacidades transversales que cualquier layer puede consumir | Repos + EmailService | Notification (CB), Moderation, Analytics |
-| **Layer 3 — Infrastructure** | Orquestación inter-agente — coordina L1 y L2, nunca lógica propia | Recibe los `ActorSystem` de L1 + L2 | EventBus (Pub/Sub), Pipeline (Saga) |
+1. **Genera un commit hash determinista** (`StageCommitHash`, SHA-1 estilo git) que viaja en el historial.
+2. **Inserta** en `publication_stage_history` y **cierra** la etapa anterior vía trigger.
+3. **Notifica al autor** (in-app + email si está habilitado).
+4. **Si llega a `published`**, dispara un **broadcast de newsletter** a `newsletter_subscribers` activos.
+5. **Emite un domain event** al EventBus para analítica y badges.
 
-> **Regla de dependencia**: L3 → L2 → L1 → Repositories. Nunca al revés. El `PipelineEngine` recibe por inyección los 5 ActorSystems que orquesta.
+### Trazabilidad para autores
 
-### Comunicación inter-agente avanzada
+Los autores ven el **hilo completo** de su publicación en `/user/publications/:id/history` con:
 
-Los agentes se comunican mediante tres patrones complementarios:
+- Línea de tiempo de etapas con timestamps y commit hash
+- Feedback editorial (sin notas internas)
+- Notificaciones recibidas
+- Reuso del widget `_publicationPipeline` (con `showInternalNotes = false`)
 
-1. **EventBus (Pub/Sub)**: Eventos de dominio broadcasteados a suscriptores por topic
-2. **Saga Orchestrator (Pipeline)**: Coordinación explícita de workflows multi-agente
-3. **Circuit Breaker**: Protección resiliente de servicios externos (email SMTP)
+---
+
+## 🔐 RBAC del Backoffice
+
+6 roles con matriz de capacidades. Cada controlador admin valida `Capability` antes de ejecutar.
+
+| Rol | Pipeline | Publicar | Newsletter | Contactos | Admins | Stats |
+|-----|---------|----------|------------|-----------|--------|-------|
+| `super_admin` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `editor_jefe` | ✅ | ✅ | ✅ | ✅ | — | ✅ |
+| `revisor` | ✅ (hasta `approved`) | — | — | — | — | ✅ |
+| `moderador` | ✅ (rechazar/cambios) | — | — | ✅ | — | — |
+| `newsletter` | — | — | ✅ | ✅ | — | ✅ |
+| `analista` | lectura | — | — | — | — | ✅ |
+
+La sidebar (`adminLayout` → `sidebar.scala.html`) se renderiza dinámicamente según `Capability`.
+
+---
+
+## ✉️ Mensajería + 📰 Newsletter
+
+- **Mensajería privada** entre usuarios y entre usuarios ↔ admins. Vistas con composer y estado vacío amigable. Tema dual cream/admin-dark.
+- **Newsletter** con suscripción/baja desde el dashboard del usuario; broadcast automático cuando una publicación llega a `published`. Panel admin con KPIs, filtro por email e IP de registro.
+
+---
+
+## 🖼️ Arquitectura de Vistas (Twirl)
+
+38 plantillas `.scala.html` distribuidas en 7 grupos funcionales y 3 layouts:
+
+```mermaid
+flowchart TB
+    subgraph Layouts["Layouts (chrome)"]
+        MAIN["main.scala.html<br/>tema cream"]
+        ADMINL["adminLayout.scala.html<br/>tema admin-dark"]
+        USERL["userLayout.scala.html<br/>reservado"]
+    end
+
+    subgraph Partials["Partials reutilizables"]
+        SIDE["sidebar.scala.html<br/>RBAC dinámico"]
+        PIPE["_publicationPipeline.scala.html<br/>widget 9 etapas"]
+    end
+
+    subgraph Public["Público"]
+        IDX[index]
+        PUBS[publicaciones]
+        PORT[portafolio]
+        ART[editorialArticleView]
+        LEG[legalDocument]
+    end
+
+    subgraph Auth["Autenticación"]
+        LOG[login]
+        REG[register]
+        VER[verifyEmail]
+        UDB[userDashboard]
+        UPR[userProfile]
+    end
+
+    subgraph UserSpace["Espacio de autor"]
+        UDASH[dashboard]
+        UEDIT[editProfile]
+        UPUB[publicProfile]
+        UBM[bookmarks]
+        UNOT[notifications]
+        UINB[inbox]
+        UMSG[viewMessage]
+        UPF[publicationForm]
+        UPP[publicationPreview]
+        UHIST[publicationHistory]
+    end
+
+    subgraph Backoffice["Backoffice"]
+        ADASH[dashboard]
+        APUBLIST[publicationsList]
+        APUBDET[publicationDetail]
+        APUBREV[publicationReview]
+        ASTATS[statistics]
+        ANEWS[newsletterSubscribers]
+        ACONT[contactForm]
+        ACDET[contactDetail]
+        ACEDIT[contactEdit]
+        AADM[adminManagement]
+    end
+
+    subgraph Errors["Errores"]
+        E404[notFound]
+        E500[serverError]
+    end
+
+    MAIN --> Public
+    MAIN --> Auth
+    MAIN --> UserSpace
+    MAIN --> Errors
+    ADMINL --> Backoffice
+    USERL -. "reservado" .- UDASH
+
+    SIDE --> MAIN
+    SIDE --> ADMINL
+    UHIST --> PIPE
+    APUBDET --> PIPE
+    APUBREV --> PIPE
+    APUBLIST --> PIPE
+
+    classDef layout fill:#1a365d,stroke:#63b3ed,color:#fff
+    classDef partial fill:#553c9a,stroke:#b794f4,color:#fff
+    classDef pub fill:#276749,stroke:#68d391,color:#fff
+    classDef auth fill:#9c4221,stroke:#f6ad55,color:#fff
+    classDef user fill:#2c5282,stroke:#90cdf4,color:#fff
+    classDef admin fill:#9b2c2c,stroke:#fc8181,color:#fff
+    classDef err fill:#4a5568,stroke:#a0aec0,color:#fff
+
+    class MAIN,ADMINL,USERL layout
+    class SIDE,PIPE partial
+    class IDX,PUBS,PORT,ART,LEG pub
+    class LOG,REG,VER,UDB,UPR auth
+    class UDASH,UEDIT,UPUB,UBM,UNOT,UINB,UMSG,UPF,UPP,UHIST user
+    class ADASH,APUBLIST,APUBDET,APUBREV,ASTATS,ANEWS,ACONT,ACDET,ACEDIT,AADM admin
+    class E404,E500 err
+```
+
+### Sistema de estilos (BEM)
+
+| Namespace | Alcance |
+|-----------|---------|
+| `ed-*` | Front editorial (cream) |
+| `ed-bo-*` | Backoffice (admin-dark + acento `#d4ff00`) |
+| `ed-msg-*` | Mensajería |
+| `ed-nl-*`, `ed-newsletter-card` | Newsletter |
+| `ed-thread-*` | Hilo de trazabilidad |
+| `ed-cat-*` | Filtros tipo "section nav" |
+
+SCSS modular en `app/assets/stylesheets/components/*.scss`, compilado a `target/web/public/main/main.css`.
+
+---
+
+## 🗄️ Base de Datos
+
+22 tablas gestionadas con evolutions (`conf/evolutions/default`):
+
+```
+users · admins · admin_capabilities
+publications · publication_categories · publication_revisions
+publication_feedback · publication_comments · publication_reactions
+editorial_stages · publication_stage_history · editorial_articles
+manifesto_pillars
+collections · collection_items
+user_bookmarks · user_badges · user_notifications
+private_messages · newsletter_subscribers · contacts
+email_verification_codes · legal_documents
+```
+
+> Trigger destacado: `trg_close_previous_stage` mantiene una sola etapa abierta por publicación.
+
+---
+
+## 🧬 Comunicación inter-agente
 
 ```mermaid
 graph LR
-    subgraph Saga["Saga Orchestrator (Pipeline)"]
-        direction LR
-        S1["1. Moderate"] --> S2["2. Create"]
-        S2 --> S3["3. Notify"]
-        S2 --> S4["4. Gamify"]
-        S2 --> S5["5. Track"]
+    subgraph Saga["Saga Orchestrator"]
+        S1[1. Moderate] --> S2[2. Create]
+        S2 --> S3[3. Notify]
+        S2 --> S4[4. Gamify]
+        S2 --> S5[5. Track]
     end
 
     subgraph PubSub["EventBus (Pub/Sub)"]
-        direction LR
-        EB["EventBus"]
-        PUB1["publication.submitted"]
-        PUB2["content.moderated"]
-        PUB3["pipeline.completed"]
-        PUB1 --> EB
-        PUB2 --> EB
-        PUB3 --> EB
+        EB[EventBus]
+        PUB1[publication.submitted] --> EB
+        PUB2[content.moderated] --> EB
+        PUB3[pipeline.completed] --> EB
     end
 
     subgraph CB["Circuit Breaker (Email)"]
-        direction LR
-        CLOSED["CLOSED\n(normal)"] -->|"5 failures"| OPEN["OPEN\n(reject)"]
-        OPEN -->|"60s timeout"| HALFOPEN["HALF_OPEN\n(test)"]
-        HALFOPEN -->|"success"| CLOSED
-        HALFOPEN -->|"failure"| OPEN
+        CLOSED -->|"5 fallos"| OPEN
+        OPEN -->|"60s"| HALFOPEN
+        HALFOPEN -->|"ok"| CLOSED
+        HALFOPEN -->|"fail"| OPEN
     end
 
     style Saga fill:#276749,color:#fff
@@ -351,167 +395,72 @@ graph LR
     style CB fill:#9b2c2c,color:#fff
 ```
 
-### Saga: Flujo completo de publicación
-
-```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant C as Controller
-    participant PL as PipelineEngine<br/>(Saga)
-    participant MOD as ModerationEngine
-    participant PUB as PublicationEngine
-    participant NOT as NotificationEngine<br/>⚡ Circuit Breaker
-    participant GAM as GamificationEngine
-    participant ANA as AnalyticsEngine
-    participant EB as EventBus<br/>(Pub/Sub)
-
-    U->>C: POST /publication
-    C->>PL: ask(ProcessNewPublication)
-    activate PL
-    Note over PL: correlationId = abc123
-
-    PL->>EB: publish(PublicationSubmitted)
-    PL->>ANA: tell(TrackEvent: pipeline.started)
-
-    rect rgb(40, 80, 60)
-        Note over PL,MOD: Stage 1: MODERATION (Ask)
-        PL->>MOD: ask(ModerateContent)
-        MOD-->>PL: ModerationResult(verdict, score, flags)
-    end
-
-    PL->>EB: publish(ContentModerated)
-
-    alt verdict == "auto_rejected"
-        PL->>NOT: tell(SendNotification: rejection)
-        PL-->>C: PipelineRejected
-    else verdict == "auto_approved" / "pending_review"
-        rect rgb(40, 60, 80)
-            Note over PL,PUB: Stage 2: CREATE (Ask)
-            PL->>PUB: ask(CreatePublication)
-            PUB-->>PL: PublicationCreatedOk(id)
-        end
-
-        par Stage 3: SIDE EFFECTS (Tell, parallel)
-            PL->>NOT: tell(SendNotification)
-            Note over NOT: Circuit Breaker<br/>gates email
-        and
-            PL->>GAM: tell(CheckBadges)
-        and
-            PL->>ANA: tell(TrackEvent: pipeline.completed)
-        end
-
-        PL->>EB: publish(PipelineCompleted)
-        PL-->>C: PipelineSuccess(id, verdict, latency)
-    end
-
-    deactivate PL
-    C-->>U: HTTP Response
-```
-
-### Integración Controller → Agentes
-
-Cada controller delega **toda la lógica reactiva** a sus agentes asignados vía adapters inyectados:
-
-| Controller | Agentes inyectados | Responsabilidad |
-|-----------|-------------------|-----------------|
-| **HomeController** | Contact, Analytics | Formularios de contacto + tracking de vistas |
-| **AuthController** | Analytics, Notification | Tracking de login/registro + bienvenida |
-| **UserPublicationController** | Message, Moderation, Gamification, Analytics, Notification | Publicaciones, mensajería, badges, moderación |
-| **AdminController** | Publication, Notification, Analytics | Aprobación/rechazo, feedback, estadísticas |
-
-> Los controllers **nunca** invocan lógica de negocio directamente — todo fluye a través de agentes.
-
 ---
 
-## ✅ Principios Reactivos Implementados
+## ✅ Principios Reactivos
 
 | Principio | Implementación |
 |-----------|---------------|
-| **Responsive** | Non-blocking I/O en todas las capas. Timeouts de 5-30s en Ask Pattern. Fast-fail con manejo de errores |
-| **Resilient** | Circuit Breaker en email. `pipeToSelf(Failure)` sin crashear actores. DeathWatch en EventBus. Saga con compensación |
-| **Elastic** | Actor model permite escalado horizontal. Stateless controllers. Pipeline concurrente. Preparado para Akka Cluster |
-| **Message-Driven** | Comunicación asíncrona vía mensajes tipados (`sealed trait`). EventBus Pub/Sub. Domain Events con correlationId |
+| **Responsive** | Non-blocking I/O end-to-end. Timeouts 5–30s en Ask. Fast-fail tipado |
+| **Resilient** | Circuit Breaker SMTP. `pipeToSelf(Failure)`. DeathWatch en EventBus. Compensación en Saga |
+| **Elastic** | Actor model sin locks. Controllers stateless. Pipeline concurrente. Apto para Akka Cluster |
+| **Message-Driven** | `sealed trait *Command`. EventBus Pub/Sub. Domain events con `correlationId` |
 
 ---
 
-## 📁 Estructura del Proyecto
+## 📁 Estructura del proyecto
 
 ```
 Reactive-Manifiesto/
 ├── app/
-│   ├── Module.scala                      # DI: provee 9 ActorSystems y 9 Adapters
-│   ├── controllers/
-│   │   ├── HomeController.scala          # Contacto, páginas → Contact, Analytics
-│   │   ├── AuthController.scala          # Login, registro → Analytics, Notification
-│   │   ├── UserPublicationController     # Publicaciones → Message, Moderation, Gamification, Analytics, Notification
-│   │   ├── AdminController.scala         # Admin → Publication, Notification, Analytics
-│   │   └── actions/
-│   │       └── AuthAction.scala          # Acción de autenticación
-│   ├── core/                             # 🧠 AGENTES (Akka Typed Actors)
-│   │   ├── ContactEngine.scala           # 🔵 Formulario de contacto
-│   │   ├── MessageEngine.scala           # 🔵 Mensajería privada
-│   │   ├── PublicationEngine.scala       # 🟢 Ciclo de vida de publicaciones
-│   │   ├── GamificationEngine.scala      # 🟢 Sistema de badges
-│   │   ├── NotificationEngine.scala      # 🟢 Hub multi-canal + Circuit Breaker
-│   │   ├── ModerationEngine.scala        # 🟢 Auto-moderación de contenido
-│   │   ├── AnalyticsEngine.scala         # 🟢 Métricas y tracking
-│   │   ├── DomainEvents.scala            # 🟡 Vocabulario de eventos de dominio
-│   │   ├── EventBusEngine.scala          # 🟡 Bus Pub/Sub + DeathWatch
-│   │   └── PublicationPipelineEngine.scala # 🟡 Saga Orchestrator
-│   ├── services/                         # 🔌 ADAPTERS (Ask/Tell → Actors)
-│   │   ├── ReactiveContactAdapter        # Ask → ContactEngine
-│   │   ├── ReactiveMessageAdapter        # Ask → MessageEngine
-│   │   ├── ReactivePublicationAdapter    # Ask → PublicationEngine
-│   │   ├── ReactiveGamificationAdapter   # Tell → GamificationEngine
-│   │   ├── ReactiveNotificationAdapter   # Tell → NotificationEngine
-│   │   ├── ReactiveModerationAdapter     # Ask → ModerationEngine
-│   │   ├── ReactiveAnalyticsAdapter      # Tell → AnalyticsEngine
-│   │   ├── ReactiveEventBusAdapter       # Tell/Ask → EventBusEngine
-│   │   ├── ReactivePipelineAdapter       # Ask → PipelineEngine (Saga)
-│   │   ├── EmailService.scala            # SMTP email delivery
-│   │   └── EmailVerificationService      # Verificación de email
-│   ├── models/                           # Case classes + Slick mappings
-│   ├── repositories/                     # Data access layer (async)
-│   └── views/                            # Templates Twirl
+│   ├── Module.scala                 # Guice DI: 9 ActorSystems + 9 Adapters
+│   ├── controllers/                 # HomeController, AuthController, UserPublicationController, AdminController, SetupController
+│   ├── core/                        # 9 Engines (Akka Typed) + DomainEvents
+│   ├── services/                    # 9 ReactiveAdapters + EmailService + EmailVerificationService
+│   ├── models/                      # case classes + Slick mappings
+│   ├── repositories/                # 13 repos async (Slick)
+│   ├── utils/                       # StageCommitHash, helpers
+│   ├── views/                       # 38 plantillas Twirl (3 layouts + 2 partials + 33 vistas)
+│   └── assets/stylesheets/          # SCSS modular (BEM)
 ├── conf/
-│   ├── application.conf                  # Configuración general
-│   ├── routes                            # Rutas HTTP
-│   ├── messages / messages.en            # i18n (es/en)
-│   └── evolutions/                       # Migraciones de DB
-├── public/                               # Assets estáticos
-├── sql/                                  # Scripts SQL de administración
-└── build.sbt                             # Definición del proyecto
+│   ├── application.conf
+│   ├── routes
+│   ├── messages, messages.en
+│   └── evolutions/default/          # Migraciones SQL
+├── public/                          # Imágenes, JS, CSS estático
+├── sql/                             # Scripts admin (alta de admins, triggers)
+├── deploy/                          # Scripts Docker / instalación / email
+├── resource/                        # Documentación funcional (.md)
+└── build.sbt
 ```
 
 ---
 
-## 🎯 Patrones de Diseño
+## 🎯 Patrones de diseño
 
-| Patrón | Uso | Ubicación |
-|--------|-----|-----------|
-| **Actor Model** | Concurrencia sin locks, procesamiento asíncrono | 9 Engines en `core/` |
-| **Ask Pattern** | Request-response sobre actores | Contact, Message, Publication, Moderation, Pipeline |
-| **Tell Pattern** | Fire-and-forget, zero-latency | Gamification, Notification, Analytics |
-| **Saga Orchestrator** | Workflow multi-agente coordinado | PublicationPipelineEngine |
-| **Pub/Sub (EventBus)** | Broadcast desacoplado de domain events | EventBusEngine + DomainEvents |
-| **Circuit Breaker** | Protección resiliente de servicios externos | NotificationEngine (email) |
-| **Message Adapter** | Conversión de respuestas tipadas entre actores | PipelineEngine → Moderation/Publication |
-| **Domain Events** | Vocabulario compartido con correlationId | DomainEvents.scala (9 event types) |
-| **pipeToSelf** | Convertir Futures en mensajes del actor | Todos los Engines |
-| **DeathWatch** | Auto-cleanup de suscriptores terminados | EventBusEngine |
-| **Fan-out** | Un evento → múltiples canales | NotificationEngine (in-app + email) |
-| **Compensating Action** | Notificación de rechazo al autor | PipelineEngine (saga rollback) |
-| **Repository** | Abstracción de acceso a datos | 13 Repositories |
-| **Adapter** | Puente entre Controllers y Actor System | 9 `Reactive*Adapter` |
-| **Command** | Mensajes tipados como objetos | `sealed trait *Command` |
-| **Dependency Injection** | Inversión de control (Guice) | `Module.scala` |
-| **MVC** | Separación de responsabilidades | Controllers + Views + Models |
+| Patrón | Ubicación |
+|--------|-----------|
+| Actor Model | `core/*Engine.scala` |
+| Ask / Tell Pattern | `services/Reactive*Adapter.scala` |
+| Saga Orchestrator | `PublicationPipelineEngine` |
+| Pub/Sub | `EventBusEngine` + `DomainEvents` |
+| Circuit Breaker | `NotificationEngine` (SMTP) |
+| `pipeToSelf` | Todos los Engines |
+| DeathWatch | `EventBusEngine` |
+| Repository | `repositories/*` |
+| Adapter | `services/Reactive*Adapter.scala` |
+| Command | `sealed trait *Command` |
+| Dependency Injection | `Module.scala` (Guice) |
+| MVC | Play estándar |
+| Capability-based RBAC | `models/AdminCapability` + `actions/AdminAction` |
+| Deterministic hashing | `utils/StageCommitHash` (SHA-1) |
+| BEM | `app/assets/stylesheets/components/*.scss` |
 
 ---
 
-## 📝 Internacionalización
+## 🌐 Internacionalización
 
-Soporte para español (predeterminado) e inglés via `conf/messages` y `conf/messages.en`.
+Español (default) e inglés vía `conf/messages` y `conf/messages.en`.
 
 ---
 
@@ -525,4 +474,4 @@ MIT
 
 ---
 
-<p align="center"><strong>Responsive • Resilient • Elastic • Message-Driven</strong></p>
+<p align="center"><strong>Responsive · Resilient · Elastic · Message-Driven</strong></p>
