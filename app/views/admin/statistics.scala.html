@@ -1,433 +1,109 @@
-@(username: String)(implicit request: RequestHeader, flash: Flash)
+@(username: String)(implicit request: RequestHeader)
 
-@admin.adminLayout("Estadísticas Avanzadas") {
-    <div class="stats-header" style="margin-bottom: 2rem;">
-        <h2 style="font-size: 2rem; color: #333; margin-bottom: 0.5rem;">📊 Estadísticas y Análisis</h2>
-        <p style="color: #666;">Panel de control profesional de métricas y KPIs</p>
+@admin.adminLayout("Estadísticas avanzadas", "stats") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Sesión @username</div>
+      <h1 class="ed-admin-title">Estadísticas avanzadas</h1>
+      <p class="ed-dash-sub">Datos hidratados desde <code>/admin/stats/advanced</code> y <code>/admin/stats/messaging</code>.</p>
     </div>
-
-    <!-- Loading State -->
-    <div id="loading" style="text-align: center; padding: 3rem;">
-        <div style="display: inline-block; width: 60px; height: 60px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        <p style="margin-top: 1rem; color: #666;">Cargando estadísticas...</p>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+      <button id="refreshStats" class="ed-link-btn ed-link-btn--accent">Refrescar</button>
     </div>
+  </header>
 
-    <style>
-        @@keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 12px rgba(0,0,0,0.1);
-        }
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin: 0.5rem 0;
-        }
-        .stat-label {
-            color: #666;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .stat-change {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-top: 0.5rem;
-        }
-        .positive { background: #d4edda; color: #155724; }
-        .negative { background: #f8d7da; color: #721c24; }
-        .neutral { background: #d1ecf1; color: #0c5460; }
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .chart-container {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-        }
-        .section-title {
-            font-size: 1.5rem;
-            color: #333;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #f0f0f0;
-        }
-    </style>
+  <h2 class="ed-admin-section-title">Comunidad</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Usuarios totales</div><div class="ed-kpi__num" data-stat="users.total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Nuevos 7d</div><div class="ed-kpi__num" data-stat="users.newLast7Days">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Nuevos 30d</div><div class="ed-kpi__num" data-stat="users.newLast30Days">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Activos 7d</div><div class="ed-kpi__num" data-stat="users.activeLast7Days">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Tasa de activación</div><div class="ed-kpi__num"><span data-stat="users.activationRate">…</span>%</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Crecimiento semanal</div><div class="ed-kpi__num"><span data-stat="users.weeklyGrowthPercent">…</span>%</div></div>
+  </section>
 
-    <!-- Main Stats Container (Hidden until loaded) -->
-    <div id="statsContainer" style="display: none;">
-        
-        <!-- KPIs Principales -->
-        <div class="section-title">🎯 KPIs Principales</div>
-        <div class="kpi-grid" id="mainKpis"></div>
+  <h2 class="ed-admin-section-title">Bandeja de contacto</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Contactos totales</div><div class="ed-kpi__num" data-stat="contacts.total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Pendientes</div><div class="ed-kpi__num" data-stat="contacts.pending">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Procesados</div><div class="ed-kpi__num" data-stat="contacts.processed">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Archivados</div><div class="ed-kpi__num" data-stat="contacts.archived">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Eficiencia</div><div class="ed-kpi__num"><span data-stat="performance.efficiency">…</span>%</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Backlog</div><div class="ed-kpi__num" data-stat="performance.pendingBacklog">…</div></div>
+  </section>
 
-        <!-- Métricas de Usuarios -->
-        <div class="section-title">👥 Métricas de Usuarios</div>
-        <div class="kpi-grid" id="userMetrics"></div>
+  <h2 class="ed-admin-section-title">Administradores</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Aprobados</div><div class="ed-kpi__num" data-stat="admins.total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Pendientes</div><div class="ed-kpi__num" data-stat="admins.pending">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Activos 7d</div><div class="ed-kpi__num" data-stat="admins.recentActivity">…</div></div>
+  </section>
 
-        <!-- Gráficos de Usuarios -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="chart-container">
-                <h3 style="margin-bottom: 1rem; color: #333;">📈 Crecimiento de Usuarios</h3>
-                <canvas id="userGrowthChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3 style="margin-bottom: 1rem; color: #333;">👤 Usuarios por Rol</h3>
-                <canvas id="userRoleChart"></canvas>
-            </div>
-        </div>
+  <h2 class="ed-admin-section-title">Mensajería privada</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Mensajes</div><div class="ed-kpi__num" data-msg="total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Sin leer</div><div class="ed-kpi__num" data-msg="unread">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Leídos</div><div class="ed-kpi__num" data-msg="read">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Sobre publicación</div><div class="ed-kpi__num" data-msg="withPublication">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Directos</div><div class="ed-kpi__num" data-msg="direct">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Tasa lectura</div><div class="ed-kpi__num"><span data-msg="readRate">…</span>%</div></div>
+  </section>
 
-        <!-- Métricas de Contactos -->
-        <div class="section-title">📨 Métricas de Contactos</div>
-        <div class="kpi-grid" id="contactMetrics"></div>
+  <div class="ed-admin-grid">
+    <section class="ed-admin-card">
+      <h2>Top remitentes</h2>
+      <ul class="ed-mini-bars" id="topSenders"><li class="ed-dash-empty">Cargando…</li></ul>
+    </section>
+    <section class="ed-admin-card">
+      <h2>Top receptores</h2>
+      <ul class="ed-mini-bars" id="topReceivers"><li class="ed-dash-empty">Cargando…</li></ul>
+    </section>
+    <section class="ed-admin-card">
+      <h2>Publicaciones más mensajeadas</h2>
+      <ul class="ed-mini-bars" id="topPublications"><li class="ed-dash-empty">Cargando…</li></ul>
+    </section>
+  </div>
 
-        <!-- Gráficos de Contactos -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="chart-container">
-                <h3 style="margin-bottom: 1rem; color: #333;">📊 Distribución por Estado</h3>
-                <canvas id="contactStatusChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3 style="margin-bottom: 1rem; color: #333;">📅 Actividad Mensual</h3>
-                <canvas id="activityChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Métricas de Rendimiento -->
-        <div class="section-title">⚡ Rendimiento del Sistema</div>
-        <div class="kpi-grid" id="performanceMetrics"></div>
-
-        <!-- Resumen de Administradores -->
-        <div class="section-title">🔧 Equipo de Administración</div>
-        <div class="kpi-grid" id="adminMetrics"></div>
-
-    </div>
-
-    <!-- Chart.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.js"></script>
-    
-    <script>
-        // Configuración de colores
-        const colors = {
-            primary: '#667eea',
-            secondary: '#764ba2',
-            success: '#43e97b',
-            danger: '#f5576c',
-            warning: '#feca57',
-            info: '#48dbfb',
-            purple: '#a29bfe',
-            pink: '#fd79a8',
-            orange: '#ff7675',
-            teal: '#00cec9'
-        };
-
-        // Cargar estadísticas
-        fetch('/admin/stats/advanced')
-            .then(response => response.json())
-            .then(data => {
-                console.log('📊 Estadísticas cargadas:', data);
-                renderStats(data);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('statsContainer').style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error cargando estadísticas:', error);
-                document.getElementById('loading').innerHTML = '<p style="color: #f5576c;">❌ Error al cargar estadísticas</p>';
-            });
-
-        function renderStats(data) {
-            // KPIs Principales
-            renderKPIs('mainKpis', [
-                {
-                    icon: '👥',
-                    value: data.users.total,
-                    label: 'Usuarios Totales',
-                    change: `+${data.users.newLast7Days} esta semana`,
-                    changeType: 'positive'
-                },
-                {
-                    icon: '📨',
-                    value: data.contacts.total,
-                    label: 'Contactos Totales',
-                    change: `+${data.contacts.newLast7Days} esta semana`,
-                    changeType: 'positive'
-                },
-                {
-                    icon: '🔥',
-                    value: data.users.activeLast7Days,
-                    label: 'Usuarios Activos (7d)',
-                    change: `${data.users.activationRate}% de activación`,
-                    changeType: 'neutral'
-                },
-                {
-                    icon: '⚡',
-                    value: `${data.performance.efficiency}%`,
-                    label: 'Eficiencia de Procesamiento',
-                    change: `${data.contacts.processed} procesados`,
-                    changeType: data.performance.efficiency > 70 ? 'positive' : 'warning'
-                }
-            ]);
-
-            // Métricas de Usuarios
-            renderKPIs('userMetrics', [
-                {
-                    icon: '🆕',
-                    value: data.users.newLast30Days,
-                    label: 'Nuevos (30 días)',
-                    change: `${data.users.newLast7Days} última semana`,
-                    changeType: 'neutral'
-                },
-                {
-                    icon: '💤',
-                    value: data.users.neverLoggedIn,
-                    label: 'Sin Login',
-                    change: `${((data.users.neverLoggedIn / data.users.total) * 100).toFixed(1)}% del total`,
-                    changeType: 'warning'
-                },
-                {
-                    icon: '📊',
-                    value: `${data.users.avgAccountAgeDays}d`,
-                    label: 'Edad Promedio Cuenta',
-                    change: 'días desde creación',
-                    changeType: 'neutral'
-                },
-                {
-                    icon: '🔄',
-                    value: `${data.users.weeklyGrowthPercent}%`,
-                    label: 'Crecimiento Semanal',
-                    change: 'vs promedio mensual',
-                    changeType: data.users.weeklyGrowthPercent > 0 ? 'positive' : 'negative'
-                }
-            ]);
-
-            // Métricas de Contactos
-            renderKPIs('contactMetrics', [
-                {
-                    icon: '🕐',
-                    value: data.contacts.pending,
-                    label: 'Pendientes',
-                    change: 'requieren atención',
-                    changeType: data.contacts.pending > 10 ? 'warning' : 'neutral'
-                },
-                {
-                    icon: '✅',
-                    value: data.contacts.processed,
-                    label: 'Procesados',
-                    change: `${data.contacts.processingRate}% del total`,
-                    changeType: 'positive'
-                },
-                {
-                    icon: '📁',
-                    value: data.contacts.archived,
-                    label: 'Archivados',
-                    change: 'histórico',
-                    changeType: 'neutral'
-                },
-                {
-                    icon: '📈',
-                    value: data.contacts.contactsPerActiveUser,
-                    label: 'Contactos/Usuario Activo',
-                    change: 'promedio',
-                    changeType: 'neutral'
-                }
-            ]);
-
-            // Métricas de Rendimiento
-            renderKPIs('performanceMetrics', [
-                {
-                    icon: '⏱️',
-                    value: `${data.performance.avgResponseTimeDays}d`,
-                    label: 'Tiempo Respuesta Promedio',
-                    change: 'días',
-                    changeType: data.performance.avgResponseTimeDays < 3 ? 'positive' : 'warning'
-                },
-                {
-                    icon: '📋',
-                    value: data.performance.pendingBacklog,
-                    label: 'Backlog Pendiente',
-                    change: 'items en cola',
-                    changeType: data.performance.pendingBacklog > 20 ? 'warning' : 'positive'
-                },
-                {
-                    icon: '🎯',
-                    value: `${data.performance.efficiency}%`,
-                    label: 'Eficiencia',
-                    change: 'tasa de completación',
-                    changeType: data.performance.efficiency > 70 ? 'positive' : 'warning'
-                }
-            ]);
-
-            // Métricas de Administradores
-            renderKPIs('adminMetrics', [
-                {
-                    icon: '👨‍💼',
-                    value: data.admins.total,
-                    label: 'Total Administradores',
-                    change: 'en el sistema',
-                    changeType: 'neutral'
-                },
-                {
-                    icon: '🟢',
-                    value: data.admins.recentActivity,
-                    label: 'Activos (7 días)',
-                    change: 'con actividad reciente',
-                    changeType: 'positive'
-                }
-            ]);
-
-            // Renderizar gráficos
-            renderCharts(data);
-        }
-
-        function renderKPIs(containerId, kpis) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = kpis.map(kpi => `
-                <div class="stat-card">
-                    <div style="font-size: 2.5rem;">${kpi.icon}</div>
-                    <div class="stat-value" style="color: ${colors.primary};">${kpi.value}</div>
-                    <div class="stat-label">${kpi.label}</div>
-                    <div class="stat-change ${kpi.changeType}">${kpi.change}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderCharts(data) {
-            // Gráfico de Crecimiento de Usuarios
-            new Chart(document.getElementById('userGrowthChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: ['Hace 30d', 'Hace 21d', 'Hace 14d', 'Hace 7d', 'Hoy'],
-                    datasets: [{
-                        label: 'Usuarios Registrados',
-                        data: [
-                            Math.max(0, data.users.total - data.users.newLast30Days),
-                            Math.max(0, data.users.total - data.users.newLast30Days + Math.floor(data.users.newLast30Days * 0.3)),
-                            Math.max(0, data.users.total - data.users.newLast7Days),
-                            Math.max(0, data.users.total - Math.floor(data.users.newLast7Days * 0.5)),
-                            data.users.total
-                        ],
-                        borderColor: colors.primary,
-                        backgroundColor: colors.primary + '20',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-
-            // Gráfico de Usuarios por Rol
-            const roleLabels = Object.keys(data.users.byRole);
-            const roleValues = Object.values(data.users.byRole);
-            new Chart(document.getElementById('userRoleChart').getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: roleLabels.map(r => r.toUpperCase()),
-                    datasets: [{
-                        data: roleValues,
-                        backgroundColor: [colors.primary, colors.success, colors.warning, colors.info],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-
-            // Gráfico de Estado de Contactos
-            new Chart(document.getElementById('contactStatusChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: ['Pendientes', 'Procesados', 'Archivados'],
-                    datasets: [{
-                        label: 'Cantidad',
-                        data: [data.contacts.pending, data.contacts.processed, data.contacts.archived],
-                        backgroundColor: [colors.warning, colors.success, colors.info],
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-
-            // Gráfico de Actividad Mensual
-            new Chart(document.getElementById('activityChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
-                    datasets: [{
-                        label: 'Nuevos Contactos',
-                        data: [
-                            Math.floor(data.contacts.newLast30Days * 0.2),
-                            Math.floor(data.contacts.newLast30Days * 0.25),
-                            Math.floor(data.contacts.newLast30Days * 0.25),
-                            data.contacts.newLast7Days
-                        ],
-                        borderColor: colors.danger,
-                        backgroundColor: colors.danger + '20',
-                        fill: true,
-                        tension: 0.4
-                    }, {
-                        label: 'Nuevos Usuarios',
-                        data: [
-                            Math.floor(data.users.newLast30Days * 0.2),
-                            Math.floor(data.users.newLast30Days * 0.25),
-                            Math.floor(data.users.newLast30Days * 0.25),
-                            data.users.newLast7Days
-                        ],
-                        borderColor: colors.primary,
-                        backgroundColor: colors.primary + '20',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        console.log('📊 Sistema de estadísticas avanzadas inicializado');
-    </script>
+  <script>
+  (function() {
+    function setText(sel, val) {
+      document.querySelectorAll(sel).forEach(function(el){ el.textContent = (val == null ? "—" : val); });
+    }
+    function getPath(obj, path) {
+      return path.split('.').reduce(function(o,k){ return (o == null) ? null : o[k]; }, obj);
+    }
+    function fillStats(json) {
+      document.querySelectorAll('[data-stat]').forEach(function(el){
+        var v = getPath(json, el.getAttribute('data-stat'));
+        el.textContent = (v == null ? "0" : v);
+      });
+    }
+    function fillMsg(json) {
+      document.querySelectorAll('[data-msg]').forEach(function(el){
+        var v = json[el.getAttribute('data-msg')];
+        el.textContent = (v == null ? "0" : v);
+      });
+      function renderList(elId, items, labelKey) {
+        var ul = document.getElementById(elId);
+        if (!ul) return;
+        if (!items || !items.length) { ul.innerHTML = '<li class="ed-dash-empty">Sin datos</li>'; return; }
+        ul.innerHTML = items.map(function(it){
+          var label = labelKey === 'username' ? '@@' + it.username : it.title;
+          return '<li><span>' + label + '</span><strong>' + it.count + '</strong></li>';
+        }).join('');
+      }
+      renderList('topSenders',    json.topSenders,    'username');
+      renderList('topReceivers',  json.topReceivers,  'username');
+      renderList('topPublications', json.topPublications, 'title');
+    }
+    function load() {
+      fetch('@routes.AdminController.advancedStats()',  {credentials:'same-origin'}).then(function(r){return r.json();}).then(fillStats).catch(function(){});
+      fetch('@routes.AdminController.messagingStats()', {credentials:'same-origin'}).then(function(r){return r.json();}).then(fillMsg).catch(function(){});
+    }
+    load();
+    document.getElementById('refreshStats').addEventListener('click', function(e){ e.preventDefault(); load(); });
+  })();
+  </script>
 }

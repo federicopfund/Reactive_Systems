@@ -1,568 +1,183 @@
-@(title: String)(content: Html)(implicit request: RequestHeader, flash: Flash)
+@(title: String, section: String = "")(content: Html)(implicit request: RequestHeader)
+
+@*
+  Layout standalone para el backoffice administrativo.
+
+  No reusa main.scala.html porque el admin necesita una chrome propia
+  (sin sidebar editorial público), un look más formal y denso, y control
+  total sobre el header.
+
+  Estructura:
+    +----------------------------------------------------------+
+    | TOPBAR (brand · breadcrumb · user · logout)              |
+    +-----------------+----------------------------------------+
+    | SIDEBAR formal  | BODY                                   |
+    | (secciones)     |                                        |
+    +-----------------+----------------------------------------+
+
+  `section` controla el item activo del sidebar.
+*@
+
+@isActive(s: String) = @{ if (section == s) "is-active" else "" }
+
+@role     = @{ request.session.get("userRole").getOrElse("admin") }
+@username = @{ request.session.get("username").orElse(request.session.get("userName")).getOrElse("admin") }
+@roleLabel = @{
+  role match {
+    case "super_admin" => "Super Admin"
+    case "admin"       => "Admin"
+    case _             => role
+  }
+}
+@initials = @{
+  val parts = username.split("[\\s.]+").filter(_.nonEmpty)
+  (if (parts.length >= 2) parts(0).take(1) + parts(1).take(1) else username.take(2)).toUpperCase
+}
+@sectionLabel = @{
+  section match {
+    case "dashboard"    => "Resumen"
+    case "publications" => "Catálogo de publicaciones"
+    case "review"       => "Cola de revisión"
+    case "contacts"     => "Bandeja de contacto"
+    case "stats"        => "Estadísticas"
+    case "newsletter"   => "Newsletter"
+    case "admins"       => "Administradores"
+    case _              => "Backoffice"
+  }
+}
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="admin-dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@title - Panel de Administración</title>
-    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/admin.css")">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@title · Backoffice — Manifiesto Reactivo</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f7f8fa;
-            color: #374151;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@@400;700;900&family=IBM+Plex+Mono:wght@@400;500&family=Inter:wght@@400;500;600&display=swap" rel="stylesheet">
 
-        /* ── NAVBAR ── */
-        .navbar {
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 0 2rem;
-            height: 56px;
-            position: sticky;
-            top: 0;
-            z-index: 900;
-        }
-        .navbar-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            height: 100%;
-            gap: 1.5rem;
-        }
-        .navbar-brand {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #1a202c;
-            text-decoration: none;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .navbar-brand span { font-size: 1.15rem; }
-
-        /* Primary links */
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            height: 100%;
-        }
-        .nav-links a {
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-            height: 100%;
-            padding: 0 0.875rem;
-            font-size: 0.8125rem;
-            font-weight: 500;
-            color: #64748b;
-            text-decoration: none;
-            border-bottom: 2px solid transparent;
-            transition: color 0.2s, border-color 0.2s;
-            white-space: nowrap;
-        }
-        .nav-links a:hover,
-        .nav-links a.active {
-            color: #1a202c;
-            border-bottom-color: #475569;
-        }
-
-        /* Right side controls */
-        .nav-actions {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Command palette trigger */
-        .cmd-trigger {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.375rem 0.75rem;
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            color: #94a3b8;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .cmd-trigger:hover {
-            background: #e8ecf0;
-            color: #64748b;
-            border-color: #cbd5e1;
-        }
-        .cmd-trigger svg { flex-shrink: 0; }
-        .cmd-trigger kbd {
-            font-family: inherit;
-            font-size: 0.6875rem;
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 3px;
-            padding: 0.1rem 0.3rem;
-            color: #94a3b8;
-            line-height: 1;
-        }
-
-        .nav-logout {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.375rem 0.625rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: #8b4c4c;
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .nav-logout:hover {
-            background: #fee2e2;
-            color: #7f1d1d;
-        }
-
-        /* ── COMMAND PALETTE ── */
-        .cmd-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.45);
-            z-index: 9999;
-            backdrop-filter: blur(4px);
-            animation: cmdFadeIn 0.15s ease-out;
-        }
-        .cmd-overlay.open { display: flex; justify-content: center; padding-top: 15vh; }
-
-        .cmd-palette {
-            background: #ffffff;
-            border-radius: 12px;
-            width: 520px;
-            max-width: 92vw;
-            box-shadow: 0 24px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.05);
-            overflow: hidden;
-            animation: cmdSlideIn 0.15s ease-out;
-        }
-        .cmd-search-wrap {
-            display: flex;
-            align-items: center;
-            padding: 0.875rem 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            gap: 0.75rem;
-        }
-        .cmd-search-wrap svg { color: #94a3b8; flex-shrink: 0; }
-        .cmd-search {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 0.9375rem;
-            color: #1a202c;
-            background: transparent;
-        }
-        .cmd-search::placeholder { color: #cbd5e1; }
-        .cmd-esc {
-            font-size: 0.6875rem;
-            color: #94a3b8;
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            padding: 0.15rem 0.4rem;
-        }
-
-        .cmd-group-label {
-            font-size: 0.6875rem;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.625rem 1rem 0.375rem;
-        }
-
-        .cmd-list {
-            max-height: 340px;
-            overflow-y: auto;
-            padding: 0.25rem 0.5rem 0.5rem;
-        }
-        .cmd-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.625rem 0.75rem;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #374151;
-            font-size: 0.8125rem;
-            transition: background 0.12s;
-            cursor: pointer;
-        }
-        .cmd-item:hover,
-        .cmd-item.cmd-active {
-            background: #f1f5f9;
-        }
-        .cmd-item-icon {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8fafc;
-            border: 1px solid #e8ecf0;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            flex-shrink: 0;
-        }
-        .cmd-item-text { flex: 1; }
-        .cmd-item-text span {
-            display: block;
-            font-weight: 500;
-            line-height: 1.3;
-        }
-        .cmd-item-text small {
-            color: #94a3b8;
-            font-size: 0.6875rem;
-        }
-        .cmd-item-badge {
-            font-size: 0.625rem;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-        }
-
-        /* ── MAIN CONTENT ── */
-        .main-container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .flash-message {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            animation: slideDown 0.3s ease-out;
-        }
-        .flash-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .flash-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        /* ── COMPONENTS ── */
-        .btn {
-            padding: 0.6rem 1.2rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8125rem; }
-        .btn-primary { background: #374151; color: #ffffff; }
-        .btn-primary:hover { background: #1f2937; }
-        .btn-success { background: #4a6b52; color: #ffffff; }
-        .btn-success:hover { background: #3d5a44; }
-        .btn-warning { background: #92792e; color: #ffffff; }
-        .btn-warning:hover { background: #7c6a2e; }
-        .btn-danger { background: #8b4c4c; color: #ffffff; }
-        .btn-danger:hover { background: #7a3e3e; }
-        .btn-secondary { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
-        .btn-secondary:hover { background: #e2e8f0; }
-
-        .badge {
-            display: inline-block;
-            padding: 0.2rem 0.625rem;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .badge-pending  { background: #fbf3db; color: #7c6a2e; }
-        .badge-approved { background: #e8f0e8; color: #3d6b47; }
-        .badge-rejected { background: #fae8e8; color: #8b4444; }
-        .badge-draft    { background: #f1f5f9; color: #64748b; }
-
-        .card {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 1.75rem;
-            border: 1px solid #e8ecf0;
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        table { width: 100%; border-collapse: collapse; }
-        th {
-            text-align: left;
-            padding: 0.75rem 1rem;
-            font-size: 0.6875rem;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid #e8ecf0;
-        }
-        td {
-            padding: 0.75rem 1rem;
-            font-size: 0.8125rem;
-            border-bottom: 1px solid #f1f5f9;
-            color: #374151;
-        }
-        tr:hover td { background: #fafbfc; }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.45);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-box {
-            background: #ffffff;
-            padding: 2rem;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 25px rgba(0,0,0,0.12);
-        }
-
-        label {
-            display: block;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #475569;
-            margin-bottom: 0.375rem;
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="password"],
-        textarea,
-        select {
-            width: 100%;
-            padding: 0.625rem 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            color: #1a202c;
-            background: #ffffff;
-            transition: border-color 0.2s;
-        }
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #94a3b8;
-            box-shadow: 0 0 0 3px rgba(148,163,184,0.12);
-        }
-
-        .text-muted { color: #94a3b8; }
-        .text-sm { font-size: 0.8125rem; }
-
-        /* ── RESPONSIVE ── */
-        .nav-links-mobile { display: none; }
-    </style>
+  @* Cache-buster: el timestamp de boot fuerza al navegador a re-pedir el CSS
+     cuando se reinicia la app o se recompila SCSS. *@
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")?v=@System.currentTimeMillis">
 </head>
-<body>
-    <!-- NAVBAR -->
-    <nav class="navbar">
-        <div class="navbar-content">
-            <a href="@routes.AdminController.dashboard(0, None)" class="navbar-brand">
-                <span>&#9877;</span> Admin
+<body class="ed-admin-body-root">
+
+  <div class="ed-bo">
+
+    @* ============= TOP BAR ============= *@
+    <header class="ed-bo__topbar">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-bo__brand">
+        <span class="ed-bo__brand-eyebrow">Manifiesto Reactivo</span>
+        <span class="ed-bo__brand-title">Backoffice</span>
+      </a>
+
+      <nav class="ed-bo__breadcrumb" aria-label="Ubicación">
+        <span class="ed-bo__crumb">Admin</span>
+        <span class="ed-bo__crumb-sep">/</span>
+        <span class="ed-bo__crumb ed-bo__crumb--active">@sectionLabel</span>
+      </nav>
+
+      <div class="ed-bo__topbar-right">
+        <a class="ed-bo__topbar-link" href="@routes.HomeController.index()" target="_blank" rel="noopener">Ver sitio ↗</a>
+        <span class="ed-bo__role ed-bo__role--@role">@roleLabel</span>
+        <div class="ed-bo__user">
+          <span class="ed-bo__user-avatar">@initials</span>
+          <div class="ed-bo__user-info">
+            <span class="ed-bo__user-name">@username</span>
+            <span class="ed-bo__user-meta">conectado</span>
+          </div>
+        </div>
+        <a class="ed-bo__logout" href="@routes.AuthController.logout()" title="Cerrar sesión">Salir</a>
+      </div>
+    </header>
+
+    <div class="ed-bo__layout">
+
+      @* ============= SIDEBAR ============= *@
+      <aside class="ed-bo__sidebar" aria-label="Navegación del backoffice">
+
+        <div class="ed-bo__nav-group">
+          <span class="ed-bo__nav-label">General</span>
+          @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.DashboardView)) {
+            <a class="ed-bo__nav-item @isActive("dashboard")" href="@routes.AdminController.dashboard(0, None)">
+              <span class="ed-bo__nav-dot"></span>Resumen
             </a>
-
-            <div class="nav-links">
-                <a href="@routes.AdminController.dashboard(0, None)">Dashboard</a>
-                <a href="@routes.AdminController.pendingPublications()">Pendientes</a>
-                <a href="@routes.AdminController.allPublications()">Publicaciones</a>
-                <a href="@routes.AdminController.newsletterSubscribers()">Newsletter</a>
-                <a href="@routes.AdminController.statisticsPage()">Estadísticas</a>
-            </div>
-
-            <div class="nav-actions">
-                <button type="button" class="cmd-trigger" onclick="openCmdPalette()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    Acciones
-                    <kbd>Ctrl K</kbd>
-                </button>
-                <a href="@routes.AdminController.logout()" class="nav-logout">
-                    Salir
-                </a>
-            </div>
+          }
+          @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.StatsView)) {
+            <a class="ed-bo__nav-item @isActive("stats")" href="@routes.AdminController.statisticsPage()">
+              <span class="ed-bo__nav-dot"></span>Estadísticas
+            </a>
+          }
         </div>
-    </nav>
 
-    <!-- COMMAND PALETTE -->
-    <div id="cmdOverlay" class="cmd-overlay" onclick="if(event.target===this)closeCmdPalette()">
-        <div class="cmd-palette">
-            <div class="cmd-search-wrap">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input id="cmdSearch" class="cmd-search" type="text" placeholder="Buscar acción..." autocomplete="off">
-                <span class="cmd-esc">ESC</span>
-            </div>
-            <div class="cmd-list" id="cmdList">
-                <div class="cmd-group-label">Navegación</div>
-                <a class="cmd-item" href="@routes.AdminController.dashboard(0, None)" data-search="dashboard inicio panel contactos">
-                    <div class="cmd-item-icon">&#9776;</div>
-                    <div class="cmd-item-text"><span>Dashboard</span><small>Vista general de contactos</small></div>
-                </a>
-                <a class="cmd-item" href="@routes.AdminController.pendingPublications()" data-search="pendientes revisar aprobar publicaciones">
-                    <div class="cmd-item-icon">&#9998;</div>
-                    <div class="cmd-item-text"><span>Publicaciones Pendientes</span><small>Revisar y aprobar publicaciones</small></div>
-                </a>
-                <a class="cmd-item" href="@routes.AdminController.allPublications()" data-search="publicaciones todas listado">
-                    <div class="cmd-item-icon">&#9783;</div>
-                    <div class="cmd-item-text"><span>Todas las Publicaciones</span><small>Listado filtrable por estado</small></div>
-                </a>
-                <a class="cmd-item" href="@routes.AdminController.statisticsPage()" data-search="estadisticas graficos metricas datos">
-                    <div class="cmd-item-icon">&#9636;</div>
-                    <div class="cmd-item-text"><span>Estadísticas</span><small>Gráficos y métricas avanzadas</small></div>
-                </a>
-                <a class="cmd-item" href="@routes.AdminController.newsletterSubscribers()" data-search="newsletter suscriptores email correo">
-                    <div class="cmd-item-icon">&#9993;</div>
-                    <div class="cmd-item-text"><span>Newsletter</span><small>Gestionar suscriptores del newsletter</small></div>
-                </a>
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Editorial</span>
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview)) {
+              <a class="ed-bo__nav-item @isActive("review")" href="@routes.AdminController.pendingPublications()">
+                <span class="ed-bo__nav-dot"></span>Cola de revisión
+              </a>
+              <a class="ed-bo__nav-item @isActive("publications")" href="@routes.AdminController.allPublications(None)">
+                <span class="ed-bo__nav-dot"></span>Catálogo
+              </a>
+            }
+          </div>
+        }
 
-                <div class="cmd-group-label">Acciones</div>
-                <a class="cmd-item" href="@routes.AdminController.createContactPage()" data-search="nuevo crear contacto agregar formulario">
-                    <div class="cmd-item-icon">&#43;</div>
-                    <div class="cmd-item-text"><span>Nuevo Contacto</span><small>Crear un nuevo registro de contacto</small></div>
-                </a>
-                <a class="cmd-item" href="@routes.HomeController.index()" data-search="sitio web publico ver pagina inicio">
-                    <div class="cmd-item-icon">&#9737;</div>
-                    <div class="cmd-item-text"><span>Ver Sitio Público</span><small>Abrir la página pública del sitio</small></div>
-                </a>
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView) || utils.RolePolicy.can(role, utils.Capabilities.Cap.NewsletterView)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Comunidad</span>
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView)) {
+              <a class="ed-bo__nav-item @isActive("contacts")" href="@routes.AdminController.dashboard(0, None)#contacts">
+                <span class="ed-bo__nav-dot"></span>Contactos
+              </a>
+            }
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.NewsletterView)) {
+              <a class="ed-bo__nav-item @isActive("newsletter")" href="@routes.AdminController.newsletterSubscribers()">
+                <span class="ed-bo__nav-dot"></span>Newsletter
+              </a>
+            }
+          </div>
+        }
 
-                <div class="cmd-group-label">Cuenta</div>
-                <a class="cmd-item" href="@routes.AdminController.logout()" data-search="salir cerrar sesion logout">
-                    <div class="cmd-item-icon">&#10132;</div>
-                    <div class="cmd-item-text"><span>Cerrar Sesión</span><small>Salir del panel de administración</small></div>
-                </a>
-            </div>
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.GovernanceManageAdmins)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Gobernanza</span>
+            <a class="ed-bo__nav-item @isActive("admins")" href="@routes.AdminController.adminManagement()">
+              <span class="ed-bo__nav-dot"></span>Administradores
+            </a>
+          </div>
+        }
+
+        @* Mensajería: disponible para todo backoffice. Reusa la bandeja
+           del usuario; cada admin es también un actor del sistema. *@
+        <div class="ed-bo__nav-group">
+          <span class="ed-bo__nav-label">Comunicación</span>
+          <a class="ed-bo__nav-item @isActive("messages")" href="@routes.UserPublicationController.inbox()">
+            <span class="ed-bo__nav-dot"></span>Mensajes
+          </a>
+          <a class="ed-bo__nav-item @isActive("notifications")" href="@routes.UserPublicationController.notifications()">
+            <span class="ed-bo__nav-dot"></span>Notificaciones
+          </a>
         </div>
+
+        <div class="ed-bo__sidebar-foot">
+          <span>v1.0 · @java.time.Year.now()</span>
+        </div>
+      </aside>
+
+      @* ============= MAIN ============= *@
+      <main class="ed-bo__main">
+        <div class="ed-admin-shell">
+          <div class="ed-admin-body">
+            @content
+          </div>
+        </div>
+      </main>
     </div>
-    
-    <div class="main-container">
-        @if(flash.get("success").isDefined) {
-            <div class="flash-message flash-success">
-                ✓ @flash.get("success").get
-            </div>
-        }
-        
-        @if(flash.get("error").isDefined) {
-            <div class="flash-message flash-error">
-                ⚠ @flash.get("error").get
-            </div>
-        }
-        
-        @content
-    </div>
-
-    <script>
-    (function(){
-        var overlay = document.getElementById('cmdOverlay');
-        var input   = document.getElementById('cmdSearch');
-        var items   = document.querySelectorAll('.cmd-item');
-        var groups  = document.querySelectorAll('.cmd-group-label');
-        var activeIdx = -1;
-
-        window.openCmdPalette = function(){
-            overlay.classList.add('open');
-            input.value = '';
-            filterItems('');
-            input.focus();
-            activeIdx = -1;
-        };
-        window.closeCmdPalette = function(){
-            overlay.classList.remove('open');
-        };
-
-        /* Ctrl+K shortcut */
-        document.addEventListener('keydown', function(e){
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                overlay.classList.contains('open') ? closeCmdPalette() : openCmdPalette();
-            }
-            if (e.key === 'Escape' && overlay.classList.contains('open')) {
-                closeCmdPalette();
-            }
-        });
-
-        /* Search filter */
-        input.addEventListener('input', function(){
-            filterItems(this.value.toLowerCase());
-            activeIdx = -1;
-            updateActive();
-        });
-
-        /* Keyboard navigation */
-        input.addEventListener('keydown', function(e){
-            var visible = getVisibleItems();
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                activeIdx = Math.min(activeIdx + 1, visible.length - 1);
-                updateActive();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                activeIdx = Math.max(activeIdx - 1, 0);
-                updateActive();
-            } else if (e.key === 'Enter' && activeIdx >= 0) {
-                e.preventDefault();
-                visible[activeIdx].click();
-            }
-        });
-
-        function filterItems(q){
-            items.forEach(function(item){
-                var text = (item.textContent + ' ' + (item.dataset.search || '')).toLowerCase();
-                item.style.display = (!q || text.indexOf(q) !== -1) ? 'flex' : 'none';
-            });
-            /* Hide group labels if all children hidden */
-            groups.forEach(function(g){
-                var next = g.nextElementSibling;
-                var hasVisible = false;
-                while(next && !next.classList.contains('cmd-group-label')){
-                    if(next.classList.contains('cmd-item') && next.style.display !== 'none') hasVisible = true;
-                    next = next.nextElementSibling;
-                }
-                g.style.display = hasVisible ? 'block' : 'none';
-            });
-        }
-
-        function getVisibleItems(){
-            var arr = [];
-            items.forEach(function(item){ if(item.style.display !== 'none') arr.push(item); });
-            return arr;
-        }
-
-        function updateActive(){
-            var visible = getVisibleItems();
-            items.forEach(function(item){ item.classList.remove('cmd-active'); });
-            if(activeIdx >= 0 && activeIdx < visible.length){
-                visible[activeIdx].classList.add('cmd-active');
-                visible[activeIdx].scrollIntoView({block:'nearest'});
-            }
-        }
-    })();
-    </script>
+  </div>
 </body>
 </html>

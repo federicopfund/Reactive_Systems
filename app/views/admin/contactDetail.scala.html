@@ -1,113 +1,50 @@
-@(contact: models.ContactRecord)(implicit request: RequestHeader, flash: Flash)
+@(contact: models.ContactRecord)(implicit request: RequestHeader)
 
-@admin.adminLayout("Detalle del Contacto") {
-    <div style="margin-bottom: 1.25rem;">
-        <a href="@routes.AdminController.dashboard(0, None)" style="color: #475569; text-decoration: none; font-size: 0.8125rem; font-weight: 500;">
-            ← Volver al Dashboard
-        </a>
+@admin.adminLayout("Contacto · " + contact.name, "contacts") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Contacto</div>
+      <h1 class="ed-admin-title">@contact.name</h1>
     </div>
-    
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c;">Detalle del Contacto #@contact.id.getOrElse("-")</h2>
-            <div style="display: flex; gap: 1rem;">
-                <a href="@routes.AdminController.editContactPage(contact.id.get)" class="btn btn-primary btn-sm">
-                    Editar
-                </a>
-                <form method="POST" 
-                      action="@routes.AdminController.deleteContact(contact.id.get)" 
-                      style="display: inline;"
-                      onsubmit="return confirm('¿Estás seguro de eliminar este contacto?');">
-                    @helper.CSRF.formField
-                    <button type="submit" class="btn btn-danger btn-sm">
-                        Eliminar
-                    </button>
-                </form>
-            </div>
-        </div>
-        
-        <div style="display: grid; gap: 1.5rem;">
-            <div>
-                <label>Nombre</label>
-                <p style="font-size: 0.875rem; color: #374151;">@contact.name</p>
-            </div>
-            
-            <div>
-                <label>Email</label>
-                <p style="font-size: 0.875rem; color: #374151;">
-                    <a href="mailto:@contact.email" style="color: #475569; text-decoration: none;">@contact.email</a>
-                </p>
-            </div>
-            
-            <div>
-                <label>Mensaje</label>
-                <div style="background: #f8fafc; padding: 1rem; border-radius: 6px; white-space: pre-wrap; line-height: 1.6; font-size: 0.875rem; color: #374151; border: 1px solid #edf0f4;">
-                    @contact.message
-                </div>
-            </div>
-            
-            <div>
-                <label>Estado</label>
-                <span class="badge @{contact.status match { case "pending" => "badge-pending"; case "processed" => "badge-processed"; case "archived" => "badge-archived"; case _ => "badge-draft" }}">
-                    @contact.status match {
-                        case "pending" => { Pendiente }
-                        case "processed" => { Procesado }
-                        case "archived" => { Archivado }
-                        case _ => { @contact.status }
-                    }
-                </span>
-            </div>
-            
-            <div>
-                <label>Fecha de Creación</label>
-                <p style="font-size: 0.875rem; color: #374151;">
-                    @{
-                        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy 'a las' HH:mm", java.util.Locale.forLanguageTag("es"))
-                        contact.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
-                    }
-                </p>
-            </div>
-        </div>
-        
-        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e8ecf0;">
-            <h3 style="margin-bottom: 0.75rem; color: #374151; font-size: 0.875rem; font-weight: 600;">Cambiar Estado</h3>
-            <div style="display: flex; gap: 0.5rem;">
-                <form method="POST" action="@routes.AdminController.updateContact(contact.id.get)" style="display: inline;">
-                    @helper.CSRF.formField
-                    <input type="hidden" name="id" value="@contact.id.get" />
-                    <input type="hidden" name="name" value="@contact.name" />
-                    <input type="hidden" name="email" value="@contact.email" />
-                    <input type="hidden" name="message" value="@contact.message" />
-                    <input type="hidden" name="status" value="pending" />
-                    <button type="submit" class="btn btn-warning btn-sm">
-                        Pendiente
-                    </button>
-                </form>
-                
-                <form method="POST" action="@routes.AdminController.updateContact(contact.id.get)" style="display: inline;">
-                    @helper.CSRF.formField
-                    <input type="hidden" name="id" value="@contact.id.get" />
-                    <input type="hidden" name="name" value="@contact.name" />
-                    <input type="hidden" name="email" value="@contact.email" />
-                    <input type="hidden" name="message" value="@contact.message" />
-                    <input type="hidden" name="status" value="processed" />
-                    <button type="submit" class="btn btn-success btn-sm">
-                        Procesado
-                    </button>
-                </form>
-                
-                <form method="POST" action="@routes.AdminController.updateContact(contact.id.get)" style="display: inline;">
-                    @helper.CSRF.formField
-                    <input type="hidden" name="id" value="@contact.id.get" />
-                    <input type="hidden" name="name" value="@contact.name" />
-                    <input type="hidden" name="email" value="@contact.email" />
-                    <input type="hidden" name="message" value="@contact.message" />
-                    <input type="hidden" name="status" value="archived" />
-                    <button type="submit" class="btn btn-secondary btn-sm">
-                        Archivar
-                    </button>
-                </form>
-            </div>
-        </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Bandeja</a>
+      @contact.id.map { id => <a href="@routes.AdminController.editContactPage(id)" class="ed-link-btn ed-link-btn--accent">Editar</a> }
+      @contact.id.map { id =>
+        <form method="POST" action="@routes.AdminController.deleteContact(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este contacto?');">
+          @helper.CSRF.formField
+          <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>
+        </form>
+      }
     </div>
+  </header>
+
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  <article class="ed-profile-card">
+    <div class="ed-profile-row"><span>Email</span><strong>@contact.email</strong></div>
+    <div class="ed-profile-row"><span>Estado actual</span><strong><span class="ed-status-pill ed-status-pill--@contact.status">@contact.status</span></strong></div>
+    <div class="ed-profile-row"><span>Recibido</span><strong>@contact.createdAt.toString.take(16).replace("T", " ")</strong></div>
+
+    <div class="ed-profile-bio">
+      <h3>Mensaje</h3>
+      <p>@contact.message</p>
+    </div>
+
+    @contact.id.map { id =>
+      <div class="ed-profile-bio">
+        <h3>Cambio rápido de estado</h3>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          @for(s <- List("pending","in_progress","resolved","spam","archived")) {
+            <form method="POST" action="@routes.AdminController.updateStatus(id, s)" class="ed-inline-form">
+              @helper.CSRF.formField
+              <button class="ed-link-btn @if(contact.status == s){ed-link-btn--accent}">@s</button>
+            </form>
+          }
+        </div>
+        <p class="ed-dash-sub" style="padding-top:0.6rem;">Las acciones se aplican vía POST a <code>/admin/contacts/:id/status/:status</code> y devuelven JSON.</p>
+      </div>
+    }
+  </article>
 }

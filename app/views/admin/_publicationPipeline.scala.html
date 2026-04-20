@@ -1,0 +1,71 @@
+@(
+  publication: models.Publication,
+  allStages: Seq[models.EditorialStage],
+  timeline: Seq[models.PublicationStageHistoryWithStage],
+  currentStageCode: Option[String],
+  role: String,
+  showInternalNotes: Boolean = true
+)
+
+@* ============================================================
+ *  Widget: pipeline editorial
+ *  - Visible para todo backoffice + autor (showInternalNotes=false)
+ *  - Marca etapas pasadas, actual, futuras
+ *  - Banner indica quién es el dueño actual de la pieza
+ * ============================================================ *@
+
+@visibleStages = @{ allStages.filter(_.active).sortBy(_.orderIndex) }
+@currentIdx    = @{ currentStageCode.flatMap(c => visibleStages.indexWhere(_.code == c) match { case -1 => None; case i => Some(i) }) }
+
+<section class="ed-pipeline" aria-label="Estado editorial de la publicación">
+  <header class="ed-pipeline__head">
+    <span class="ed-pipeline__eyebrow">Pipeline editorial</span>
+    @currentStageCode.map { code =>
+      <span class="ed-pipeline__current">
+        Etapa actual:
+        <strong>@visibleStages.find(_.code == code).map(_.label).getOrElse(code)</strong>
+        ·
+        <em>Espera acción de @utils.EditorialStagePolicy.ownerLabelFor(code)</em>
+      </span>
+    }
+  </header>
+
+  <ol class="ed-pipeline__rail">
+    @for((stage, idx) <- visibleStages.zipWithIndex) {
+      @defining(currentIdx.exists(_ > idx)) { isPast =>
+      @defining(currentIdx.contains(idx))   { isCurrent =>
+        <li class="ed-pipeline__step @if(isPast){is-past} @if(isCurrent){is-current}"
+            title="@stage.description.getOrElse("")">
+          <span class="ed-pipeline__step-dot" aria-hidden="true">
+            @if(isPast){✓} else if(isCurrent){●} else{○}
+          </span>
+          <span class="ed-pipeline__step-label">@stage.label</span>
+        </li>
+      }}
+    }
+  </ol>
+
+  @if(timeline.nonEmpty) {
+    <details class="ed-pipeline__timeline">
+      <summary>Historial de transiciones (@timeline.size)</summary>
+      <ul class="ed-pipeline__timeline-list">
+        @timeline.reverse.map { entry =>
+          <li class="ed-pipeline__timeline-item">
+            <div class="ed-pipeline__timeline-meta">
+              <strong>@entry.stageLabel</strong>
+              · @entry.history.enteredAt.toString.take(16).replace("T"," ")
+              @entry.enteredByUsername.map { u => · por <em>@@@u</em> }
+              @if(entry.history.exitedAt.isEmpty){ <span class="ed-pipeline__chip">actual</span> }
+            </div>
+            @entry.history.reason.map { r => <p class="ed-pipeline__timeline-reason">@r</p> }
+            @if(showInternalNotes) {
+              @entry.history.internalNotes.map { n =>
+                <p class="ed-pipeline__timeline-notes"><span>Notas internas:</span> @n</p>
+              }
+            }
+          </li>
+        }
+      </ul>
+    </details>
+  }
+</section>

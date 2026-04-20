@@ -1,564 +1,136 @@
-@(contacts: Seq[models.ContactRecord], username: String, currentPage: Int, totalPages: Int, searchQuery: Option[String], pendingPublicationsCount: Int, pendingAdminsCount: Int = 0, role: String = "admin", msgMetrics: Map[String, Int] = Map.empty, topSenders: Seq[(Long, String, Int)] = Seq.empty, topReceivers: Seq[(Long, String, Int)] = Seq.empty, topPubsByMsg: Seq[(Long, String, Int)] = Seq.empty)(implicit request: RequestHeader, flash: Flash)
+@(contacts: Seq[models.ContactRecord],
+  username: String,
+  currentPage: Int,
+  totalPages: Int,
+  searchQuery: Option[String],
+  pendingPublicationsCount: Int,
+  pendingAdminsCount: Int = 0,
+  role: String = "admin",
+  msgMetrics: Map[String, Int] = Map.empty,
+  topSenders: Seq[(Long, String, Int)] = Seq.empty,
+  topReceivers: Seq[(Long, String, Int)] = Seq.empty,
+  topPubsByMsg: Seq[(Long, String, Int)] = Seq.empty)(implicit request: RequestHeader)
 
-@admin.adminLayout("Dashboard") {
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <div>
-            <h2 style="font-size: 1.25rem; font-weight: 700; color: #1a202c; margin-bottom: 0.25rem;">Dashboard</h2>
-            <p style="font-size: 0.8125rem; color: #64748b;">Bienvenido, <strong>@username</strong>
-                @if(role == "super_admin") {
-                    <span style="background: #7c3aed; color: white; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; margin-left: 0.5rem;">Super Admin</span>
-                }
-            </p>
-        </div>
-        <div style="display: flex; gap: 0.5rem;">
-            @if(role == "super_admin") {
-                <a href="@routes.AdminController.adminManagement()" class="btn btn-primary">
-                    Gestión de Admins
-                    @if(pendingAdminsCount > 0) {
-                        <span style="background: #ef4444; color: white; padding: 0.0625rem 0.375rem; border-radius: 9999px; font-size: 0.6875rem; margin-left: 0.25rem;">@pendingAdminsCount</span>
-                    }
-                </a>
-            }
-            <a href="@routes.AdminController.pendingPublications()" class="btn btn-success">
-                Publicaciones Pendientes
-            </a>
-            <a href="@routes.AdminController.createContactPage()" class="btn btn-secondary">
-                Nuevo Contacto
-            </a>
-        </div>
+@admin.adminLayout("Resumen del backoffice", "dashboard") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Resumen operativo</div>
+      <h1 class="ed-admin-title">Hola, @username</h1>
+      <p class="ed-dash-sub">Vista global del estado editorial, mensajería y comunidad.</p>
     </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.pendingPublications()" class="ed-link-btn ed-link-btn--accent">Pendientes (@pendingPublicationsCount)</a>
+      <a href="@routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo</a>
+      <a href="@routes.AdminController.statisticsPage()" class="ed-link-btn">Estadísticas</a>
+      @if(role == "super_admin") {
+        <a href="@routes.AdminController.adminManagement()" class="ed-link-btn">Admins (@pendingAdminsCount)</a>
+      }
+    </div>
+  </header>
 
-    @if(role == "super_admin" && pendingAdminsCount > 0) {
-        <div style="background: #f5f0ff; border: 1px solid #ddd6fe; padding: 1.25rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #7c3aed;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h3 style="font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 0.25rem;">🛡️ Administradores pendientes de aprobación</h3>
-                    <p style="font-size: 0.8125rem; color: #64748b;">Tienes <strong>@pendingAdminsCount</strong> solicitud(es) de administrador esperando tu aprobación</p>
-                </div>
-                <a href="@routes.AdminController.adminManagement()" class="btn btn-primary" style="white-space: nowrap;">
-                    Gestionar
-                </a>
-            </div>
-        </div>
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  @if(pendingPublicationsCount > 0) {
+    <a href="@routes.AdminController.pendingPublications()" class="ed-flash ed-flash--info" style="display:block;text-decoration:none;">
+      Hay <strong>@pendingPublicationsCount</strong> publicación(es) en espera de revisión editorial.
+    </a>
+  }
+
+  <h2 class="ed-admin-section-title">Mensajería privada</h2>
+
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Mensajes</div><div class="ed-kpi__num">@msgMetrics.getOrElse("total", 0)</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Sin leer</div><div class="ed-kpi__num">@msgMetrics.getOrElse("unread", 0)</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Últimos 7d</div><div class="ed-kpi__num">@msgMetrics.getOrElse("last7Days", 0)</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Últimos 30d</div><div class="ed-kpi__num">@msgMetrics.getOrElse("last30Days", 0)</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Tasa de lectura</div><div class="ed-kpi__num">@msgMetrics.getOrElse("readRate", 0)%</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Remitentes únicos</div><div class="ed-kpi__num">@msgMetrics.getOrElse("uniqueSenders", 0)</div></div>
+  </section>
+
+  <div class="ed-admin-grid">
+    <section class="ed-admin-card">
+      <h2>Top remitentes</h2>
+      <ul class="ed-mini-bars">
+        @topSenders.map { case (_, uname, count) =>
+          <li><span>@@@uname</span><strong>@count</strong></li>
+        }
+        @if(topSenders.isEmpty) { <li class="ed-dash-empty">Sin datos</li> }
+      </ul>
+    </section>
+    <section class="ed-admin-card">
+      <h2>Top receptores</h2>
+      <ul class="ed-mini-bars">
+        @topReceivers.map { case (_, uname, count) =>
+          <li><span>@@@uname</span><strong>@count</strong></li>
+        }
+        @if(topReceivers.isEmpty) { <li class="ed-dash-empty">Sin datos</li> }
+      </ul>
+    </section>
+    <section class="ed-admin-card">
+      <h2>Publicaciones más mensajeadas</h2>
+      <ul class="ed-mini-bars">
+        @topPubsByMsg.map { case (_, title, count) =>
+          <li><span>@title</span><strong>@count</strong></li>
+        }
+        @if(topPubsByMsg.isEmpty) { <li class="ed-dash-empty">Sin datos</li> }
+      </ul>
+    </section>
+  </div>
+
+  <h2 class="ed-admin-section-title" id="contacts">Bandeja de contacto</h2>
+
+  <section class="ed-admin-card">
+    <header class="ed-admin-card__head">
+      <h2>Mensajes recibidos</h2>
+      <form method="GET" action="@routes.AdminController.dashboard(0, None)" class="ed-admin-search">
+        <input type="text" name="search" value="@searchQuery.getOrElse("")" placeholder="Buscar por nombre, email o mensaje…">
+        <button type="submit" class="ed-link-btn">Buscar</button>
+        @if(searchQuery.exists(_.nonEmpty)) {
+          <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">Limpiar</a>
+        }
+      </form>
+      <a href="@routes.AdminController.createContactPage()" class="ed-link-btn ed-link-btn--accent">+ Nuevo</a>
+    </header>
+
+    @if(contacts.isEmpty) {
+      <p class="ed-dash-empty">No hay contactos para mostrar.</p>
+    } else {
+      <table class="ed-admin-table">
+        <thead>
+          <tr><th>Nombre</th><th>Email</th><th>Mensaje</th><th>Estado</th><th>Recibido</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+          @contacts.map { c =>
+            <tr>
+              <td>@c.name</td>
+              <td>@c.email</td>
+              <td class="ed-truncate">@c.message.take(80)…</td>
+              <td><span class="ed-status-pill ed-status-pill--@c.status">@c.status</span></td>
+              <td>@c.createdAt.toString.take(10)</td>
+              <td>
+                @c.id.map { id =>
+                  <a href="@routes.AdminController.viewContact(id)" class="ed-link-btn">Ver</a>
+                  <a href="@routes.AdminController.editContactPage(id)" class="ed-link-btn">Editar</a>
+                  <form method="POST" action="@routes.AdminController.deleteContact(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este contacto?');">
+                    @helper.CSRF.formField
+                    <button type="submit" class="ed-link-btn ed-link-btn--danger">Eliminar</button>
+                  </form>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if(totalPages > 1) {
+        <nav class="ed-pager">
+          @for(p <- 0 until totalPages) {
+            <a href="@routes.AdminController.dashboard(p, searchQuery)" class="ed-pager__page @if(p == currentPage){is-active}">@(p + 1)</a>
+          }
+        </nav>
+      }
     }
-
-    @if(pendingPublicationsCount > 0) {
-        <div style="background: #fff8f0; border: 1px solid #e8ddd0; padding: 1.25rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #8a7035;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h3 style="font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 0.25rem;">Publicaciones pendientes de revisión</h3>
-                    <p style="font-size: 0.8125rem; color: #64748b;">Tienes <strong>@pendingPublicationsCount</strong> publicación(es) esperando aprobación</p>
-                </div>
-                <a href="@routes.AdminController.pendingPublications()" class="btn btn-warning" style="white-space: nowrap;">
-                    Revisar ahora
-                </a>
-            </div>
-        </div>
-    }
-
-    @* ============================================ *@
-    @* MÉTRICAS DEL SISTEMA DE MENSAJERÍA REACTIVA  *@
-    @* ============================================ *@
-    <h3 style="font-size: 0.8125rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 0.25rem;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Mensajería Reactiva (Message-Driven)
-    </h3>
-
-    <!-- KPIs principales -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
-        <div class="card" style="border-left: 3px solid #6b8caa; padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Total mensajes</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("total", 0)</div>
-        </div>
-        <div class="card" style="border-left: 3px solid #d4a853; padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">No leídos</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: #d4a853; margin-top: 0.125rem;">@msgMetrics.getOrElse("unread", 0)</div>
-        </div>
-        <div class="card" style="border-left: 3px solid #6b8f71; padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Leídos</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: #6b8f71; margin-top: 0.125rem;">@msgMetrics.getOrElse("read", 0)</div>
-        </div>
-        <div class="card" style="border-left: 3px solid #8c6b8a; padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Tasa de lectura</div>
-            <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("readRate", 0)%</div>
-        </div>
-    </div>
-
-    <!-- Métricas de actividad y alcance -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
-        <div class="card" style="padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Última semana</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("last7Days", 0)</div>
-        </div>
-        <div class="card" style="padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Último mes</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("last30Days", 0)</div>
-        </div>
-        <div class="card" style="padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Sobre publicaciones</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #6b8caa; margin-top: 0.125rem;">@msgMetrics.getOrElse("withPublication", 0)</div>
-        </div>
-        <div class="card" style="padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Directos</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("direct", 0)</div>
-        </div>
-    </div>
-
-    <!-- Alcance de usuarios -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
-        <div class="card" style="padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Remitentes únicos</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("uniqueSenders", 0)</div>
-            <div style="font-size: 0.6875rem; color: #94a3b8; margin-top: 0.25rem;">usuarios que han enviado mensajes</div>
-        </div>
-        <div class="card" style="padding: 1rem;">
-            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Receptores únicos</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("uniqueReceivers", 0)</div>
-            <div style="font-size: 0.6875rem; color: #94a3b8; margin-top: 0.25rem;">autores que han recibido mensajes</div>
-        </div>
-    </div>
-
-    <!-- Gráficos de mensajería y tablas de ranking -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
-        <div class="card">
-            <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Distribución de Mensajes</h3>
-            <canvas id="msgStatusChart" style="max-height: 250px;"></canvas>
-        </div>
-
-        <div class="card">
-            <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Tipo de Mensajes</h3>
-            <canvas id="msgTypeChart" style="max-height: 250px;"></canvas>
-        </div>
-    </div>
-
-    <!-- Rankings -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
-        @if(topSenders.nonEmpty) {
-            <div class="card">
-                <h4 style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Top Remitentes</h4>
-                @for((user, idx) <- topSenders.zipWithIndex) {
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; @if(idx < topSenders.size - 1){border-bottom: 1px solid #f1f5f9;}">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="width: 22px; height: 22px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.625rem; font-weight: 700; color: #64748b;">@{idx + 1}</span>
-                            <span style="font-size: 0.8125rem; font-weight: 600; color: #1a202c;">@user._2</span>
-                        </div>
-                        <span style="font-size: 0.75rem; font-weight: 700; color: #6b8caa; background: #eef4fa; padding: 0.125rem 0.5rem; border-radius: 4px;">@user._3</span>
-                    </div>
-                }
-            </div>
-        }
-
-        @if(topReceivers.nonEmpty) {
-            <div class="card">
-                <h4 style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Top Receptores (Autores)</h4>
-                @for((user, idx) <- topReceivers.zipWithIndex) {
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; @if(idx < topReceivers.size - 1){border-bottom: 1px solid #f1f5f9;}">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="width: 22px; height: 22px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.625rem; font-weight: 700; color: #64748b;">@{idx + 1}</span>
-                            <span style="font-size: 0.8125rem; font-weight: 600; color: #1a202c;">@user._2</span>
-                        </div>
-                        <span style="font-size: 0.75rem; font-weight: 700; color: #6b8f71; background: #f0faf4; padding: 0.125rem 0.5rem; border-radius: 4px;">@user._3</span>
-                    </div>
-                }
-            </div>
-        }
-
-        @if(topPubsByMsg.nonEmpty) {
-            <div class="card">
-                <h4 style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Publicaciones con más mensajes</h4>
-                @for((pub, idx) <- topPubsByMsg.zipWithIndex) {
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; @if(idx < topPubsByMsg.size - 1){border-bottom: 1px solid #f1f5f9;}">
-                        <span style="font-size: 0.8125rem; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="@pub._2">@pub._2</span>
-                        <span style="font-size: 0.75rem; font-weight: 700; color: #8c6b8a; background: #f5f0fa; padding: 0.125rem 0.5rem; border-radius: 4px;">@pub._3</span>
-                    </div>
-                }
-            </div>
-        }
-    </div>
-
-    @defining({
-        val allContacts = contacts
-        val total = allContacts.length
-        val pending = allContacts.count(_.status == "pending")
-        val processed = allContacts.count(_.status == "processed")
-        val archived = allContacts.count(_.status == "archived")
-        (total, pending, processed, archived)
-    }) { case (total, pending, processed, archived) =>
-        <!-- Tarjetas de Estadísticas de Contactos -->
-        <h3 style="font-size: 0.8125rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Estadísticas de Contactos</h3>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-            <div class="card" style="border-left: 3px solid #94a3b8; padding: 1.25rem;">
-                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Total</div>
-                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@total</div>
-            </div>
-            
-            <div class="card" style="border-left: 3px solid #d4a853; padding: 1.25rem;">
-                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Pendientes</div>
-                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@pending</div>
-            </div>
-            
-            <div class="card" style="border-left: 3px solid #6b8f71; padding: 1.25rem;">
-                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Procesados</div>
-                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@processed</div>
-            </div>
-            
-            <div class="card" style="border-left: 3px solid #8b9fad; padding: 1.25rem;">
-                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Archivados</div>
-                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@archived</div>
-            </div>
-        </div>
-
-        <!-- Gráficos -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="card">
-                <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Distribución por Estado</h3>
-                <canvas id="statusChart" style="max-height: 300px;"></canvas>
-            </div>
-            
-            <div class="card">
-                <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Resumen General</h3>
-                <canvas id="summaryChart" style="max-height: 300px;"></canvas>
-            </div>
-        </div>
-
-        <div class="card" style="margin-bottom: 1.5rem;">
-            <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Actividad Temporal</h3>
-            <canvas id="timelineChart" style="max-height: 250px;"></canvas>
-        </div>
-    }
-    
-    <div class="card">
-        <div class="search-bar" style="margin-bottom: 1.5rem;">
-            <form method="GET" action="@routes.AdminController.dashboard(0, None)" style="display: flex; gap: 1rem;">
-                <input 
-                    type="text" 
-                    name="search" 
-                    placeholder="Buscar por nombre, email o mensaje..." 
-                    value="@searchQuery.getOrElse("")"
-                    style="flex: 1;"
-                />
-                <button type="submit" class="btn btn-primary">Buscar</button>
-                @if(searchQuery.isDefined) {
-                    <a href="@routes.AdminController.dashboard(0, None)" class="btn btn-secondary">Limpiar</a>
-                }
-            </form>
-        </div>
-        
-        @if(contacts.isEmpty) {
-            <div style="text-align: center; padding: 3rem; color: #64748b;">
-                <p style="font-size: 0.875rem;">No hay contactos registrados</p>
-            </div>
-        } else {
-            <div class="table-responsive" style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Mensaje</th>
-                            <th>Estado</th>
-                            <th>Fecha</th>
-                            <th style="text-align: center;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for(contact <- contacts) {
-                            <tr>
-                                <td>@contact.id.getOrElse("-")</td>
-                                <td style="font-weight: 500;">@contact.name</td>
-                                <td>@contact.email</td>
-                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    @contact.message.take(50)@if(contact.message.length > 50) { ... }
-                                </td>
-                                <td>
-                                    <span class="badge @{contact.status match { case "pending" => "badge-pending"; case "processed" => "badge-processed"; case "archived" => "badge-archived"; case _ => "badge-draft" }}">
-                                        @contact.status match {
-                                            case "pending" => { Pendiente }
-                                            case "processed" => { Procesado }
-                                            case "archived" => { Archivado }
-                                            case _ => { @contact.status }
-                                        }
-                                    </span>
-                                </td>
-                                <td style="font-size: 0.8125rem; color: #64748b;">
-                                    @{
-                                        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-                                        contact.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
-                                    }
-                                </td>
-                                <td style="text-align: center;">
-                                    <div style="display: flex; gap: 0.375rem; justify-content: center;">
-                                        <a href="@routes.AdminController.viewContact(contact.id.get)" class="btn btn-secondary btn-sm">Ver</a>
-                                        <a href="@routes.AdminController.editContactPage(contact.id.get)" class="btn btn-primary btn-sm">Editar</a>
-                                        <form method="POST" 
-                                              action="@routes.AdminController.deleteContact(contact.id.get)" 
-                                              style="display: inline;"
-                                              onsubmit="return confirm('¿Estás seguro de eliminar este contacto?');">
-                                            @helper.CSRF.formField
-                                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            
-            @if(totalPages > 1) {
-                <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
-                    @if(currentPage > 0) {
-                        <a href="@routes.AdminController.dashboard(currentPage - 1, searchQuery)" class="btn btn-secondary">
-                            ← Anterior
-                        </a>
-                    }
-                    
-                    <span style="padding: 0.5rem 1rem; color: #64748b; font-size: 0.8125rem;">
-                        Página @{currentPage + 1} de @totalPages
-                    </span>
-                    
-                    @if(currentPage < totalPages - 1) {
-                        <a href="@routes.AdminController.dashboard(currentPage + 1, searchQuery)" class="btn btn-secondary">
-                            Siguiente →
-                        </a>
-                    }
-                </div>
-            }
-        }
-    </div>
-
-    <!-- Chart.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.js"></script>
-
-    <!-- Datos del servidor inyectados como JSON (evita warnings del IDE) -->
-    <div id="chartData" style="display:none"
-         data-pending="@{contacts.count(_.status == "pending")}"
-         data-processed="@{contacts.count(_.status == "processed")}"
-         data-archived="@{contacts.count(_.status == "archived")}"
-         data-total="@{contacts.length}">
-    </div>
-    <script id="contactsJson" type="application/json">@Html(play.api.libs.json.Json.toJson(contacts.map(c => play.api.libs.json.Json.obj("createdAt" -> c.createdAt.toString(), "status" -> c.status))).toString())</script>
-
-    <script>
-        const dataEl = document.getElementById('chartData');
-        const pending = parseInt(dataEl.dataset.pending);
-        const processed = parseInt(dataEl.dataset.processed);
-        const archived = parseInt(dataEl.dataset.archived);
-        const total = parseInt(dataEl.dataset.total);
-
-        const allContacts = JSON.parse(document.getElementById('contactsJson').textContent);
-        
-        const now = new Date();
-        const today = allContacts.filter(c => {
-            const cDate = new Date(c.createdAt);
-            return cDate.toDateString() === now.toDateString();
-        }).length;
-        
-        const thisWeek = allContacts.filter(c => {
-            const cDate = new Date(c.createdAt);
-            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            return cDate >= weekAgo;
-        }).length;
-        
-        const thisMonth = allContacts.filter(c => {
-            const cDate = new Date(c.createdAt);
-            return cDate.getMonth() === now.getMonth() && cDate.getFullYear() === now.getFullYear();
-        }).length;
-
-        // Colores del tema (paleta neutra)
-        const colors = {
-            pending: '#d4a853',
-            processed: '#6b8f71',
-            archived: '#8b9fad',
-            primary: '#64748b'
-        };
-
-        // Configuración común
-        const chartConfig = {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom'
-                }
-            }
-        };
-
-        // 1. Gráfico de Pastel - Estados
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pendientes', 'Procesados', 'Archivados'],
-                datasets: [{
-                    data: [pending, processed, archived],
-                    backgroundColor: [
-                        colors.pending,
-                        colors.processed,
-                        colors.archived
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                ...chartConfig,
-                cutout: '60%',
-                plugins: {
-                    ...chartConfig.plugins,
-                    legend: {
-                        ...chartConfig.plugins.legend,
-                        labels: {
-                            padding: 15,
-                            font: { size: 12 }
-                        }
-                    }
-                }
-            }
-        });
-
-        // 2. Gráfico de Barras - Resumen
-        const summaryCtx = document.getElementById('summaryChart').getContext('2d');
-        new Chart(summaryCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Pendientes', 'Procesados', 'Archivados'],
-                datasets: [{
-                    label: 'Cantidad',
-                    data: [pending, processed, archived],
-                    backgroundColor: [
-                        colors.pending,
-                        colors.processed,
-                        colors.archived
-                    ],
-                    borderRadius: 8,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                ...chartConfig,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                },
-                plugins: {
-                    ...chartConfig.plugins,
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-
-        // 3. Gráfico de Línea - Tendencia Temporal
-        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
-        new Chart(timelineCtx, {
-            type: 'line',
-            data: {
-                labels: ['Hoy', 'Esta Semana', 'Este Mes', 'Total'],
-                datasets: [{
-                    label: 'Contactos',
-                    data: [today, thisWeek, thisMonth, total],
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primary + '20',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    pointBackgroundColor: colors.primary,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
-                }]
-            },
-            options: {
-                ...chartConfig,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                },
-                plugins: {
-                    ...chartConfig.plugins,
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return 'Contactos: ' + context.parsed.y;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        console.log('📊 Gráficos cargados exitosamente');
-        console.log('Total:', total, '| Pendientes:', pending, '| Procesados:', processed, '| Archivados:', archived);
-    </script>
-
-    <!-- Messaging Charts -->
-    <script>
-        // Messaging data from server
-        const msgRead = @msgMetrics.getOrElse("read", 0);
-        const msgUnread = @msgMetrics.getOrElse("unread", 0);
-        const msgWithPub = @msgMetrics.getOrElse("withPublication", 0);
-        const msgDirect = @msgMetrics.getOrElse("direct", 0);
-
-        // 4. Doughnut — Leídos vs No leídos
-        const msgStatusCtx = document.getElementById('msgStatusChart');
-        if (msgStatusCtx) {
-            new Chart(msgStatusCtx.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Leídos', 'No leídos'],
-                    datasets: [{
-                        data: [msgRead, msgUnread],
-                        backgroundColor: ['#6b8f71', '#d4a853'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    cutout: '60%',
-                    plugins: {
-                        legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } }
-                    }
-                }
-            });
-        }
-
-        // 5. Bar — Sobre publicaciones vs Directos
-        const msgTypeCtx = document.getElementById('msgTypeChart');
-        if (msgTypeCtx) {
-            new Chart(msgTypeCtx.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: ['Sobre publicaciones', 'Directos'],
-                    datasets: [{
-                        label: 'Mensajes',
-                        data: [msgWithPub, msgDirect],
-                        backgroundColor: ['#6b8caa', '#8b9fad'],
-                        borderRadius: 8,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        console.log('📬 Gráficos de mensajería cargados');
-    </script>
+  </section>
 }

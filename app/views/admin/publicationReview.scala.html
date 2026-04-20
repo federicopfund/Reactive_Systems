@@ -1,119 +1,54 @@
-@(publications: List[models.PublicationWithAuthor])(implicit request: RequestHeader, flash: Flash)
+@(publications: List[models.PublicationWithAuthor], stages: Seq[models.EditorialStage])(implicit request: RequestHeader)
 
-@admin.adminLayout("Publicaciones Pendientes") {
-    <div style="margin-bottom: 1.25rem;">
-        <a href="@routes.AdminController.dashboard(0, None)" style="color: #475569; text-decoration: none; font-size: 0.8125rem; font-weight: 500;">
-            &larr; Volver al Dashboard
-        </a>
+@stageLabel(pwa: models.PublicationWithAuthor) = @{
+  pwa.publication.currentStageId.flatMap(sid => stages.find(_.id.contains(sid)).map(_.label))
+    .getOrElse(pwa.publication.status)
+}
+
+@admin.adminLayout("Cola de revisión", "review") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Cola editorial</div>
+      <h1 class="ed-admin-title">Publicaciones pendientes</h1>
+      <p class="ed-dash-sub">@publications.size pieza(s) esperan resolución.</p>
     </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo completo</a>
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+    </div>
+  </header>
 
-    <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c; margin-bottom: 1.25rem;">Publicaciones pendientes de revisi&oacute;n</h2>
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
 
-    @if(publications.isEmpty) {
-        <div class="card" style="text-align: center; padding: 3rem;">
-            <h3 style="font-size: 1rem; color: #374151; margin-bottom: 0.375rem;">Sin publicaciones pendientes</h3>
-            <p class="text-muted text-sm">Todas las publicaciones han sido revisadas</p>
-        </div>
-    } else {
-        <div style="display: grid; gap: 1rem;">
-            @for(pubWithAuthor <- publications) {
-                @defining(pubWithAuthor.publication) { pub =>
-                    <div class="card">
-                        <div style="margin-bottom: 0.75rem;">
-                            <h3 style="font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 0.5rem; word-break: break-word; overflow-wrap: break-word;">@pub.title</h3>
-                            <div style="display: flex; gap: 1rem; color: #64748b; font-size: 0.8125rem; flex-wrap: wrap;">
-                                <span>@pubWithAuthor.authorFullName (@("@")@pubWithAuthor.authorUsername)</span>
-                                <span>@pub.updatedAt.toString.substring(0, 10)</span>
-                                <span class="badge badge-pending">@pub.category</span>
-                            </div>
-                        </div>
-
-                        @if(pub.excerpt.isDefined) {
-                            <p style="color: #475569; font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.75rem; overflow-wrap: break-word; word-break: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;">@pub.excerpt.get</p>
-                        } else {
-                            <p style="color: #94a3b8; font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.75rem; overflow-wrap: break-word; word-break: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;">@pub.content.take(200)</p>
-                        }
-
-                        @if(pub.tags.isDefined) {
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.75rem;">
-                                @for(tag <- pub.tags.get.split(",").map(_.trim)) {
-                                    <span style="background: #f1f5f9; color: #475569; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.6875rem;">#@tag</span>
-                                }
-                            </div>
-                        }
-
-                        <div style="display: flex; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; flex-wrap: wrap;">
-                            <a href="@routes.AdminController.reviewPublicationDetail(pub.id.get)" class="btn btn-secondary btn-sm">Ver detalle</a>
-                            <form method="POST" action="@routes.AdminController.approvePublication(pub.id.get)" style="display: inline;">
-                                @helper.CSRF.formField
-                                <button type="submit" class="btn btn-success btn-sm">Aprobar</button>
-                            </form>
-                            <button type="button" class="btn btn-warning btn-sm" data-publication-id="@pub.id.get" onclick="showRejectModal(this.dataset.publicationId)">Rechazar</button>
-                            <button type="button" class="btn btn-danger btn-sm" data-publication-id="@pub.id.get" data-publication-title="@pub.title" onclick="showDeleteModal(this.dataset.publicationId, this.dataset.publicationTitle)">Eliminar</button>
-                        </div>
-                    </div>
-                }
+  @if(publications.isEmpty) {
+    <p class="ed-dash-empty">No hay publicaciones pendientes de revisión.</p>
+  } else {
+    <ul class="ed-revision-list" style="list-style:none;padding:0;">
+      @publications.map { pwa =>
+        <li class="ed-revision-row">
+          <div class="ed-revision-row__main">
+            <div class="ed-revision-row__title">@pwa.publication.title</div>
+            <div class="ed-revision-row__meta">@@@pwa.authorUsername · <span>@pwa.publication.category</span> · <span class="ed-stage-chip">@stageLabel(pwa)</span> · @pwa.publication.createdAt.toString.take(10)</div>
+            <p class="ed-revision-row__excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(180))…</p>
+          </div>
+          <div class="ed-revision-row__actions">
+            @pwa.publication.id.map { id =>
+              <a class="ed-rev-btn ed-rev-btn--view" href="@routes.AdminController.reviewPublicationDetail(id)">Revisar</a>
+              <form method="POST" action="@routes.AdminController.approvePublication(id)" class="ed-inline-form">
+                @helper.CSRF.formField
+                <button class="ed-rev-btn ed-rev-btn--approve">Aprobar</button>
+              </form>
+              <form method="POST" action="@routes.AdminController.rejectPublication(id)" class="ed-inline-form" onsubmit="var r=prompt('Motivo del rechazo (opcional)');if(r===null)return false;this.elements['rejectionReason'].value=r;return true;">
+                @helper.CSRF.formField
+                <input type="hidden" name="rejectionReason" value="">
+                <button class="ed-rev-btn ed-rev-btn--reject">Rechazar</button>
+              </form>
             }
-        </div>
-    }
-
-    <!-- Modal Rechazar -->
-    <div id="rejectModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-title">Rechazar publicaci&oacute;n</div>
-            <form id="rejectForm" method="POST">
-                @helper.CSRF.formField
-                <label>Motivo del rechazo:</label>
-                <textarea name="rejectionReason" rows="4" placeholder="Explica por qu&eacute; se rechaza..." required style="margin-top: 0.5rem;"></textarea>
-                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <button type="submit" class="btn btn-warning">Confirmar rechazo</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeRejectModal()">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Eliminar -->
-    <div id="deleteModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-title">Eliminar publicaci&oacute;n</div>
-            <p style="margin-bottom: 0.75rem; color: #475569; font-size: 0.875rem;">
-                &iquest;Est&aacute;s seguro de eliminar:
-                <strong style="color: #1a202c;" id="deletePublicationTitle"></strong>
-            </p>
-            <p style="margin-bottom: 1rem; color: #94a3b8; font-size: 0.8125rem;">
-                Esta acci&oacute;n no se puede deshacer.
-            </p>
-            <form id="deleteForm" method="POST">
-                @helper.CSRF.formField
-                <div style="display: flex; gap: 0.5rem;">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function showRejectModal(publicationId) {
-            var modal = document.getElementById('rejectModal');
-            var form = document.getElementById('rejectForm');
-            form.action = '/admin/publications/' + publicationId + '/reject';
-            modal.style.display = 'flex';
-        }
-        function closeRejectModal() {
-            document.getElementById('rejectModal').style.display = 'none';
-        }
-        function showDeleteModal(publicationId, publicationTitle) {
-            var modal = document.getElementById('deleteModal');
-            var form = document.getElementById('deleteForm');
-            var titleEl = document.getElementById('deletePublicationTitle');
-            form.action = '/admin/publications/' + publicationId + '/delete';
-            titleEl.textContent = publicationTitle.substring(0, 60) + (publicationTitle.length > 60 ? '...' : '');
-            modal.style.display = 'flex';
-        }
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-    </script>
+          </div>
+        </li>
+      }
+    </ul>
+  }
 }

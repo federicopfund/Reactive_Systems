@@ -1,55 +1,73 @@
-@(publications: List[models.PublicationWithAuthor], status: Option[String])(implicit request: RequestHeader, flash: Flash)
+@(publications: List[models.PublicationWithAuthor], status: Option[String], stages: Seq[models.EditorialStage])(implicit request: RequestHeader)
 
-@admin.adminLayout("Publicaciones") {
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-        <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c;">Publicaciones</h2>
-        <form method="GET" action="@routes.AdminController.allPublications()">
-            <select name="status" onchange="this.form.submit()" style="font-size: 0.8125rem;">
-                <option value="" @if(status.isEmpty){ selected }>Todas</option>
-                <option value="pending" @if(status.contains("pending")){ selected }>Pendientes</option>
-                <option value="approved" @if(status.contains("approved")){ selected }>Aprobadas</option>
-                <option value="rejected" @if(status.contains("rejected")){ selected }>Rechazadas</option>
-                <option value="draft" @if(status.contains("draft")){ selected }>Borradores</option>
-            </select>
-        </form>
+@stageLabel(pwa: models.PublicationWithAuthor) = @{
+  pwa.publication.currentStageId.flatMap(sid => stages.find(_.id.contains(sid)).map(_.label))
+    .getOrElse(pwa.publication.status)
+}
+
+@admin.adminLayout("Catálogo de publicaciones", "publications") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Catálogo</div>
+      <h1 class="ed-admin-title">Publicaciones @status.map(s => s"· $s").getOrElse("")</h1>
+      <p class="ed-dash-sub">@publications.size resultado(s)</p>
     </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.pendingPublications()" class="ed-link-btn ed-link-btn--accent">Cola de revisión</a>
+      <a href="@routes.AdminController.listAllPublicationsJson()" class="ed-link-btn" target="_blank" rel="noopener" download="publications.json" title="Exportar como JSON">Exportar JSON ↓</a>
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+    </div>
+  </header>
 
-    @if(publications.isEmpty) {
-        <div class="card" style="text-align: center; padding: 3rem;">
-            <p class="text-muted text-sm">No hay publicaciones para este filtro</p>
-        </div>
-    } else {
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; overflow: hidden;">
-            @for(pubWithAuthor <- publications) {
-                @defining(pubWithAuthor.publication) { pub =>
-                    <div class="card">
-                        <div style="font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 0.5rem; word-break: break-word; overflow-wrap: break-word;">@pub.title</div>
-                        <div style="color: #64748b; font-size: 0.8125rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.75rem;">
-                            <span>@pubWithAuthor.authorFullName (@("@")@pubWithAuthor.authorUsername)</span>
-                            <span>@pub.category</span>
-                            <span>@pub.updatedAt.toString.substring(0, 10)</span>
-                            <span class="badge @{"badge-" + pub.status}">@pub.status</span>
-                        </div>
-                        @if(pub.excerpt.isDefined) {
-                            <p style="color: #475569; font-size: 0.8125rem; margin-bottom: 0.75rem; overflow-wrap: break-word; word-break: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;">@pub.excerpt.get</p>
-                        } else {
-                            <p style="color: #94a3b8; font-size: 0.8125rem; margin-bottom: 0.75rem; overflow-wrap: break-word; word-break: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;">@pub.content.take(200)</p>
-                        }
-                        <div style="display: flex; gap: 0.375rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; flex-wrap: wrap;">
-                            <a class="btn btn-secondary btn-sm" href="@routes.AdminController.reviewPublicationDetail(pub.id.get)">Ver</a>
-                            <form method="POST" action="@routes.AdminController.approvePublication(pub.id.get)" style="display:inline">
-                                @helper.CSRF.formField
-                                <button class="btn btn-success btn-sm" type="submit">Aprobar</button>
-                            </form>
-                            <button class="btn btn-warning btn-sm" onclick="location.href='@routes.AdminController.reviewPublicationDetail(pub.id.get)#reject'">Rechazar</button>
-                            <form method="POST" action="@routes.AdminController.deletePublication(pub.id.get)" style="display:inline" onsubmit="return confirm('Eliminar publicación?')">
-                                @helper.CSRF.formField
-                                <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
-                            </form>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  <nav class="ed-admin-actions" style="margin-bottom:1.25rem;">
+    <a class="ed-link-btn @if(status.isEmpty){ed-link-btn--accent}" href="@routes.AdminController.allPublications(None)">Todas</a>
+    @for(s <- List("draft","pending","approved","rejected")) {
+      <a class="ed-link-btn @if(status.contains(s)){ed-link-btn--accent}" href="@routes.AdminController.allPublications(Some(s))">@s</a>
     }
+  </nav>
+
+  @if(publications.isEmpty) {
+    <p class="ed-dash-empty">No hay publicaciones con ese filtro.</p>
+  } else {
+    <table class="ed-admin-table">
+      <thead><tr><th>Título</th><th>Autor</th><th>Categoría</th><th>Estado</th><th>Etapa editorial</th><th>Vistas</th><th>Fecha</th><th>Acciones</th></tr></thead>
+      <tbody>
+        @publications.map { pwa =>
+          <tr>
+            <td><strong>@pwa.publication.title</strong></td>
+            <td>@@@pwa.authorUsername</td>
+            <td>@pwa.publication.category</td>
+            <td><span class="ed-status-pill ed-status-pill--@pwa.publication.status">@pwa.publication.status</span></td>
+            <td><span class="ed-stage-chip">@stageLabel(pwa)</span></td>
+            <td>@pwa.publication.viewCount</td>
+            <td>@pwa.publication.createdAt.toString.take(10)</td>
+            <td>
+              @pwa.publication.id.map { id =>
+                <a href="@routes.AdminController.reviewPublicationDetail(id)" class="ed-link-btn">Ver</a>
+                @if(pwa.publication.status == "pending") {
+                  <form method="POST" action="@routes.AdminController.approvePublication(id)" class="ed-inline-form">
+                    @helper.CSRF.formField
+                    <button class="ed-link-btn ed-link-btn--success">Aprobar</button>
+                  </form>
+                  <form method="POST" action="@routes.AdminController.rejectPublication(id)" class="ed-inline-form" onsubmit="var r=prompt('Motivo del rechazo');if(r===null)return false;this.elements['rejectionReason'].value=r;return true;">
+                    @helper.CSRF.formField
+                    <input type="hidden" name="rejectionReason" value="">
+                    <button class="ed-link-btn ed-link-btn--warning">Rechazar</button>
+                  </form>
+                }
+                <form method="POST" action="@routes.AdminController.deletePublication(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar definitivamente esta publicación?');">
+                  @helper.CSRF.formField
+                  <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>
+                </form>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
 }
