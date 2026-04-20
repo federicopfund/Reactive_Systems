@@ -36,6 +36,11 @@ libraryDependencies ++= Seq(
   // Email sending
   "com.sun.mail" % "javax.mail" % "1.6.2",
 
+  // Markdown rendering (publicaciones dinámicas)
+  "org.commonmark" % "commonmark" % "0.22.0",
+  "org.commonmark" % "commonmark-ext-gfm-tables" % "0.22.0",
+  "org.commonmark" % "commonmark-ext-autolink" % "0.22.0",
+
   // Testing
   "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test
 )

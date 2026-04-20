@@ -5,9 +5,6 @@
 # Home page
 GET     /                           controllers.HomeController.index()
 
-# Debug endpoint: Listar todos los admins (JSON)
-GET     /debug/admins               controllers.AdminController.listAllAdmins()
-
 # Publicaciones page
 GET     /publicaciones              controllers.HomeController.publicaciones()
 GET     /publicaciones/buscar       controllers.HomeController.searchPublicaciones(q: String ?= "", category: Option[String] ?= None)
@@ -25,10 +22,6 @@ POST    /contact                    controllers.HomeController.submitContact()
 
 # Newsletter
 POST    /newsletter/subscribe       controllers.HomeController.subscribeNewsletter()
-
-# Admin endpoints (opcional - proteger en producción)
-GET     /api/contacts               controllers.HomeController.listContacts(page: Int ?= 0)
-GET     /api/contacts/stats         controllers.HomeController.contactStats()
 
 # Authentication Routes (Users & Admins)
 GET     /login                      controllers.AuthController.loginPage()
@@ -53,7 +46,6 @@ GET     /admin/logout               controllers.AdminController.logout()
 GET     /admin                      controllers.AdminController.dashboard(page: Int ?= 0, search: Option[String] ?= None)
 GET     /admin/dashboard            controllers.AdminController.dashboard(page: Int ?= 0, search: Option[String] ?= None)
 GET     /admin/statistics           controllers.AdminController.statisticsPage()
-GET     /admin/stats                controllers.AdminController.stats()
 GET     /admin/stats/advanced       controllers.AdminController.advancedStats()
 GET     /admin/stats/messaging      controllers.AdminController.messagingStats()
 
@@ -84,6 +76,9 @@ POST    /user/publications/:id/edit controllers.UserPublicationController.update
 # View Publication (Preview)
 GET     /user/publications/:id      controllers.UserPublicationController.viewPublication(id: Long)
 
+# Hilo de trazabilidad editorial (vista del autor con commit hashes)
+GET     /user/publications/:id/history  controllers.UserPublicationController.publicationHistory(id: Long)
+
 # Publish Actions
 POST    /user/publications/:id/submit   controllers.UserPublicationController.submitForReview(id: Long)
 POST    /user/publications/:id/delete   controllers.UserPublicationController.deletePublication(id: Long)
@@ -94,6 +89,10 @@ GET     /api/user/notifications/unread   controllers.UserPublicationController.u
 
 # Bookmarks
 GET     /user/bookmarks                 controllers.UserPublicationController.bookmarks()
+
+# Newsletter (usuario logueado)
+POST    /user/newsletter/subscribe      controllers.UserPublicationController.subscribeNewsletter()
+POST    /user/newsletter/unsubscribe    controllers.UserPublicationController.unsubscribeNewsletter()
 
 # Profile
 GET     /user/profile/edit              controllers.UserPublicationController.editProfileForm()
@@ -106,18 +105,13 @@ POST    /publications/:id/comment       controllers.UserPublicationController.ad
 POST    /comments/:id/delete            controllers.UserPublicationController.deleteComment(id: Long)
 POST    /publications/:id/bookmark      controllers.UserPublicationController.toggleBookmark(id: Long)
 
-# Badges API
-GET     /api/user/badges                controllers.UserPublicationController.userBadges()
-
 # Private Messaging (Reactive / Message-Driven)
 GET     /user/messages                  controllers.UserPublicationController.inbox(tab: String ?= "received")
 GET     /user/messages/:id              controllers.UserPublicationController.viewMessage(id: Long)
 POST    /publications/:id/message       controllers.UserPublicationController.sendMessage(id: Long)
 POST    /user/messages/send             controllers.UserPublicationController.sendDirectMessage()
 GET     /api/user/messages/unread       controllers.UserPublicationController.unreadMessagesCount()
-
-# API
-GET     /api/user/publications      controllers.UserPublicationController.listPublicationsJson()
+GET     /api/user/publications          controllers.UserPublicationController.listPublicationsJson()
 
 # ============================================
 # ADMIN PUBLICATION MANAGEMENT
@@ -131,6 +125,7 @@ GET     /admin/publications/:id     controllers.AdminController.reviewPublicatio
 # Approve/Reject
 POST    /admin/publications/:id/approve controllers.AdminController.approvePublication(id: Long)
 POST    /admin/publications/:id/reject  controllers.AdminController.rejectPublication(id: Long)
+POST    /admin/publications/:id/transition controllers.AdminController.transitionStage(id: Long)
 POST    /admin/publications/:id/delete  controllers.AdminController.deletePublication(id: Long)
 POST    /admin/publications/:id/notes   controllers.AdminController.saveAdminNotes(id: Long)
 
@@ -149,6 +144,7 @@ GET     /admin/admins               controllers.AdminController.adminManagement(
 POST    /admin/admins/:id/approve   controllers.AdminController.approveAdmin(id: Long)
 POST    /admin/admins/:id/reject    controllers.AdminController.rejectAdmin(id: Long)
 POST    /admin/admins/:id/revoke    controllers.AdminController.revokeAdmin(id: Long)
+POST    /admin/admins/:id/role      controllers.AdminController.changeAdminRole(id: Long)
 
 # API
 GET     /api/admin/publications     controllers.AdminController.listAllPublicationsJson()
