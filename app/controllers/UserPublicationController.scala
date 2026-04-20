@@ -7,8 +7,8 @@ import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PublicationRepository, UserRepository, PublicationFeedbackRepository, UserNotificationRepository, ReactionRepository, CommentRepository, BookmarkRepository, BadgeRepository, PrivateMessageRepository}
-import models.{Publication, PublicationStatus, NotificationType, PublicationComment, PrivateMessage}
+import repositories.{PublicationRepository, UserRepository, PublicationFeedbackRepository, UserNotificationRepository, ReactionRepository, CommentRepository, BookmarkRepository, BadgeRepository, PrivateMessageRepository, EditorialStageRepository, PublicationStageHistoryRepository, NewsletterRepository}
+import models.{Publication, PublicationStatus, NotificationType, PublicationComment, PrivateMessage, EditorialStageCode}
 import services.{ReactiveMessageAdapter, ReactiveGamificationAdapter, ReactiveAnalyticsAdapter, ReactiveNotificationAdapter, ReactiveModerationAdapter}
 import core.{MessageSent, MessageError, ModerationResult}
 import actions.{UserAction, AuthRequest}
@@ -35,6 +35,9 @@ class UserPublicationController @Inject()(
   bookmarkRepo: BookmarkRepository,
   badgeRepo: BadgeRepository,
   messageRepo: PrivateMessageRepository,
+  stageRepo: EditorialStageRepository,
+  stageHistoryRepo: PublicationStageHistoryRepository,
+  newsletterRepo: NewsletterRepository,
   messageAdapter: ReactiveMessageAdapter,
   gamificationAdapter: ReactiveGamificationAdapter,
   analyticsAdapter: ReactiveAnalyticsAdapter,
@@ -65,14 +68,51 @@ class UserPublicationController @Inject()(
       pubIds = publications.flatMap(_.id)
       feedbackCounts <- feedbackRepo.countVisibleByPublicationIds(pubIds)
       badges <- badgeRepo.findByUserId(request.userId)
+      user  <- userRepo.findById(request.userId)
+      subscribed <- user.map(u => newsletterRepo.isSubscribed(u.email)).getOrElse(Future.successful(false))
     } yield {
       Ok(views.html.user.dashboard(
         username = request.username,
         publications = publications,
         stats = stats,
         feedbackCounts = feedbackCounts,
-        badges = badges
+        badges = badges,
+        userEmail = user.map(_.email).getOrElse(""),
+        newsletterSubscribed = subscribed
       ))
+    }
+  }
+
+  /**
+   * Alta del usuario logueado al newsletter, usando su propio email.
+   * Idempotente: re-activa si estaba dado de baja.
+   */
+  def subscribeNewsletter = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    userRepo.findById(request.userId).flatMap {
+      case Some(u) =>
+        newsletterRepo.subscribe(u.email, Some(request.remoteAddress)).map {
+          case Right(_) =>
+            Redirect(routes.UserPublicationController.dashboard())
+              .flashing("success" -> "¡Suscrito! Recibirás aviso cuando se publique una nueva pieza en la comunidad.")
+          case Left(msg) =>
+            Redirect(routes.UserPublicationController.dashboard()).flashing("info" -> msg)
+        }
+      case None =>
+        Future.successful(Redirect(routes.UserPublicationController.dashboard())
+          .flashing("error" -> "No se pudo resolver tu email."))
+    }
+  }
+
+  /** Baja del usuario logueado del newsletter. */
+  def unsubscribeNewsletter = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    userRepo.findById(request.userId).flatMap {
+      case Some(u) =>
+        newsletterRepo.unsubscribe(u.email).map { _ =>
+          Redirect(routes.UserPublicationController.dashboard())
+            .flashing("info" -> "Te diste de baja del newsletter. Puedes volver cuando quieras.")
+        }
+      case None =>
+        Future.successful(Redirect(routes.UserPublicationController.dashboard()))
     }
   }
 
@@ -343,6 +383,43 @@ class UserPublicationController @Inject()(
   }
 
   /**
+   * Hilo de trazabilidad editorial visto por el autor.
+   *
+   * Combina cronológicamente las transiciones de etapa
+   * (`publication_stage_history`) con las notificaciones recibidas y el
+   * feedback visible al autor. Cada transición lleva su commit hash
+   * determinístico (estilo git short SHA) generado por `StageCommitHash`,
+   * de modo que el autor pueda referenciar un punto exacto del proceso
+   * al hablar con el equipo editorial.
+   *
+   * Acceso: solo el autor puede ver el hilo de su propia publicación.
+   * Las notas internas del pipeline NUNCA se renderizan en esta vista.
+   */
+  def publicationHistory(id: Long) = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    publicationRepo.findById(id).flatMap {
+      case Some(pub) if pub.userId == request.userId =>
+        for {
+          stages       <- stageRepo.findActive()
+          timeline     <- stageHistoryRepo.timelineWithStageOf(id)
+          notifs       <- notificationRepo.findByPublicationForUser(request.userId, id)
+          feedback     <- feedbackRepo.findVisibleByPublicationId(id)
+          currentEntry <- stageHistoryRepo.currentStageOf(id)
+        } yield {
+          val currentCode = currentEntry
+            .flatMap(h => stages.find(_.id.contains(h.stageId)).map(_.code))
+            .orElse(Some(EditorialStageCode.fromLegacyStatus(pub.status)))
+          Ok(views.html.user.publicationHistory(
+            pub, request.username, stages, timeline, currentCode, notifs, feedback
+          ))
+        }
+      case Some(_) =>
+        Future.successful(Forbidden("No tienes permiso para ver el historial de esta publicación"))
+      case None =>
+        Future.successful(NotFound("Publicación no encontrada"))
+    }
+  }
+
+  /**
    * API: Contar notificaciones no leídas (para el badge del bell)
    */
   def unreadCount = userAction.async { implicit request: AuthRequest[AnyContent] =>
@@ -485,19 +562,6 @@ class UserPublicationController @Inject()(
     userRepo.updateProfile(request.userId, f("bio"), f("avatarUrl"), f("website"), f("location")).map { _ =>
       Redirect(routes.UserPublicationController.publicProfile(request.username))
         .flashing("success" -> "Perfil actualizado")
-    }
-  }
-
-  // ============================================
-  // BADGES (API)
-  // ============================================
-
-  /** Get user badges as JSON */
-  def userBadges = userAction.async { implicit request: AuthRequest[AnyContent] =>
-    badgeRepo.findByUserId(request.userId).map { badges =>
-      Ok(Json.toJson(badges.map { b =>
-        Json.obj("key" -> b.badgeKey, "awardedAt" -> b.awardedAt.toString)
-      }))
     }
   }
 

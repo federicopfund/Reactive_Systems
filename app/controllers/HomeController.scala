@@ -8,7 +8,11 @@ import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import services.ReactiveContactAdapter
 import services.ReactiveAnalyticsAdapter
-import repositories.{ContactRepository, ReactionRepository, CommentRepository, BookmarkRepository, NewsletterRepository}
+import repositories.{
+  ContactRepository, ReactionRepository, CommentRepository, BookmarkRepository,
+  NewsletterRepository, PublicationCategoryRepository, ManifestoPillarRepository,
+  LegalDocumentRepository, CollectionRepository, EditorialArticleRepository
+}
 import core.{Contact, ContactSubmitted, ContactError}
 import actions.{OptionalAuthAction, OptionalAuthRequest}
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,6 +31,11 @@ class HomeController @Inject()(
   commentRepo: CommentRepository,
   bookmarkRepo: BookmarkRepository,
   newsletterRepo: NewsletterRepository,
+  categoryRepo: PublicationCategoryRepository,
+  pillarRepo: ManifestoPillarRepository,
+  legalRepo: LegalDocumentRepository,
+  collectionRepo: CollectionRepository,
+  editorialArticleRepo: EditorialArticleRepository,
   optionalAuth: OptionalAuthAction
 )(implicit ec: ExecutionContext) extends BaseController with I18nSupport {
 
@@ -42,16 +51,21 @@ class HomeController @Inject()(
 
   def index() = Action.async { implicit request: Request[AnyContent] =>
     analyticsAdapter.trackPageView("/", None, request.headers.get("Referer"))
-    publicationRepository.findAllApproved(limit = 6).map { publications =>
-      Ok(views.html.index(contactForm, publications))
-    }
+    for {
+      publications <- publicationRepository.findAllApproved(limit = 6)
+      pillars      <- pillarRepo.findActive()
+    } yield Ok(views.html.index(contactForm, publications, pillars))
   }
 
   def publicaciones() = Action.async { implicit request: Request[AnyContent] =>
-    // Obtener publicaciones dinámicas aprobadas de usuarios
-    publicationRepository.findAllApproved(limit = 20).map { dynamicPublications =>
-      Ok(views.html.publicaciones(dynamicPublications, "", None))
-    }
+    // Listado mezclado: publicaciones de usuarios + artículos editoriales del equipo
+    for {
+      dynamicPublications <- publicationRepository.findAllApproved(limit = 20)
+      editorialArticles   <- editorialArticleRepo.findAllPublished(limit = 20)
+      categories          <- categoryRepo.findActive()
+    } yield Ok(views.html.publicaciones(
+      dynamicPublications, editorialArticles, categories, "", None
+    ))
   }
 
   def publicacion(slug: String) = optionalAuth.async { implicit request: OptionalAuthRequest[AnyContent] =>
@@ -85,48 +99,70 @@ class HomeController @Inject()(
           ))
         }
       case _ =>
-        // Si no se encuentra, buscar en artículos estáticos
-        Future.successful(slug match {
-          case "akka-actors" => Ok(views.html.articulos.akkaActors())
-          case "patrones-resiliencia" => Ok(views.html.articulos.patronesResiliencia())
-          case "akka-streams" => Ok(views.html.articulos.akkaStreams())
-          case "play-async" => Ok(views.html.articulos.playAsync())
-          case "message-passing" => Ok(views.html.articulos.messagePassing())
-          case "testing-reactivo" => Ok(views.html.articulos.testingReactivo())
-          case _ => NotFound("Publicación no encontrada")
-        })
+        // Fallback: buscar en editorial_articles (piezas del equipo, DB-driven).
+        editorialArticleRepo.findBySlug(slug).map {
+          case Some(article) if article.isPublished =>
+            // Track + view count (fire-and-forget)
+            val userId = request.userInfo.map(_._1)
+            analyticsAdapter.trackPageView(s"/publicacion/$slug", userId, request.headers.get("Referer"))
+            article.id.foreach(editorialArticleRepo.incrementViewCount)
+            Ok(views.html.editorialArticleView(article))
+          case _ =>
+            NotFound("Publicación no encontrada")
+        }
     }
   }
 
   def searchPublicaciones(q: String, category: Option[String]) = Action.async { implicit request: Request[AnyContent] =>
-    if (q.trim.isEmpty) {
+    val cleanCategory = category.map(_.trim).filter(_.nonEmpty)
+    if (q.trim.isEmpty && cleanCategory.isEmpty) {
       Future.successful(Redirect(routes.HomeController.publicaciones()))
     } else {
-      publicationRepository.searchApproved(q, category).map { results =>
-        Ok(views.html.publicaciones(results, q, category))
-      }
+      // El filtro `category` viene como nombre humano ("Tutorial"); buscamos
+      // su slug para filtrar también editorial_articles.
+      for {
+        publications      <- publicationRepository.searchApproved(q, cleanCategory)
+        categorySlug      <- cleanCategory match {
+                               case Some(name) => categoryRepo.findByName(name).map(_.map(_.slug))
+                               case None       => Future.successful(None)
+                             }
+        editorialArticles <- editorialArticleRepo.search(q, categorySlug)
+        categories        <- categoryRepo.findActive()
+      } yield Ok(views.html.publicaciones(
+        publications, editorialArticles, categories, q, cleanCategory
+      ))
     }
   }
 
-  def portafolio() = optionalAuth { implicit request: OptionalAuthRequest[AnyContent] =>
-    // Pasar información de autenticación a la vista
+  def portafolio() = optionalAuth.async { implicit request: OptionalAuthRequest[AnyContent] =>
     val isAuthenticated = request.userInfo.isDefined
-    val username = request.userInfo.map(_._2)
-    Ok(views.html.portafolio(isAuthenticated, username))
+    val username        = request.userInfo.map(_._2)
+    collectionRepo.findPublishedWithCounts().map { collections =>
+      Ok(views.html.portafolio(isAuthenticated, username, collections))
+    }
   }
 
-  def politicaPrivacidad() = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.legal.privacidad())
+  def politicaPrivacidad() = Action.async { implicit request: Request[AnyContent] =>
+    legalRepo.findPublishedBySlug("privacidad").map {
+      case Some(doc) => Ok(views.html.legal.legalDocument(doc))
+      case None      => NotFound("Documento no disponible")
+    }
   }
 
-  def terminosDeUso() = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.legal.terminos())
+  def terminosDeUso() = Action.async { implicit request: Request[AnyContent] =>
+    legalRepo.findPublishedBySlug("terminos").map {
+      case Some(doc) => Ok(views.html.legal.legalDocument(doc))
+      case None      => NotFound("Documento no disponible")
+    }
   }
 
   def submitContact() = Action.async { implicit request: Request[AnyContent] =>
     contactForm.bindFromRequest().fold(
       formWithErrors => {
-        Future.successful(BadRequest(views.html.index(formWithErrors)))
+        for {
+          publications <- publicationRepository.findAllApproved(limit = 6)
+          pillars      <- pillarRepo.findActive()
+        } yield BadRequest(views.html.index(formWithErrors, publications, pillars))
       },
       contactData => {
         val contact = Contact(contactData.name, contactData.email, contactData.message)
@@ -138,32 +174,6 @@ class HomeController @Inject()(
         }
       }
     )
-  }
-
-  // Endpoint opcional para listar contactos (útil para admin)
-  def listContacts(page: Int) = Action.async { implicit request: Request[AnyContent] =>
-    contactRepository.list(page, pageSize = 20).map { contacts =>
-      Ok(play.api.libs.json.Json.toJson(contacts.map { c =>
-        play.api.libs.json.Json.obj(
-          "id" -> c.id,
-          "name" -> c.name,
-          "email" -> c.email,
-          "message" -> c.message,
-          "createdAt" -> c.createdAt.toString,
-          "status" -> c.status
-        )
-      }))
-    }
-  }
-
-  // Endpoint para obtener estadísticas
-  def contactStats() = Action.async { implicit request: Request[AnyContent] =>
-    contactRepository.count().map { total =>
-      Ok(play.api.libs.json.Json.obj(
-        "total" -> total,
-        "timestamp" -> java.time.Instant.now().toString
-      ))
-    }
   }
 
   // Newsletter subscription

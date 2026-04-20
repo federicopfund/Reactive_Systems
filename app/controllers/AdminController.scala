@@ -6,8 +6,8 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json._
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository, PrivateMessageRepository}
-import models.{ContactRecord, PublicationFeedback, UserNotification, FeedbackType}
+import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository, PrivateMessageRepository, EditorialStageRepository, PublicationStageHistoryRepository}
+import models.{ContactRecord, PublicationFeedback, UserNotification, FeedbackType, EditorialStageCode, PublicationStageHistory}
 import services.{ReactivePublicationAdapter, ReactiveNotificationAdapter, ReactiveAnalyticsAdapter}
 import core.{PublicationApproved, PublicationRejected, PublicationError}
 import actions.{AdminOnlyAction, SuperAdminOnlyAction, AuthRequest}
@@ -29,6 +29,8 @@ class AdminController @Inject()(
   notificationRepository: UserNotificationRepository,
   newsletterRepository: NewsletterRepository,
   messageRepository: PrivateMessageRepository,
+  stageRepository: EditorialStageRepository,
+  stageHistoryRepository: PublicationStageHistoryRepository,
   publicationAdapter: ReactivePublicationAdapter,
   notificationAdapter: ReactiveNotificationAdapter,
   analyticsAdapter: ReactiveAnalyticsAdapter,
@@ -130,29 +132,6 @@ class AdminController @Inject()(
         "Expires" -> "0"
       )
       .discardingCookies(DiscardingCookie("PLAY_SESSION"))
-  }
-
-  /**
-   * Endpoint de debug: Listar todos los administradores (desde users table)
-   * Ruta: GET /debug/admins
-   */
-  def listAllAdmins(): Action[AnyContent] = Action.async { implicit request =>
-    userRepository.findApprovedAdmins().map { admins =>
-      Ok(Json.obj(
-        "total" -> admins.length,
-        "admins" -> Json.toJson(admins.map { user =>
-          Json.obj(
-            "id" -> user.id,
-            "username" -> user.username,
-            "email" -> user.email,
-            "role" -> user.role,
-            "adminApproved" -> user.adminApproved,
-            "createdAt" -> user.createdAt.toString,
-            "lastLogin" -> user.lastLogin.map(_.toString)
-          )
-        })
-      ))
-    }
   }
 
   /**
@@ -339,27 +318,6 @@ class AdminController @Inject()(
   }
 
   /**
-   * Estadísticas del dashboard
-   */
-  def stats(): Action[AnyContent] = adminAction.async { implicit request: AuthRequest[AnyContent] =>
-    for {
-      totalCount <- contactRepository.count()
-      allContacts <- contactRepository.listAll()
-    } yield {
-      val pendingCount = allContacts.count(_.status == "pending")
-      val processedCount = allContacts.count(_.status == "processed")
-      val archivedCount = allContacts.count(_.status == "archived")
-      
-      Ok(Json.obj(
-        "total" -> totalCount,
-        "pending" -> pendingCount,
-        "processed" -> processedCount,
-        "archived" -> archivedCount
-      ))
-    }
-  }
-
-  /**
    * Estadísticas avanzadas para el dashboard profesional
    */
   def advancedStats(): Action[AnyContent] = adminAction.async { implicit request: AuthRequest[AnyContent] =>
@@ -511,31 +469,132 @@ class AdminController @Inject()(
    * Ver publicaciones pendientes de aprobación
    */
   def pendingPublications = adminAction.async { implicit request: AuthRequest[AnyContent] =>
-    publicationRepository.findPending().map { publications =>
-      Ok(views.html.admin.publicationReview(publications))
-    }
+    for {
+      publications <- publicationRepository.findPending()
+      stages       <- stageRepository.findActive()
+    } yield Ok(views.html.admin.publicationReview(publications, stages))
   }
 
   /**
    * Listar todas las publicaciones con filtros
    */
   def allPublications(status: Option[String] = None) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
-    publicationRepository.findAllByStatus(status).map { publications =>
-      Ok(views.html.admin.publicationsList(publications, status))
-    }
+    for {
+      publications <- publicationRepository.findAllByStatus(status)
+      stages       <- stageRepository.findActive()
+    } yield Ok(views.html.admin.publicationsList(publications, status, stages))
   }
 
   /**
-   * Ver detalle de una publicación para revisión
+   * Ver detalle de una publicación para revisión.
+   * Carga también la pipeline editorial (etapas + timeline) para que
+   * todos los roles del backoffice vean el estado, y solo el rol
+   * propietario de la etapa actual vea los botones de transición.
    */
   def reviewPublicationDetail(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
     publicationRepository.findById(id).flatMap {
       case Some(publication) =>
-        feedbackRepository.findByPublicationId(id).map { feedbacks =>
-          Ok(views.html.admin.publicationDetail(publication, feedbacks))
+        for {
+          feedbacks    <- feedbackRepository.findByPublicationId(id)
+          stages       <- stageRepository.findActive()
+          timeline     <- stageHistoryRepository.timelineWithStageOf(id)
+          currentEntry <- stageHistoryRepository.currentStageOf(id)
+        } yield {
+          val currentCode = currentEntry.flatMap(h => stages.find(_.id.contains(h.stageId)).map(_.code))
+            .orElse(Some(EditorialStageCode.fromLegacyStatus(publication.status)))
+          val nextStages = currentCode
+            .map(c => utils.EditorialStagePolicy.nextStagesFor(c, request.role, stages))
+            .getOrElse(Seq.empty)
+          Ok(views.html.admin.publicationDetail(publication, feedbacks, stages, timeline, currentCode, nextStages, request.role))
         }
       case None =>
         Future.successful(NotFound("Publicación no encontrada"))
+    }
+  }
+
+  /**
+   * Transición editorial canónica: mueve una pieza de su etapa actual
+   * a la `toStage` indicada en el formulario.
+   *
+   * Defensa en profundidad: valida `EditorialStagePolicy.canTransitionFrom`
+   * y `isAllowedTarget` en el server además de la UI. Inserta una fila
+   * en `publication_stage_history` (el trigger de DB cierra la previa),
+   * actualiza el cache `current_stage_id`, sincroniza el `status` legado y
+   * notifica al autor.
+   */
+  def transitionStage(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    val form          = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+    val toCode        = form.get("toStage").flatMap(_.headOption).getOrElse("")
+    val reason        = form.get("reason").flatMap(_.headOption).filter(_.trim.nonEmpty)
+    val internalNotes = form.get("internalNotes").flatMap(_.headOption).filter(_.trim.nonEmpty)
+    val redirectBack  = Redirect(routes.AdminController.reviewPublicationDetail(id))
+
+    publicationRepository.findById(id).flatMap {
+      case None =>
+        Future.successful(redirectBack.flashing("error" -> "Publicación no encontrada"))
+
+      case Some(pub) =>
+        for {
+          stages       <- stageRepository.findActive()
+          currentEntry <- stageHistoryRepository.currentStageOf(id)
+          currentCode = currentEntry.flatMap(h => stages.find(_.id.contains(h.stageId)).map(_.code))
+            .getOrElse(EditorialStageCode.fromLegacyStatus(pub.status))
+          targetStage = stages.find(_.code == toCode)
+          ok = targetStage.isDefined &&
+               utils.EditorialStagePolicy.canTransitionFrom(currentCode, request.role) &&
+               utils.EditorialStagePolicy.isAllowedTarget(currentCode, toCode)
+          result <- if (!ok) {
+            Future.successful(redirectBack.flashing("error" ->
+              s"Transición no permitida desde \"$currentCode\" a \"$toCode\" para tu rol"))
+          } else {
+            val target       = targetStage.get
+            val legacyStatus = EditorialStageCode.toLegacyStatus(target.code)
+            for {
+              _ <- stageHistoryRepository.insertTransition(PublicationStageHistory(
+                     publicationId = id,
+                     stageId       = target.id.get,
+                     enteredBy     = Some(request.userId),
+                     reason        = reason,
+                     internalNotes = internalNotes
+                   ))
+              _ <- publicationRepository.updateCurrentStage(id, target.id.get)
+              _ <- publicationRepository.changeStatus(id, legacyStatus, request.userId,
+                     reason.filter(_ => legacyStatus == "rejected"))
+              _ <- notificationRepository.create(UserNotification(
+                     userId           = pub.userId,
+                     notificationType = "publication_status",
+                     title            = s"Tu pieza pasó a: ${target.label}",
+                     message          = s"${request.username} movió \"${pub.title}\" a la etapa \"${target.label}\"." +
+                                        reason.map(r => s"\n\nMotivo: $r").getOrElse(""),
+                     publicationId    = Some(id)
+                   ))
+              // ── Broadcast a suscriptores del newsletter ─────────────
+              // Solo cuando la pieza alcanza publicación pública. Se notifica
+              // in-app a cada suscriptor que además sea usuario registrado.
+              // Excluye al propio autor para no duplicar la notificación anterior.
+              _ <- if (target.code == EditorialStageCode.Published) {
+                     for {
+                       emails <- newsletterRepository.findActiveEmails()
+                       recipients <- userRepository.findByEmails(emails)
+                       ids = recipients.flatMap(_.id).filterNot(_ == pub.userId)
+                       _ <- notificationRepository.createBroadcast(
+                              userIds = ids,
+                              notificationType = "community_publication",
+                              title = s"Nueva pieza en la comunidad: ${pub.title}",
+                              message = s"${request.username} publicó «${pub.title}». Léela ahora en la portada.",
+                              publicationId = Some(id)
+                            )
+                     } yield ()
+                   } else Future.successful(())
+              _ = analyticsAdapter.trackEvent("publication.stage_transition", Some(request.userId), Map(
+                    "publicationId" -> id.toString,
+                    "from"          -> currentCode,
+                    "to"            -> target.code,
+                    "by"            -> request.username
+                  ))
+            } yield redirectBack.flashing("success" -> s"Publicación movida a ${target.label}")
+          }
+        } yield result
     }
   }
 
@@ -770,46 +829,141 @@ class AdminController @Inject()(
   }
 
   /**
-   * Aprobar un administrador pendiente
+   * Aprobar un administrador pendiente asignándole un rol.
+   *
+   * El Super Admin elige el rol (admin | super_admin) en el formulario.
+   * Tras aprobar se crea una `UserNotification` para que el nuevo admin
+   * vea, en su bandeja, qué rol se le asignó y quién lo aprobó.
    */
   def approveAdmin(userId: Long): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
-    userRepository.approveAdmin(userId, request.userId).map { updated =>
-      if (updated > 0) {
+    val rawRole = request.body.asFormUrlEncoded
+      .flatMap(_.get("role").flatMap(_.headOption))
+      .getOrElse("editor_jefe")
+
+    utils.RolePolicy.assignableRoles.find(_.key == rawRole) match {
+      case None =>
+        Future.successful(
+          Redirect(routes.AdminController.adminManagement())
+            .flashing("error" -> s"Rol no válido: $rawRole")
+        )
+      case Some(roleDef) =>
+        userRepository.approveAdmin(userId, request.userId, roleDef.key).flatMap { updated =>
+          if (updated > 0) {
+            val capLines = roleDef.caps.toSeq.sortBy(_.label).map(c => s"• ${c.label}").mkString("\n")
+            val notif = UserNotification(
+              userId           = userId,
+              notificationType = "admin_role_assigned",
+              title            = s"Tu solicitud fue aprobada · rol: ${roleDef.label}",
+              message          = s"${request.username} te aprobó como ${roleDef.label}.\n\n${roleDef.description}\n\nPermisos asignados:\n$capLines"
+            )
+            notificationRepository.create(notif).map { _ =>
+              Redirect(routes.AdminController.adminManagement())
+                .flashing("success" -> s"Administrador aprobado como ${roleDef.label} y notificado")
+            }
+          } else {
+            Future.successful(
+              Redirect(routes.AdminController.adminManagement())
+                .flashing("error" -> "No se pudo aprobar el administrador")
+            )
+          }
+        }
+    }
+  }
+
+  /**
+   * Cambiar el rol de un administrador ya aprobado.
+   * Solo super_admin. Notifica al usuario con el nuevo set de capacidades.
+   */
+  def changeAdminRole(userId: Long): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
+    if (userId == request.userId) {
+      Future.successful(
         Redirect(routes.AdminController.adminManagement())
-          .flashing("success" -> "Administrador aprobado exitosamente")
-      } else {
-        Redirect(routes.AdminController.adminManagement())
-          .flashing("error" -> "No se pudo aprobar el administrador")
+          .flashing("error" -> "No podés cambiar tu propio rol desde aquí")
+      )
+    } else {
+      val rawRole = request.body.asFormUrlEncoded
+        .flatMap(_.get("role").flatMap(_.headOption))
+        .getOrElse("")
+
+      utils.RolePolicy.assignableRoles.find(_.key == rawRole) match {
+        case None =>
+          Future.successful(
+            Redirect(routes.AdminController.adminManagement())
+              .flashing("error" -> s"Rol no válido: $rawRole")
+          )
+        case Some(roleDef) =>
+          userRepository.changeAdminRole(userId, roleDef.key).flatMap { updated =>
+            if (updated > 0) {
+              val capLines = roleDef.caps.toSeq.sortBy(_.label).map(c => s"• ${c.label}").mkString("\n")
+              val notif = UserNotification(
+                userId           = userId,
+                notificationType = "admin_role_assigned",
+                title            = s"Tu rol fue actualizado a ${roleDef.label}",
+                message          = s"${request.username} cambió tu rol a ${roleDef.label}.\n\n${roleDef.description}\n\nPermisos actuales:\n$capLines"
+              )
+              notificationRepository.create(notif).map { _ =>
+                Redirect(routes.AdminController.adminManagement())
+                  .flashing("success" -> s"Rol actualizado a ${roleDef.label} y usuario notificado")
+              }
+            } else {
+              Future.successful(
+                Redirect(routes.AdminController.adminManagement())
+                  .flashing("error" -> "No se pudo cambiar el rol (¿usuario fuera del backoffice?)")
+              )
+            }
+          }
       }
     }
   }
 
   /**
    * Rechazar un administrador pendiente (vuelve a usuario normal)
+   * Notifica al usuario del rechazo.
    */
   def rejectAdmin(userId: Long): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
-    userRepository.rejectAdmin(userId).map { updated =>
+    userRepository.rejectAdmin(userId).flatMap { updated =>
       if (updated > 0) {
-        Redirect(routes.AdminController.adminManagement())
-          .flashing("success" -> "Solicitud de administrador rechazada")
+        val notif = UserNotification(
+          userId           = userId,
+          notificationType = "admin_role_rejected",
+          title            = "Tu solicitud de administrador fue rechazada",
+          message          = s"${request.username} revisó tu solicitud y no fue aprobada en este momento."
+        )
+        notificationRepository.create(notif).map { _ =>
+          Redirect(routes.AdminController.adminManagement())
+            .flashing("success" -> "Solicitud rechazada y usuario notificado")
+        }
       } else {
-        Redirect(routes.AdminController.adminManagement())
-          .flashing("error" -> "No se pudo rechazar la solicitud")
+        Future.successful(
+          Redirect(routes.AdminController.adminManagement())
+            .flashing("error" -> "No se pudo rechazar la solicitud")
+        )
       }
     }
   }
 
   /**
    * Revocar permisos de administrador (vuelve a usuario normal)
+   * Notifica al ex-administrador.
    */
   def revokeAdmin(userId: Long): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
-    userRepository.revokeAdmin(userId).map { updated =>
+    userRepository.revokeAdmin(userId).flatMap { updated =>
       if (updated > 0) {
-        Redirect(routes.AdminController.adminManagement())
-          .flashing("success" -> "Permisos de administrador revocados")
+        val notif = UserNotification(
+          userId           = userId,
+          notificationType = "admin_role_revoked",
+          title            = "Tus permisos de administrador fueron revocados",
+          message          = s"${request.username} revocó tus permisos. Volviste al rol estándar."
+        )
+        notificationRepository.create(notif).map { _ =>
+          Redirect(routes.AdminController.adminManagement())
+            .flashing("success" -> "Permisos revocados y usuario notificado")
+        }
       } else {
-        Redirect(routes.AdminController.adminManagement())
-          .flashing("error" -> "No se pudieron revocar los permisos")
+        Future.successful(
+          Redirect(routes.AdminController.adminManagement())
+            .flashing("error" -> "No se pudieron revocar los permisos")
+        )
       }
     }
   }

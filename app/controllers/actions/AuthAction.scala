@@ -92,7 +92,7 @@ class UserAction @Inject()(
         val username = request.session.get("username").getOrElse("Usuario")
         val role = request.session.get("userRole").getOrElse("user")
         
-        if (role == "user" || role == "admin" || role == "super_admin") {
+        if (role == "user" || utils.RolePolicy.isBackoffice(role)) {
           block(AuthRequest(userId, username, role, request))
         } else {
           Future.successful(
@@ -110,7 +110,10 @@ class UserAction @Inject()(
 }
 
 /**
- * AdminOnlyAction - Verifica que el usuario es administrador (admin o super_admin)
+ * AdminOnlyAction - Gate de acceso al backoffice.
+ * Permite cualquier rol declarado como "staff" en `RolePolicy.backofficeRoleKeys`
+ * (super_admin, editor_jefe, revisor, moderador, newsletter, analista, + legacy "admin").
+ * La autorización fina por acción debe hacerse luego con `RolePolicy.can(role, cap)`.
  */
 class AdminOnlyAction @Inject()(
   val parser: BodyParsers.Default,
@@ -126,8 +129,8 @@ class AdminOnlyAction @Inject()(
         val userId = userIdStr.toLong
         val username = request.session.get("username").getOrElse("Admin")
         val role = request.session.get("userRole").getOrElse("user")
-        
-        if (role == "admin" || role == "super_admin") {
+
+        if (utils.RolePolicy.isBackoffice(role)) {
           block(AuthRequest(userId, username, role, request))
         } else {
           Future.successful(
@@ -176,5 +179,30 @@ class SuperAdminOnlyAction @Inject()(
             .flashing("error" -> "Debes iniciar sesión como administrador")
         )
     }
+  }
+}
+
+/**
+ * CapabilityCheck — helper para gates finos por capacidad dentro de un endpoint admin.
+ *
+ * Uso típico desde un endpoint que ya pasó por `adminAction`:
+ *
+ *   def deletePublication(id: Long) = adminAction.async { implicit request =>
+ *     CapabilityCheck.require(request, utils.Capabilities.Cap.PublicationsDelete) {
+ *       publicationRepo.delete(id).map(_ => Redirect(...))
+ *     }
+ *   }
+ */
+object CapabilityCheck {
+  def require[A](
+    request: AuthRequest[A],
+    cap: utils.Capabilities.Cap
+  )(block: => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
+    if (utils.RolePolicy.can(request.role, cap)) block
+    else Future.successful(
+      Results.Forbidden(
+        s"Tu rol (${utils.RolePolicy.labelFor(request.role)}) no tiene la capacidad: ${cap.label}"
+      )
+    )
   }
 }
