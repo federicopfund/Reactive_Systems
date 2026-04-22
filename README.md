@@ -13,11 +13,14 @@ Combina un sitio público de publicaciones, un espacio de autor con trazabilidad
 | Backend | Play Framework 3.0.1 |
 | Lenguaje | Scala 2.13.12 |
 | Sistema reactivo | Akka Typed 2.8.5 |
+| Distribución | Akka Cluster + DistributedPubSub 2.8.5 (`eventbus-core`) |
+| Serialización inter-nodo | Akka Jackson 2.8.5 |
 | Persistencia | Slick 3 + PostgreSQL (H2 en dev) |
 | Frontend | Twirl + SCSS (sbt-sassify) + Vanilla JS |
 | DI | Guice |
 | Build | SBT 1.9.7 |
 | Email | JavaMail SMTP + Circuit Breaker |
+| Tests | ScalaTestPlus Play 7 + Akka Actor TestKit Typed 2.8.5 |
 
 ---
 
@@ -41,6 +44,17 @@ fuser -k 9000/tcp 2>/dev/null && sbt clean compile run
 sbt webStage
 ```
 
+```bash
+# Ejecutar la suite de tests (5/5)
+sbt test
+
+# Solo el smoke test de Cluster Pub/Sub
+sbt "testOnly core.EventBusEngineClusterSpec"
+
+# Solo el spec del DomainGuardian
+sbt "testOnly core.guardian.DomainGuardianSpec"
+```
+
 ---
 
 ## 🧭 Mapa funcional
@@ -57,7 +71,17 @@ sbt webStage
 
 ## 🏗️ Arquitectura de Agentes
 
-9 actores **Akka Typed** organizados en 3 capas, comunicados por **EventBus (Pub/Sub)** y un **Saga Orchestrator** (PipelineEngine).
+**1 `ActorSystem` raíz** (`reactive-manifiesto`) con un `RootGuardian` que supervisa **3 guardians especializados**, los cuales a su vez levantan los **9 agentes** del sistema con _backoff supervision_. La comunicación inter-agente se realiza por el **EventBus distribuido** (Akka Cluster DistributedPubSub) y un **Saga Orchestrator** (`PipelineEngine`).
+
+```
+reactive-manifiesto (ActorSystem)
+└── RootGuardian
+    ├── DomainGuardian      → Contact · Message · Publication · Gamification
+    ├── CrossCutGuardian    → Notification · Moderation · Analytics
+    └── InfraGuardian       → EventBus (Cluster Pub/Sub) · PublicationPipeline
+```
+
+Cada guardian aplica `SupervisorStrategy.restartWithBackoff(minBackoff = 200ms, maxBackoff = 10s, randomFactor = 0.2)` sobre sus hijos.
 
 ```mermaid
 graph TB
@@ -86,16 +110,22 @@ graph TB
         RPLA["ReactivePipelineAdapter"]
     end
 
-    subgraph ActorSystem["Akka Typed Actor System (9 agentes)"]
-        CE["🔵 ContactEngine"]
-        ME["🔵 MessageEngine"]
-        PE["🟢 PublicationEngine"]
-        GE["🟢 GamificationEngine"]
-        NE["🟢 NotificationEngine ⚡CB"]
-        MOE["🟢 ModerationEngine"]
-        AE["🟢 AnalyticsEngine"]
-        EB["🟡 EventBusEngine (Pub/Sub)"]
-        PL["🟡 PipelineEngine (Saga)"]
+    subgraph ActorSystem["reactive-manifiesto (1 ActorSystem · RootGuardian)"]
+        subgraph DG["DomainGuardian"]
+            CE["🔵 ContactEngine"]
+            ME["🔵 MessageEngine"]
+            PE["🟢 PublicationEngine"]
+            GE["🟢 GamificationEngine"]
+        end
+        subgraph CG["CrossCutGuardian"]
+            NE["🟢 NotificationEngine ⚡CB"]
+            MOE["🟢 ModerationEngine"]
+            AE["🟢 AnalyticsEngine"]
+        end
+        subgraph IG["InfraGuardian"]
+            EB["🟡 EventBusEngine · Cluster Pub/Sub"]
+            PL["🟡 PipelineEngine · Saga"]
+        end
     end
 
     subgraph Repositories["Repositories (Slick async)"]
@@ -152,21 +182,51 @@ graph TB
     style DB fill:#553c9a,stroke:#6b46c1,color:#fff
 ```
 
-### Los 9 agentes
+### Los 9 agentes (agrupados por guardian)
 
-| # | Agente | Sistema | Patrón | Responsabilidad |
-|---|--------|---------|--------|-----------------|
-| 🔵 | ContactEngine | `contact-core` | Ask | Formularios de contacto |
-| 🔵 | MessageEngine | `message-core` | Ask | Mensajería privada + notificación al receptor |
-| 🟢 | PublicationEngine | `publication-core` | Ask | Ciclo de vida de publicaciones |
-| 🟢 | GamificationEngine | `gamification-core` | Tell | Otorgamiento de badges |
-| 🟢 | NotificationEngine | `notification-core` | Tell | Hub multicanal con **Circuit Breaker** SMTP |
-| 🟢 | ModerationEngine | `moderation-core` | Ask | Auto-moderación + cola manual |
-| 🟢 | AnalyticsEngine | `analytics-core` | Tell | Métricas en memoria (zero-latency) |
-| 🟡 | EventBusEngine | `eventbus-core` | Pub/Sub | Bus de domain events + DeathWatch |
-| 🟡 | PipelineEngine | `pipeline-core` | Saga | Orquesta Moderate → Create → Notify → Gamify → Track |
+| # | Agente | Guardian | Patrón | Responsabilidad |
+|---|--------|----------|--------|-----------------|
+| 🔵 | ContactEngine | `DomainGuardian` | Ask | Formularios de contacto |
+| 🔵 | MessageEngine | `DomainGuardian` | Ask | Mensajería privada + notificación al receptor |
+| 🟢 | PublicationEngine | `DomainGuardian` | Ask | Ciclo de vida de publicaciones |
+| 🟢 | GamificationEngine | `DomainGuardian` | Tell | Otorgamiento de badges |
+| 🟢 | NotificationEngine | `CrossCutGuardian` | Tell | Hub multicanal con **Circuit Breaker** SMTP |
+| 🟢 | ModerationEngine | `CrossCutGuardian` | Ask | Auto-moderación + cola manual |
+| 🟢 | AnalyticsEngine | `CrossCutGuardian` | Tell | Métricas en memoria (zero-latency) |
+| 🟡 | EventBusEngine | `InfraGuardian` | **Cluster Pub/Sub** | Bus de domain events vía `DistributedPubSubMediator` |
+| 🟡 | PipelineEngine | `InfraGuardian` | Saga | Orquesta Moderate → Create → Notify → Gamify → Track |
 
 > 🔵 dominio · 🟢 cross-cutting · 🟡 infraestructura
+
+### EventBus distribuido (Akka Cluster)
+
+El `EventBusEngine` delega el routing en `akka.cluster.pubsub.DistributedPubSubMediator`:
+
+- **Routing O(1) por topic** (antes O(n) con `Map.filter`).
+- **Sin SPOF**: la tabla de suscriptores se replica entre los nodos vía gossip.
+- **Cluster-ready**: el mismo binario escala horizontalmente sin tocar a los 9 agentes.
+- **Topics**: derivados del prefijo de `event.eventType` (`publication.submitted` → `publication`) + topic comodín `"*"`.
+- **Configuración aislada**: solo el ActorSystem usa `provider = cluster` (bloque `eventbus-cluster` en `application.conf`); el resto del runtime sigue local.
+- **Serialización**: `sealed trait DomainEvent` anotado con `@JsonTypeInfo` + `@JsonSubTypes`, binding `core.DomainEvent = jackson-json`.
+
+### Endpoint de salud
+
+`GET /health` consulta a los 3 guardians y devuelve un JSON consolidado con el estado de cada hijo:
+
+```bash
+curl -s http://localhost:9000/health | jq
+```
+
+```json
+{
+  "status": "Healthy",
+  "guardians": {
+    "domain":   { "contact": "Healthy", "message": "Healthy", "publication": "Healthy", "gamification": "Healthy" },
+    "crosscut": { "notification": "Healthy", "moderation": "Healthy", "analytics": "Healthy" },
+    "infra":    { "eventBus": "Healthy", "pipeline": "Healthy" }
+  }
+}
+```
 
 ---
 
@@ -410,8 +470,8 @@ graph LR
         S2 --> S5[5. Track]
     end
 
-    subgraph PubSub["EventBus (Pub/Sub)"]
-        EB[EventBus]
+    subgraph PubSub["EventBus (Akka Cluster DistributedPubSub)"]
+        EB["DistributedPubSubMediator"]
         PUB1[publication.submitted] --> EB
         PUB2[content.moderated] --> EB
         PUB3[pipeline.completed] --> EB
@@ -435,10 +495,10 @@ graph LR
 
 | Principio | Implementación |
 |-----------|---------------|
-| **Responsive** | Non-blocking I/O end-to-end. Timeouts 5–30s en Ask. Fast-fail tipado |
-| **Resilient** | Circuit Breaker SMTP. `pipeToSelf(Failure)`. DeathWatch en EventBus. Compensación en Saga |
-| **Elastic** | Actor model sin locks. Controllers stateless. Pipeline concurrente. Apto para Akka Cluster |
-| **Message-Driven** | `sealed trait *Command`. EventBus Pub/Sub. Domain events con `correlationId` |
+| **Responsive** | Non-blocking I/O end-to-end. Timeouts 5–30s en Ask. Fast-fail tipado. `/health` consolidado |
+| **Resilient** | Backoff supervision en los 3 guardians. Circuit Breaker SMTP. `pipeToSelf(Failure)`. Compensación en Saga. Cluster Pub/Sub elimina el SPOF del bus |
+| **Elastic** | Actor model sin locks. Controllers stateless. Pipeline concurrente. EventBus distribuido vía `DistributedPubSubMediator` (escala añadiendo nodos) |
+| **Message-Driven** | `sealed trait *Command`. EventBus Pub/Sub cluster-wide. Domain events con `correlationId` y `@JsonTypeInfo` para serialización inter-nodo |
 
 ---
 
@@ -447,9 +507,11 @@ graph LR
 ```
 Reactive-Manifiesto/
 ├── app/
-│   ├── Module.scala                 # Guice DI: 9 ActorSystems + 9 Adapters
-│   ├── controllers/                 # HomeController, AuthController, UserPublicationController, AdminController, SetupController
-│   ├── core/                        # 9 Engines (Akka Typed) + DomainEvents
+│   ├── Module.scala                 # Guice DI: 1 ActorSystem (RootGuardian) + 9 Adapters
+│   ├── controllers/                 # HomeController, AuthController, UserPublicationController, AdminController, HealthController, SetupController
+│   ├── core/
+│   │   ├── *Engine.scala            # 9 Engines (Akka Typed) + DomainEvents
+│   │   └── guardian/                # RootGuardian + DomainGuardian + CrossCutGuardian + InfraGuardian + HealthModel
 │   ├── services/                    # 9 ReactiveAdapters + EmailService + EmailVerificationService
 │   ├── models/                      # case classes + Slick mappings
 │   ├── repositories/                # 13 repos async (Slick)
@@ -457,10 +519,14 @@ Reactive-Manifiesto/
 │   ├── views/                       # 38 plantillas Twirl (3 layouts + 2 partials + 33 vistas)
 │   └── assets/stylesheets/          # SCSS modular (BEM)
 ├── conf/
-│   ├── application.conf
-│   ├── routes
+│   ├── application.conf             # incluye bloque `eventbus-cluster`
+│   ├── routes                       # incluye GET /health
 │   ├── messages, messages.en
 │   └── evolutions/default/          # Migraciones SQL
+├── test/
+│   └── core/
+│       ├── EventBusEngineClusterSpec.scala   # Issue #14 — DistributedPubSub
+│       └── guardian/DomainGuardianSpec.scala # Issue #15 — guardians
 ├── public/                          # Imágenes, JS, CSS estático
 ├── sql/                             # Scripts admin (alta de admins, triggers)
 ├── deploy/                          # Scripts Docker / instalación / email
@@ -475,16 +541,18 @@ Reactive-Manifiesto/
 | Patrón | Ubicación |
 |--------|-----------|
 | Actor Model | `core/*Engine.scala` |
+| Hierarchical Supervision | `core/guardian/{Root,Domain,CrossCut,Infra}Guardian.scala` |
+| Backoff Supervision | `Behaviors.supervise(...).onFailure(restartWithBackoff(...))` en cada guardian |
 | Ask / Tell Pattern | `services/Reactive*Adapter.scala` |
 | Saga Orchestrator | `PublicationPipelineEngine` |
-| Pub/Sub | `EventBusEngine` + `DomainEvents` |
+| Cluster Pub/Sub | `EventBusEngine` (`DistributedPubSubMediator`) |
 | Circuit Breaker | `NotificationEngine` (SMTP) |
 | `pipeToSelf` | Todos los Engines |
-| DeathWatch | `EventBusEngine` |
 | Repository | `repositories/*` |
 | Adapter | `services/Reactive*Adapter.scala` |
 | Command | `sealed trait *Command` |
 | Dependency Injection | `Module.scala` (Guice) |
+| Health Endpoint | `controllers/HealthController` + `GET /health` |
 | MVC | Play estándar |
 | Capability-based RBAC | `models/AdminCapability` + `actions/AdminAction` |
 | Deterministic hashing | `utils/StageCommitHash` (SHA-1) |
