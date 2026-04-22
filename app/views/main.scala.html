@@ -6,16 +6,18 @@
 
   Args:
     - title: título de la pestaña del navegador.
-    - fullBleed: si true (default), el content se renderiza directo dentro de .ed-main
-                 sin padding adicional (las secciones controlan su propio padding).
+    - fullBleed: si true (default), el content se renderiza directo dentro de .ed-main.
                  Si false, envuelve el content en un .ed-container centrado.
+
+  Issue #16: theming dual (crema/noche/auto), skip link, escaneo de prefers-color-scheme.
 *@
 
 <!DOCTYPE html>
-<html lang="es" data-theme="crema">
+<html lang="es" data-theme="auto">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
   <title>@title — Manifiesto Reactivo</title>
   <meta name="description" content="Manifiesto Reactivo — edición digital sobre sistemas Responsivos, Resilientes, Elásticos y Orientados a Mensajes.">
   <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
@@ -31,19 +33,28 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@@0,400;0,500;0,700;0,900;1,400;1,700&family=Lora:ital,wght@@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@@400;500&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
-  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/admin.css")">
 
+  @* Bootstrap inline anti-FOUC: aplica el tema antes del primer paint.
+     Soporta tres modos: 'crema' | 'noche' | 'auto'. *@
   <script>
-    (function() {
-      var t = localStorage.getItem('ed-theme') || 'crema';
-      document.documentElement.setAttribute('data-theme', t);
+    (function () {
+      try {
+        var t = localStorage.getItem('ed-theme');
+        if (t !== 'crema' && t !== 'noche' && t !== 'auto') t = 'auto';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'auto');
+      }
     })();
   </script>
 </head>
 <body>
+  @* Issue #16-E: enlace de salto al contenido principal (visible al recibir foco). *@
+  <a href="#ed-main" class="ed-skip-link">Saltar al contenido principal</a>
+
   <div class="ed-shell">
     @partials.sidebar()
-    <main class="ed-main">
+    <main id="ed-main" class="ed-main" tabindex="-1">
       @if(fullBleed) {
         @content
       } else {
@@ -52,12 +63,6 @@
     </main>
   </div>
 
-  <script>
-    // Theme toggle helper (opcional, expuesto globalmente)
-    window.setEdTheme = function(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('ed-theme', theme);
-    };
-  </script>
+  <script src="@routes.Assets.versioned("javascripts/theme.js")"></script>
 </body>
 </html>

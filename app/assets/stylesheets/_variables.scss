@@ -1,40 +1,48 @@
 // ============================================
 // Variables — Editorial Reactiva
+//
+// LEGACY: este archivo ahora actúa como capa de **compatibilidad** sobre
+// `_tokens.scss`. Los nombres `$ed-*` siguen disponibles para componentes
+// no migrados, pero **toda nueva regla** debe consumir tokens semánticos
+// del nivel 2 (`var(--color-*)`) y de espaciado (`$space-*`).
+// Ver `docs/design-tokens.md`.
 // ============================================
 
-// Tipografías
+// Tipografías (alias de uso directo en mixins)
 $font-display: 'Playfair Display', Georgia, serif;
 $font-body:    'Lora', Georgia, serif;
 $font-mono:    'IBM Plex Mono', 'JetBrains Mono', monospace;
 
-// Paleta editorial (tema crema, default — coincide con el diseño base)
-$ed-bg:            #f5f0e8;
-$ed-bg2:           #ede8de;
-$ed-bg3:           #e0dbd0;
-$ed-text:          #1a1612;
-$ed-text-dim:      #6a6058;
-$ed-text-faint:    #a09888;
-$ed-accent:        #c1440e;
+// ── Aliases legacy del tema crema (mapeados a primitivos del nivel 1) ──
+$ed-bg:            $crema-100;
+$ed-bg2:           $crema-200;
+$ed-bg3:           $crema-300;
+$ed-text:          $crema-900;
+$ed-text-dim:      $crema-600;
+// Issue #16-E: contrast fix — antes `#a09888` (2.7:1, falla AA).
+// Nuevo valor `$crema-700` (#4a4138) → 8.5:1 sobre crema-100 ✓
+$ed-text-faint:    $crema-700;
+$ed-accent:        $terracota-500;
 $ed-border:        rgba(26, 22, 18, 0.10);
 $ed-border-strong: rgba(26, 22, 18, 0.18);
 
-// Estados / semánticos
-$color-success: #6b8f71;
-$color-warning: #f59e0b;
-$color-danger:  #ef4444;
-$color-info:    #6b8caa;
+// Estados / semánticos (alias)
+$color-success: $success-500;
+$color-warning: $warning-500;
+$color-danger:  $danger-500;
+$color-info:    $info-500;
 
-// Aliases legacy (compatibilidad con código viejo)
-$primary:         $ed-accent;
-$secondary:       $ed-text-dim;
-$bg:              $ed-bg;
-$text:            $ed-text;
-$border-color:    $ed-border;
+// Aliases ultra-legacy
+$primary:      $ed-accent;
+$secondary:    $ed-text-dim;
+$bg:           $ed-bg;
+$text:         $ed-text;
+$border-color: $ed-border;
 
-// Layout
-$sidebar-width: 220px;
-$content-padding-x: 3.5rem;
-$content-padding-y: 2.5rem;
+// Layout (consumidos por _mixins / componentes existentes)
+$sidebar-width:     220px;
+$content-padding-x: $space-8;   // 3.5rem
+$content-padding-y: $space-7;   // 2.5rem
 
 // Breakpoints
 $bp-sm:  640px;

@@ -1,5 +1,6 @@
 // ============================================
 // Animations — Editorial Reactiva
+// Wrapped in `motion-safe` to honour `prefers-reduced-motion: reduce` (Issue #16-E).
 // ============================================
 
 @keyframes ed-fade-in {
@@ -22,5 +23,9 @@
   50%      { opacity: 0.5; }
 }
 
-.ed-animate-fade-in { animation: ed-fade-in 0.35s ease-out; }
-.ed-animate-slide-up { animation: ed-slide-up 0.4s ease-out; }
+@include motion-safe {
+  .ed-animate-fade-in  { animation: ed-fade-in 0.35s $ease-out; }
+  .ed-animate-slide-up { animation: ed-slide-up 0.4s  $ease-out; }
+  .ed-animate-fade     { animation: ed-fade 0.3s $ease-out; }
+  .ed-animate-pulse    { animation: ed-pulse 1.6s ease-in-out infinite; }
+}

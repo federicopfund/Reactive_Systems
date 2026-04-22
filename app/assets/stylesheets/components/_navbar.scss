@@ -82,12 +82,16 @@
     background: var(--ed-border);
   }
 
-  &.active {
+  &.active,
+  &.is-active,
+  &[aria-current="page"] {
     color: var(--ed-text);
-    background: rgba(212, 255, 0, 0.07);
+    background: var(--color-accent-soft);
 
-    .ed-nav-dot { background: var(--ed-accent); }
+    .ed-nav-dot { background: var(--color-accent); }
   }
+
+  @include focus-ring(2px);
 }
 
 .ed-nav-dot {

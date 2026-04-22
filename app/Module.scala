@@ -60,6 +60,12 @@ class Module extends AbstractModule {
   @Singleton
   def provideActorSystem(refs: RootGuardian.Refs): ActorSystem[Nothing] = _system
 
+  // Issue #15/#16: el HealthController usa AskPattern y necesita un
+  // `akka.actor.typed.Scheduler` implícito. Lo derivamos del sistema raíz.
+  @Provides @Singleton
+  def provideTypedScheduler(system: ActorSystem[Nothing]): akka.actor.typed.Scheduler =
+    system.scheduler
+
   @Provides @Singleton
   def domainRef(refs: RootGuardian.Refs): akka.actor.typed.ActorRef[DomainGuardianCommand]   = refs.domain
   @Provides @Singleton

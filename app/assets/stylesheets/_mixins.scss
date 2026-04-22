@@ -2,7 +2,7 @@
 // Mixins — Editorial Reactiva
 // ============================================
 
-@mixin mono-eyebrow($size: 0.6rem, $color: var(--ed-text-faint)) {
+@mixin mono-eyebrow($size: 0.6rem, $color: var(--color-text-tertiary)) {
   font-family: $font-mono;
   font-size: $size;
   letter-spacing: 0.18em;
@@ -16,7 +16,7 @@
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.02em;
-  color: var(--ed-text);
+  color: var(--color-text-primary);
   text-wrap: pretty;
 }
 
@@ -28,14 +28,17 @@
   display: grid;
   grid-template-columns: repeat(#{$cols}, 1fr);
   gap: 0;
-  border: 1px solid var(--ed-border);
+  border: 1px solid var(--color-border-subtle);
 }
 
-@mixin focus-ring {
+// Issue #16-E: anillo de foco visible universal.
+// Usa `var(--color-focus-ring)` que cambia automáticamente por tema.
+@mixin focus-ring($offset: 2px) {
   outline: none;
   &:focus-visible {
-    outline: 2px solid var(--ed-accent);
-    outline-offset: 2px;
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: $offset;
+    border-radius: 2px;
   }
 }
 
@@ -44,4 +47,13 @@
   @else if $bp == md { @media (max-width: $bp-md)  { @content; } }
   @else if $bp == lg { @media (max-width: $bp-lg)  { @content; } }
   @else if $bp == xl { @media (max-width: $bp-xl)  { @content; } }
+}
+
+// Issue #16-E: motion safety — envuelve animaciones para respetar
+// `prefers-reduced-motion`. Las animaciones no críticas no corren si el
+// usuario las desactivó en el SO.
+@mixin motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    @content;
+  }
 }

@@ -47,10 +47,11 @@
 }
 
 <!DOCTYPE html>
-<html lang="es" data-theme="admin-dark">
+<html lang="es" data-theme="auto">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
   <title>@title · Backoffice — Manifiesto Reactivo</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
@@ -62,8 +63,24 @@
   @* Cache-buster: el timestamp de boot fuerza al navegador a re-pedir el CSS
      cuando se reinicia la app o se recompila SCSS. *@
   <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")?v=@System.currentTimeMillis">
+
+  @* Issue #16: bootstrap inline anti-FOUC (claro/oscuro/auto). *@
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ed-theme');
+        if (t !== 'crema' && t !== 'noche' && t !== 'auto') t = 'auto';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'auto');
+      }
+    })();
+  </script>
 </head>
 <body class="ed-admin-body-root">
+
+  @* Issue #16-E: skip link al contenido principal. *@
+  <a href="#ed-bo-main" class="ed-skip-link">Saltar al contenido principal</a>
 
   <div class="ed-bo">
 
@@ -82,6 +99,7 @@
 
       <div class="ed-bo__topbar-right">
         <a class="ed-bo__topbar-link" href="@routes.HomeController.index()" target="_blank" rel="noopener">Ver sitio ↗</a>
+        @partials.themeToggle(compact = true)
         <span class="ed-bo__role ed-bo__role--@role">@roleLabel</span>
         <div class="ed-bo__user">
           <span class="ed-bo__user-avatar">@initials</span>
@@ -170,7 +188,7 @@
       </aside>
 
       @* ============= MAIN ============= *@
-      <main class="ed-bo__main">
+      <main id="ed-bo-main" class="ed-bo__main" tabindex="-1">
         <div class="ed-admin-shell">
           <div class="ed-admin-body">
             @content
@@ -179,5 +197,7 @@
       </main>
     </div>
   </div>
+
+  <script src="@routes.Assets.versioned("javascripts/theme.js")"></script>
 </body>
 </html>

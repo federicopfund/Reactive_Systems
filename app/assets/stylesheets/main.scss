@@ -1,38 +1,53 @@
 // ============================================
 // Main SCSS — Editorial Reactiva
-// Punto de entrada único
+// Punto de entrada único.
+//
+// Orden de capas (Issue #16):
+//   0. Tokens (primitivos + maps semánticos)
+//   1. Variables legacy + mixins (consumen tokens)
+//   2. Animations (consume mixins)
+//   3. Base (emite CSS vars semánticas en :root y por tema)
+//   4. Componentes
+//   5. Responsive overrides
+//   6. Backoffice (al final, pisa estilos públicos vía body.ed-admin-body-root)
 // ============================================
 
-// 1. Configuración
+// 0. Tokens
+@import 'tokens';
+
+// 1. Configuración legacy + helpers
 @import 'variables';
 @import 'mixins';
+
+// 2. Animations
 @import 'animations';
 
-// 2. Base (reset + variables CSS + tipografía body)
+// 3. Base
 @import 'base';
 
-// 3. Layout y utilidades
+// 4. Layout / utilidades
 @import 'components/typography';
 @import 'components/layout';
 
-// 4. Componentes — navegación
+// 5. Componentes — navegación
 @import 'components/navbar';   // sidebar editorial
 @import 'components/footer';
+@import 'components/theme-toggle';
 
-// 5. Componentes — UI core
+// 6. Componentes — UI core
 @import 'components/buttons';
 @import 'components/forms';
 @import 'components/cards';
 @import 'components/alerts';
 
-// 6. Componentes — secciones de página
+// 7. Componentes — secciones de página
 @import 'components/hero';
 @import 'components/sections';
 @import 'components/publications';
 @import 'components/articles';
 @import 'components/portfolio';
 
-// 7. Componentes — flujos de usuario
+// 8. Componentes — flujos de usuario
 @import 'components/auth';
 @import 'components/dashboard';
 @import 'components/verification';
@@ -42,97 +57,8 @@
 @import 'components/graph-popup';
 @import 'components/messages';
 
-// 8. Responsive (overrides públicos)
+// 9. Responsive (overrides públicos)
 @import 'components/responsive';
 
-// 9. Backoffice — DEBE ir al final para que su body root
-//    pise cualquier estilo público de <body>.
+// 10. Backoffice — DEBE ir al final.
 @import 'components/admin';
-// ============================================
-// Main SCSS — Editorial Reactiva
-// Punto de entrada principal
-// ============================================
-
-// 1. Configuración
-@import 'variables';
-@import 'mixins';
-@import 'animations';
-
-// 2. Base (reset + variables CSS + tipografía body)
-@import 'base';
-
-// 3. Layout y utilidades
-@import 'components/typography';
-@import 'components/layout';
-
-// 4. Componentes — navegación
-@import 'components/navbar';   // sidebar editorial
-@import 'components/footer';
-
-// 5. Componentes — UI core
-@import 'components/buttons';
-@import 'components/forms';
-@import 'components/cards';
-@import 'components/alerts';
-
-// 6. Componentes — secciones de página
-@import 'components/hero';
-@import 'components/sections';
-@import 'components/publications';
-@import 'components/articles';
-@import 'components/portfolio';
-
-// 7. Componentes — flujos de usuario
-@import 'components/auth';
-@import 'components/dashboard';
-@import 'components/verification';
-@import 'components/publication-form';
-@import 'components/publication-editor';
-@import 'components/legal';
-@import 'components/graph-popup';
-@import 'components/admin';
-
-// 8. Responsive (al final para overrides)
-@import 'components/responsive';
-// ============================================
-// Main SCSS - Archivo de Entrada Principal
-// ============================================
-
-// 1. Configuración
-@import 'variables';
-@import 'mixins';
-@import 'animations';
-
-// 2. Base
-@import 'base';
-
-// 3. Layout y Utilidades
-@import 'components/typography';
-@import 'components/layout';
-
-// 4. Components
-@import 'components/navbar';
-@import 'components/buttons';
-@import 'components/forms';
-@import 'components/cards';
-@import 'components/alerts';
-@import 'components/auth';
-@import 'components/publication-editor';
-@import 'components/publication-form';
-@import 'components/dashboard';
-@import 'components/verification';
-@import 'components/hero';
-@import 'components/footer';
-@import 'components/sections';
-@import 'components/articles';
-@import 'components/portfolio';
-@import 'components/publications';
-@import 'components/legal';
-@import 'components/graph-popup';
-
-// 5. Responsive consolidado (debe ir al final)
-@import 'components/responsive';
-
-// 6. Estilos personalizados adicionales
-// Aquí puedes agregar más componentes según sea necesario
-

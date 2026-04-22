@@ -13,34 +13,40 @@
 // ==========================================================================
 
 // ---- Tokens locales del backoffice (no contaminan el resto del sitio) ----
-// Paleta CREMA editorial CLARA — fondo casi blanco con tinte cálido,
-// cards 100% blancas, texto marrón profundo. Pensada para uso operativo
-// prolongado (alta legibilidad, bajo cansancio visual).
-$bo-bg:        #f7f3e9;   // crema muy claro (page bg)
-$bo-surface:   #ffffff;   // cards, topbar, sidebar — blanco puro
-$bo-surface-2: #f0ead8;   // inputs, hover, zebra
-$bo-surface-3: #e3dac3;   // divisores fuertes
-$bo-border:    rgba(45, 24, 16, 0.08);
-$bo-border-2:  rgba(45, 24, 16, 0.16);
-$bo-text:      #1f140a;   // marrón profundo
-$bo-text-2:    #4a3a2a;
-$bo-text-3:    #7a6a55;
-$bo-text-4:    #a89a82;
-$bo-accent:    #c1440e;   // terracota editorial
-$bo-accent-2:  #9a3508;   // hover terracota
-$bo-accent-soft: rgba(193, 68, 14, 0.10);
-$bo-success:   #4f7a55;
-$bo-warning:   #a45f00;
-$bo-danger:    #a02c2c;
-$bo-info:      #4a6f8f;
+//
+// Issue #16-F: dedup. Los nombres `$bo-*` se preservan para no tocar 1000+
+// usos, pero ahora **derivan de la capa semántica** (`var(--color-*)`).
+// Cuando el usuario alterna tema (crema ↔ noche) vía `data-theme`, los
+// componentes del backoffice se re-themean automáticamente sin recompilar.
+//
+// Los valores SCSS que aún se usan como `background:`, `color:` directos en
+// keyframes o map-merges se mantienen como fallback estático (paleta crema).
+$bo-bg:        var(--color-surface);
+$bo-surface:   var(--color-surface-raised);
+$bo-surface-2: var(--color-surface-sunken);
+$bo-surface-3: var(--color-surface-strong);
+$bo-border:    var(--color-border-subtle);
+$bo-border-2:  var(--color-border-strong);
+$bo-text:      var(--color-text-primary);
+$bo-text-2:    var(--color-text-secondary);
+$bo-text-3:    var(--color-text-tertiary);
+$bo-text-4:    var(--color-text-tertiary);
+$bo-accent:    var(--color-accent);
+$bo-accent-2:  var(--color-accent-hover);
+$bo-accent-soft: var(--color-accent-soft);
+$bo-success:   var(--color-success);
+$bo-warning:   var(--color-warning);
+$bo-danger:    var(--color-danger);
+$bo-info:      var(--color-info);
 
 // Banda superior de identidad admin (gradiente terracota → ámbar)
 $bo-id-bar: linear-gradient(90deg, #6b3410 0%, #c1440e 50%, #d97706 100%);
 
-$bo-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
-$bo-sans: 'Inter', -apple-system, system-ui, sans-serif;
-$bo-display: 'Playfair Display', Georgia, serif;
-$bo-serif:   'Lora', Georgia, serif;
+// Tipografías: alias hacia los tokens centralizados de `_variables.scss`
+$bo-mono:    $font-mono;
+$bo-sans:    'Inter', -apple-system, system-ui, sans-serif;
+$bo-display: $font-display;
+$bo-serif:   $font-body;
 
 // ==========================================================================
 // 0. Reset/scope global del backoffice

@@ -2,13 +2,17 @@
 
 @* ============================================
  * Sidebar editorial — navegación lateral
- * Se incluye en main.scala.html como navbar principal
+ * Issue #16-E · semántica con `aria-current="page"` y `<aside aria-label>`.
  * ============================================ *@
 
 @isActive(prefix: String) = @{
   val p = request.path
   if (prefix == "/") p == "/"
   else p == prefix || p.startsWith(prefix + "/")
+}
+
+@navAttrs(active: Boolean) = @{
+  if (active) "ed-nav-item is-active" else "ed-nav-item"
 }
 
 @userId   = @{ request.session.get("userId") }
@@ -28,7 +32,7 @@
   }
 }
 
-<aside class="ed-sidebar">
+<aside class="ed-sidebar" aria-label="Navegación principal">
   <div class="ed-sidebar-brand">
     <a href="@routes.HomeController.index()">
       <span class="ed-brand-label">Edición Digital</span>
@@ -36,49 +40,59 @@
     </a>
   </div>
 
-  <nav class="ed-sidebar-nav">
+  <nav class="ed-sidebar-nav" aria-label="Secciones del sitio">
     <div class="ed-nav-section">
       <span class="ed-nav-section-label">Explorar</span>
       <a href="@routes.HomeController.index()"
-         class="ed-nav-item @if(isActive("/")) {active}">
-        <span class="ed-nav-dot"></span>Portada
+         class="@navAttrs(isActive("/"))"
+         @if(isActive("/")){aria-current="page"}>
+        <span class="ed-nav-dot" aria-hidden="true"></span>Portada
       </a>
       <a href="@routes.HomeController.publicaciones()"
-         class="ed-nav-item @if(isActive("/publicaciones")) {active}">
-        <span class="ed-nav-dot"></span>Artículos
+         class="@navAttrs(isActive("/publicaciones"))"
+         @if(isActive("/publicaciones")){aria-current="page"}>
+        <span class="ed-nav-dot" aria-hidden="true"></span>Artículos
       </a>
       <a href="@routes.HomeController.portafolio()"
-         class="ed-nav-item @if(isActive("/portafolio")) {active}">
-        <span class="ed-nav-dot"></span>Colecciones
+         class="@navAttrs(isActive("/portafolio"))"
+         @if(isActive("/portafolio")){aria-current="page"}>
+        <span class="ed-nav-dot" aria-hidden="true"></span>Colecciones
       </a>
       <a href="@routes.HomeController.index()#contact"
          class="ed-nav-item">
-        <span class="ed-nav-dot"></span>Contacto
+        <span class="ed-nav-dot" aria-hidden="true"></span>Contacto
       </a>
     </div>
 
     @if(userId.isDefined) {
       <div class="ed-nav-section">
         <span class="ed-nav-section-label">Mi espacio</span>
-        <a href="@routes.UserPublicationController.dashboard()"
-           class="ed-nav-item @if(isActive("/user/dashboard") || isActive("/user/publications")) {active}">
-          <span class="ed-nav-dot"></span>Mis propuestas
-        </a>
+        @defining(isActive("/user/dashboard") || isActive("/user/publications")) { active =>
+          <a href="@routes.UserPublicationController.dashboard()"
+             class="@navAttrs(active)"
+             @if(active){aria-current="page"}>
+            <span class="ed-nav-dot" aria-hidden="true"></span>Mis propuestas
+          </a>
+        }
         <a href="@routes.UserPublicationController.editProfileForm()"
-           class="ed-nav-item @if(isActive("/user/profile")) {active}">
-          <span class="ed-nav-dot"></span>Mi perfil
+           class="@navAttrs(isActive("/user/profile"))"
+           @if(isActive("/user/profile")){aria-current="page"}>
+          <span class="ed-nav-dot" aria-hidden="true"></span>Mi perfil
         </a>
         <a href="@routes.UserPublicationController.inbox()"
-           class="ed-nav-item @if(isActive("/user/messages")) {active}">
-          <span class="ed-nav-dot"></span>Mensajes
+           class="@navAttrs(isActive("/user/messages"))"
+           @if(isActive("/user/messages")){aria-current="page"}>
+          <span class="ed-nav-dot" aria-hidden="true"></span>Mensajes
         </a>
         <a href="@routes.UserPublicationController.notifications()"
-           class="ed-nav-item @if(isActive("/user/notifications")) {active}">
-          <span class="ed-nav-dot"></span>Notificaciones
+           class="@navAttrs(isActive("/user/notifications"))"
+           @if(isActive("/user/notifications")){aria-current="page"}>
+          <span class="ed-nav-dot" aria-hidden="true"></span>Notificaciones
         </a>
         <a href="@routes.UserPublicationController.bookmarks()"
-           class="ed-nav-item @if(isActive("/user/bookmarks")) {active}">
-          <span class="ed-nav-dot"></span>Guardados
+           class="@navAttrs(isActive("/user/bookmarks"))"
+           @if(isActive("/user/bookmarks")){aria-current="page"}>
+          <span class="ed-nav-dot" aria-hidden="true"></span>Guardados
         </a>
       </div>
 
@@ -86,23 +100,27 @@
         <div class="ed-nav-section">
           <span class="ed-nav-section-label">Administración</span>
           <a href="@routes.AdminController.dashboard()"
-             class="ed-nav-item @if(isActive("/admin")) {active}">
-            <span class="ed-nav-dot"></span>Panel Admin
+             class="@navAttrs(isActive("/admin"))"
+             @if(isActive("/admin")){aria-current="page"}>
+            <span class="ed-nav-dot" aria-hidden="true"></span>Panel Admin
           </a>
         </div>
       }
     }
   </nav>
 
+  @* Issue #16-D: switcher de tema (radiogroup ARIA). *@
+  @partials.themeToggle()
+
   <div class="ed-sidebar-auth">
     @if(userId.isDefined) {
       <div class="ed-user-block">
-        <span class="ed-user-avatar">@initials</span>
+        <span class="ed-user-avatar" aria-hidden="true">@initials</span>
         <div class="ed-user-info">
           <div class="ed-user-name">@userName</div>
           <div class="ed-user-role">@roleLabel</div>
         </div>
-        <a href="@routes.AuthController.logout()" class="ed-user-logout" title="Cerrar sesión">↪</a>
+        <a href="@routes.AuthController.logout()" class="ed-user-logout" title="Cerrar sesión" aria-label="Cerrar sesión">↪</a>
       </div>
     } else {
       <div class="ed-auth-cta">

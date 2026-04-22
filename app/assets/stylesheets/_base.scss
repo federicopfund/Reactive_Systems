@@ -1,5 +1,5 @@
 // ============================================
-// Base — Reset + variables CSS + body
+// Base — Reset + emisión de CSS vars semánticas + body
 // ============================================
 
 *, *::before, *::after {
@@ -8,59 +8,88 @@
   padding: 0;
 }
 
+// Helper: emite las CSS vars de un tema a partir del map del nivel 2.
+@mixin emit-theme($map) {
+  @each $name, $value in $map {
+    --#{$name}: #{$value};
+  }
+}
+
+// ── Tema por defecto: crema ──
 :root {
-  --ed-bg:            #{$ed-bg};
-  --ed-bg2:           #{$ed-bg2};
-  --ed-bg3:           #{$ed-bg3};
-  --ed-text:          #{$ed-text};
-  --ed-text-dim:      #{$ed-text-dim};
-  --ed-text-faint:    #{$ed-text-faint};
-  --ed-accent:        #{$ed-accent};
-  --ed-border:        #{$ed-border};
-  --ed-border-strong: #{$ed-border-strong};
+  @include emit-theme($theme-crema);
+
+  // Espaciado / tipografía expuestos como CSS vars (consumibles en HTML inline)
+  --space-1: #{$space-1};  --space-2: #{$space-2};
+  --space-3: #{$space-3};  --space-4: #{$space-4};
+  --space-5: #{$space-5};  --space-6: #{$space-6};
+  --space-7: #{$space-7};  --space-8: #{$space-8};
+  --space-9: #{$space-9};
 
   --font-display: #{inspect($font-display)};
   --font-body:    #{inspect($font-body)};
   --font-mono:    #{inspect($font-mono)};
+
+  // ── Aliases legacy (compat con componentes no migrados) ──
+  --ed-bg:            var(--color-surface);
+  --ed-bg2:           var(--color-surface-sunken);
+  --ed-bg3:           var(--color-surface-strong);
+  --ed-text:          var(--color-text-primary);
+  --ed-text-dim:      var(--color-text-secondary);
+  --ed-text-faint:    var(--color-text-tertiary);
+  --ed-accent:        var(--color-accent);
+  --ed-border:        var(--color-border-subtle);
+  --ed-border-strong: var(--color-border-strong);
 }
 
-// Tema negro (modo oscuro editorial)
-[data-theme="negro"] {
-  --ed-bg:            #09090f;
-  --ed-bg2:           #0f0f1a;
-  --ed-bg3:           #141420;
-  --ed-text:          #f2edd6;
-  --ed-text-dim:      #a09880;
-  --ed-text-faint:    #5a5448;
-  --ed-accent:        #d4ff00;
-  --ed-border:        rgba(242, 237, 214, 0.08);
-  --ed-border-strong: rgba(242, 237, 214, 0.15);
+// ── Tema noche editorial ──
+[data-theme="noche"] {
+  @include emit-theme($theme-noche);
 }
 
-// Tema azul
-[data-theme="azul"] {
-  --ed-bg:            #070d1a;
-  --ed-bg2:           #0b1224;
-  --ed-bg3:           #101830;
-  --ed-text:          #e8f0f8;
-  --ed-text-dim:      #8095b0;
-  --ed-text-faint:    #3a4a60;
-  --ed-accent:        #7ec8e3;
-  --ed-border:        rgba(232, 240, 248, 0.08);
-  --ed-border-strong: rgba(232, 240, 248, 0.15);
+// ── Tema auto: respeta preferencia del SO ──
+[data-theme="auto"] {
+  @media (prefers-color-scheme: dark) {
+    @include emit-theme($theme-noche);
+  }
 }
 
-// Alias: data-theme="crema" sigue funcionando aunque ya es el default
+// ── Alias de compatibilidad: `data-theme="crema"` (default explícito) ──
 [data-theme="crema"] {
-  --ed-bg:            #f5f0e8;
-  --ed-bg2:           #ede8de;
-  --ed-bg3:           #e0dbd0;
-  --ed-text:          #1a1612;
-  --ed-text-dim:      #6a6058;
-  --ed-text-faint:    #a09888;
-  --ed-accent:        #c1440e;
-  --ed-border:        rgba(26, 22, 18, 0.10);
-  --ed-border-strong: rgba(26, 22, 18, 0.18);
+  @include emit-theme($theme-crema);
+}
+
+// ── Temas legacy preservados (negro/azul) ──
+[data-theme="negro"] {
+  --color-surface:        #09090f;
+  --color-surface-raised: #0f0f1a;
+  --color-surface-sunken: #060609;
+  --color-surface-strong: #141420;
+  --color-text-primary:   #f2edd6;
+  --color-text-secondary: #c9c0a3;   // 9:1 sobre #09090f ✓
+  --color-text-tertiary:  #968e75;   // 4.6:1 sobre #09090f ✓
+  --color-border-subtle:  rgba(242, 237, 214, 0.10);
+  --color-border-strong:  rgba(242, 237, 214, 0.20);
+  --color-accent:         #d4ff00;
+  --color-accent-hover:   #b8db00;
+  --color-accent-soft:    rgba(212, 255, 0, 0.16);
+  --color-focus-ring:     #d4ff00;
+}
+
+[data-theme="azul"] {
+  --color-surface:        #070d1a;
+  --color-surface-raised: #0b1224;
+  --color-surface-sunken: #050912;
+  --color-surface-strong: #101830;
+  --color-text-primary:   #e8f0f8;
+  --color-text-secondary: #b8c4d6;
+  --color-text-tertiary:  #8095b0;
+  --color-border-subtle:  rgba(232, 240, 248, 0.10);
+  --color-border-strong:  rgba(232, 240, 248, 0.20);
+  --color-accent:         #7ec8e3;
+  --color-accent-hover:   #9bd6ed;
+  --color-accent-soft:    rgba(126, 200, 227, 0.18);
+  --color-focus-ring:     #7ec8e3;
 }
 
 html, body {
@@ -68,8 +97,8 @@ html, body {
 }
 
 body {
-  background: var(--ed-bg);
-  color: var(--ed-text);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
@@ -80,12 +109,13 @@ body {
 // Scrollbar fina
 ::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--ed-border-strong); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ed-text-faint); }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
 
 a {
   color: inherit;
   text-decoration: none;
+  @include focus-ring(3px);
 }
 
 img, svg {
@@ -96,14 +126,50 @@ img, svg {
 button {
   font-family: inherit;
   cursor: pointer;
+  @include focus-ring;
 }
 
 input, textarea, select {
   font-family: inherit;
+  @include focus-ring;
 }
 
 // Selección de texto
 ::selection {
-  background: var(--ed-accent);
-  color: var(--ed-bg);
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+
+// ── Issue #16-E: skip link para navegación por teclado ──
+.ed-skip-link {
+  position: absolute;
+  top: -100px;
+  left: $space-4;
+  z-index: $z-skip-link;
+  padding: $space-2 $space-4;
+  background: var(--color-accent);
+  color: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: $fs-small;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: $radius-md;
+
+  &:focus {
+    top: $space-4;
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+// ── Issue #16-E: motion safety global ──
+// Anula transiciones/animaciones para usuarios con `prefers-reduced-motion`.
+// Componentes pueden re-habilitar con `@include motion-safe { ... }`.
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
