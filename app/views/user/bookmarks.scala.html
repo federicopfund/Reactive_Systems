@@ -9,7 +9,14 @@
     </header>
 
     @if(publications.isEmpty) {
-      <p class="ed-dash-empty">Aún no has marcado ninguna pieza. Explora <a href="@routes.HomeController.publicaciones()">las publicaciones</a>.</p>
+      @partials.emptyState(
+        variant = "empty",
+        icon = "bookmark",
+        title = "Sin marcadores aún",
+        body = "Cuando guardes una publicación aparecerá aquí para que la retomes cuando quieras.",
+        ctaLabel = Some("Explorar publicaciones"),
+        ctaHref = Some(routes.HomeController.publicaciones().url)
+      )
     } else {
       <div class="ed-articles-grid">
         @publications.map { p =>

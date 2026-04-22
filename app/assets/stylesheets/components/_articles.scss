@@ -108,6 +108,7 @@
   color: var(--ed-text);
   margin-bottom: 1rem;
   padding-top: 0.5rem;
+  scroll-margin-top: 80px; // Issue #18-I: anchors editoriales precisos
 }
 
 .ed-article-h3 {
@@ -116,6 +117,7 @@
   font-weight: 700;
   color: var(--ed-text);
   margin: 1.25rem 0 0.5rem;
+  scroll-margin-top: 80px; // Issue #18-I
 }
 
 .ed-article-p {

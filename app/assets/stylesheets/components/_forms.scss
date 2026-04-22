@@ -52,7 +52,21 @@
 
   &--error input,
   &--error textarea,
-  &--error select { border-color: $color-danger; }
+  &--error select,
+  &--invalid input,
+  &--invalid textarea,
+  &--invalid select { border-color: $color-danger; }
+
+  // Issue #18-D: validación inline → estados visuales sutiles.
+  &--invalid input,
+  &--invalid textarea,
+  &--invalid select { border-left-width: 3px; }
+
+  &--valid input,
+  &--valid textarea,
+  &--valid select {
+    border-left: 3px solid var(--color-success);
+  }
 
   &__error {
     font-family: $font-mono;

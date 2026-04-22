@@ -39,7 +39,14 @@
     <section class="ed-dash-section">
       <h2 class="ed-dash-section__title">Mis publicaciones</h2>
       @if(userPublications.isEmpty) {
-        <p class="ed-dash-empty">Aún no has publicado nada. Empieza por una pieza.</p>
+        @partials.emptyState(
+          variant = "empty",
+          icon = "feather",
+          title = "Aún no has publicado nada",
+          body = "Tu primer artículo puede ser una nota corta, un caso de estudio o un patrón observado. Lo importante es empezar.",
+          ctaLabel = Some("Propuesta nueva"),
+          ctaHref = Some(routes.UserPublicationController.newPublicationForm().url)
+        )
       } else {
         <div class="ed-submission-list">
           @userPublications.take(8).map { p =>
@@ -59,7 +66,14 @@
     <section class="ed-dash-section">
       <h2 class="ed-dash-section__title">Marcadores</h2>
       @if(bookmarkedPublications.isEmpty) {
-        <p class="ed-dash-empty">Aún no has marcado ninguna publicación.</p>
+        @partials.emptyState(
+          variant = "empty",
+          icon = "bookmark",
+          title = "Sin marcadores aún",
+          body = "Cuando guardes una publicación aparecerá aquí para que la retomes cuando quieras.",
+          ctaLabel = Some("Explorar publicaciones"),
+          ctaHref = Some(routes.HomeController.publicaciones().url)
+        )
       } else {
         <div class="ed-submission-list">
           @bookmarkedPublications.take(6).map { p =>

@@ -50,16 +50,27 @@
   </div>
 
   @if(totalCount == 0) {
-    <div class="ed-pub-empty">
-      <div class="ed-pub-empty__title">Sin resultados</div>
-      <p>
-        @if(searchQuery.nonEmpty || searchCategory.isDefined) {
-          No encontramos publicaciones con esos filtros. Prueba con otros términos.
-        } else {
-          Aún no hay publicaciones en esta edición. Vuelve pronto.
-        }
-      </p>
-    </div>
+    @if(searchQuery.nonEmpty || searchCategory.isDefined) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "search",
+        title = "Sin resultados",
+        body = "No encontramos publicaciones con esos filtros. Prueba con otros términos o explora todas las publicaciones.",
+        ctaLabel = Some("Ver todas"),
+        ctaHref = Some(routes.HomeController.publicaciones().url)
+      )
+    } else {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "feather",
+        title = "Aún no hay piezas en esta edición",
+        body = "Sé de los primeros en proponer un artículo para la edición Nº 01 del Manifiesto Reactivo.",
+        ctaLabel = Some("Proponer publicación"),
+        ctaHref = Some(routes.UserPublicationController.dashboard().url),
+        secondaryLabel = Some("Suscribirme"),
+        secondaryHref = Some("/#contact")
+      )
+    }
   } else {
     <div class="ed-articles-grid">
 

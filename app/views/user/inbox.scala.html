@@ -44,16 +44,14 @@
     </nav>
 
     @if(msgs.isEmpty) {
-      <div class="ed-msg-empty">
-        <span class="ed-msg-empty__icon" aria-hidden="true">✉</span>
-        <div class="ed-msg-empty__title">
-          @if(tab == "sent") { Aún no has enviado mensajes }
-          else               { No tienes mensajes recibidos }
-        </div>
-        <div class="ed-msg-empty__sub">
-          Usa el botón <em>Escribir mensaje</em> para iniciar una conversación.
-        </div>
-      </div>
+      @partials.emptyState(
+        variant = "empty",
+        icon = "envelope",
+        title = if(tab == "sent") "Aún no has enviado mensajes" else "Tu bandeja está tranquila",
+        body = "Cuando intercambies mensajes con autores y editores aparecerán aquí. Empieza una conversación desde la página de un autor.",
+        ctaLabel = Some("Explorar autores"),
+        ctaHref = Some(routes.HomeController.publicaciones().url)
+      )
     } else {
       <ul class="ed-msg-list">
         @msgs.map { mu =>

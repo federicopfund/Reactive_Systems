@@ -9,7 +9,14 @@
     </header>
 
     @if(notifs.isEmpty) {
-      <p class="ed-dash-empty">No tienes notificaciones nuevas.</p>
+      @partials.emptyState(
+        variant = "empty",
+        icon = "bolt",
+        title = "Sin notificaciones",
+        body = "Aquí verás avisos cuando alguien comente tu publicación, te envíe un mensaje o cambien el estado editorial de una pieza.",
+        ctaLabel = Some("Ver mis publicaciones"),
+        ctaHref = Some(routes.UserPublicationController.dashboard().url)
+      )
     } else {
       <ul class="ed-notif-list">
         @notifs.map { n =>

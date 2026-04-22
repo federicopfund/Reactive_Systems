@@ -1,0 +1,47 @@
+// ============================================
+// print.scss — Bundle de impresión (Issue #18-G)
+// Cargado desde main.scala.html con media="print" para no bloquear el render.
+// ============================================
+
+@media print {
+  *, *::before, *::after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .ed-sidebar,
+  .ed-mobile-topbar,
+  .ed-skip-link,
+  .ed-toast-stack,
+  .ed-drawer-overlay,
+  .ed-pub-toolbar,
+  .ed-page-footer,
+  .ed-sidebar__rail-toggle,
+  .ed-theme-toggle,
+  .ed-cta-actions,
+  .ed-search-wrap,
+  nav.ed-cat-row { display: none !important; }
+
+  .ed-shell { display: block !important; height: auto !important; }
+  .ed-main  { overflow: visible !important; }
+
+  a { color: #000 !important; text-decoration: underline; }
+  a[href]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555 !important; }
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after { content: ""; }
+
+  h1, h2, h3 { page-break-after: avoid; }
+  img, table, pre { page-break-inside: avoid; }
+
+  .ed-article-card,
+  .ed-pub-empty,
+  .ed-section { border: none !important; padding: 0 0 1rem !important; }
+}
