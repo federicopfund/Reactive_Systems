@@ -83,103 +83,120 @@ reactive-manifiesto (ActorSystem)
 
 Cada guardian aplica `SupervisorStrategy.restartWithBackoff(minBackoff = 200ms, maxBackoff = 10s, randomFactor = 0.2)` sobre sus hijos.
 
+### Jerarquía de supervisión
+
+Vista centrada en el árbol de actores: **`RootGuardian` → 3 guardians → 9 agentes**. Las flechas sólidas representan relaciones de **supervisión** (padre → hijo, con backoff supervision).
+
 ```mermaid
 graph TB
+    AS(["🧬 ActorSystem<br/><b>reactive-manifiesto</b>"])
+    RG{{"🛡️ RootGuardian<br/><i>spawn order: Domain → CrossCut → Infra</i>"}}
+
+    DG{{"🛡️ DomainGuardian"}}
+    CG{{"🛡️ CrossCutGuardian"}}
+    IG{{"🛡️ InfraGuardian"}}
+
+    CE["🔵 ContactEngine<br/><sub>Ask</sub>"]
+    ME["🔵 MessageEngine<br/><sub>Ask</sub>"]
+    PE["🟢 PublicationEngine<br/><sub>Ask</sub>"]
+    GE["🟢 GamificationEngine<br/><sub>Tell</sub>"]
+
+    NE["🟢 NotificationEngine<br/><sub>Tell · ⚡ Circuit Breaker</sub>"]
+    MOE["🟢 ModerationEngine<br/><sub>Ask</sub>"]
+    AE["🟢 AnalyticsEngine<br/><sub>Tell · in-memory</sub>"]
+
+    EB["🟡 EventBusEngine<br/><sub>DistributedPubSubMediator</sub>"]
+    PL["🟡 PipelineEngine<br/><sub>Saga Orchestrator</sub>"]
+
+    AS --> RG
+    RG --> DG
+    RG --> CG
+    RG --> IG
+
+    DG --> CE
+    DG --> ME
+    DG --> PE
+    DG --> GE
+
+    CG --> NE
+    CG --> MOE
+    CG --> AE
+
+    IG --> EB
+    IG --> PL
+
+    PL -. "Ask" .-> MOE
+    PL -. "Ask" .-> PE
+    PL -. "Tell" .-> NE
+    PL -. "Tell" .-> GE
+    PL -. "Tell" .-> AE
+    PL -. "publish" .-> EB
+
+    classDef system fill:#553c9a,stroke:#6b46c1,color:#fff,stroke-width:2px
+    classDef guardian fill:#1a365d,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef domain fill:#1e3a8a,stroke:#3b82f6,color:#fff
+    classDef crosscut fill:#1c4532,stroke:#276749,color:#fff
+    classDef infra fill:#7c2d12,stroke:#c2410c,color:#fff
+
+    class AS system
+    class RG,DG,CG,IG guardian
+    class CE,ME,PE,GE domain
+    class NE,MOE,AE crosscut
+    class EB,PL infra
+```
+
+> Líneas sólidas = supervisión (padre → hijo) · Líneas punteadas = mensajes lógicos del Saga (Ask/Tell/publish).
+
+### Flujo de invocación HTTP → Adapter → Agente
+
+Visión complementaria: cómo entra una request HTTP al sistema reactivo. Los `Reactive*Adapter` resuelven el `ActorRef` del agente correspondiente vía Ask al guardián padre, **manteniendo la jerarquía** anterior.
+
+```mermaid
+graph LR
     subgraph Clients["🌐 Clientes"]
-        B1["Usuario autenticado"]
+        B1["Usuario"]
         B2["Visitante"]
-        B3["Administrador"]
+        B3["Admin"]
     end
 
     subgraph Controllers["Controllers (Play)"]
         HC["HomeController"]
         UPC["UserPublicationController"]
         AC["AdminController"]
-        AUC["AuthController"]
+        HE["HealthController"]
     end
 
-    subgraph Adapters["Reactive Adapters (Ask / Tell)"]
-        RCA["ReactiveContactAdapter"]
-        RMA["ReactiveMessageAdapter"]
-        RPA["ReactivePublicationAdapter"]
-        RGA["ReactiveGamificationAdapter"]
-        RNA["ReactiveNotificationAdapter"]
-        RMOA["ReactiveModerationAdapter"]
-        RAA["ReactiveAnalyticsAdapter"]
-        REBA["ReactiveEventBusAdapter"]
-        RPLA["ReactivePipelineAdapter"]
+    subgraph Adapters["9 Reactive Adapters"]
+        ADP[["ReactiveContact / Message<br/>Publication / Gamification<br/>Notification / Moderation<br/>Analytics / EventBus / Pipeline"]]
     end
 
-    subgraph ActorSystem["reactive-manifiesto (1 ActorSystem · RootGuardian)"]
-        subgraph DG["DomainGuardian"]
-            CE["🔵 ContactEngine"]
-            ME["🔵 MessageEngine"]
-            PE["🟢 PublicationEngine"]
-            GE["🟢 GamificationEngine"]
-        end
-        subgraph CG["CrossCutGuardian"]
-            NE["🟢 NotificationEngine ⚡CB"]
-            MOE["🟢 ModerationEngine"]
-            AE["🟢 AnalyticsEngine"]
-        end
-        subgraph IG["InfraGuardian"]
-            EB["🟡 EventBusEngine · Cluster Pub/Sub"]
-            PL["🟡 PipelineEngine · Saga"]
-        end
+    subgraph Engines["9 Engines (Akka Typed)<br/><i>supervisados por Domain/CrossCut/Infra Guardian</i>"]
+        ENG[["ContactEngine · MessageEngine<br/>PublicationEngine · GamificationEngine<br/>NotificationEngine ⚡ · ModerationEngine<br/>AnalyticsEngine · EventBusEngine · PipelineEngine"]]
     end
 
-    subgraph Repositories["Repositories (Slick async)"]
-        REPOS[("13 repositorios")]
-    end
-
-    subgraph DB["PostgreSQL"]
-        DBIcon[("22 tablas")]
+    subgraph Persistence["Persistencia"]
+        REPOS[("13 repositorios Slick")]
+        DB[("🗄️ PostgreSQL · 22 tablas")]
     end
 
     B1 --> UPC
     B2 --> HC
     B3 --> AC
-    B1 --> AUC
+    B1 --> HE
 
-    HC --> RCA
-    HC --> RAA
-    UPC --> RMA
-    UPC --> RMOA
-    UPC --> RGA
-    UPC --> RNA
-    AC --> RPA
-    AC --> RNA
-    AUC --> RAA
+    HC --> ADP
+    UPC --> ADP
+    AC --> ADP
+    HE -. "Ask GetHealth" .-> Engines
 
-    RCA --> CE
-    RMA --> ME
-    RPA --> PE
-    RGA --> GE
-    RNA --> NE
-    RMOA --> MOE
-    RAA --> AE
-    REBA --> EB
-    RPLA --> PL
+    ADP --> ENG
+    ENG --> REPOS
+    REPOS --> DB
 
-    PL == "Ask" ==> MOE
-    PL == "Ask" ==> PE
-    PL == "Tell" ==> NE
-    PL == "Tell" ==> GE
-    PL == "Tell" ==> AE
-    PL -. "publish" .-> EB
-
-    CE --> REPOS
-    ME --> REPOS
-    PE --> REPOS
-    GE --> REPOS
-    NE --> REPOS
-    REPOS --> DBIcon
-
-    style ActorSystem fill:#1a365d,stroke:#2b6cb0,color:#fff
-    style Adapters fill:#2c5282,stroke:#3182ce,color:#fff
     style Controllers fill:#2d3748,stroke:#4a5568,color:#fff
-    style Repositories fill:#1c4532,stroke:#276749,color:#fff
-    style DB fill:#553c9a,stroke:#6b46c1,color:#fff
+    style Adapters fill:#2c5282,stroke:#3182ce,color:#fff
+    style Engines fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style Persistence fill:#1c4532,stroke:#276749,color:#fff
 ```
 
 ### Los 9 agentes (agrupados por guardian)
