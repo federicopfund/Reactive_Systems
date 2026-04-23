@@ -1,0 +1,17 @@
+@(e: models.CommunityEvent)
+
+@*
+  Bloque de fecha grande (dia + mes) — accent visual de la tarjeta.
+*@
+
+@monthLabel = @{
+  e.localStart.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es")).toUpperCase
+}
+
+<div class="ed-event-date-block" aria-hidden="true">
+  <span class="ed-event-date-block__month">@monthLabel</span>
+  <span class="ed-event-date-block__day">@e.localStart.getDayOfMonth</span>
+  <span class="ed-event-date-block__weekday">@{
+    e.localStart.getDayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es"))
+  }</span>
+</div>

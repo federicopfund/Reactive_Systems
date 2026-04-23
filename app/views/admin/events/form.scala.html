@@ -1,0 +1,173 @@
+@(existing: Option[models.CommunityEvent],
+  formErrors: Map[String, String],
+  formData: Map[String, String])(implicit request: RequestHeader)
+
+@import models.EventEnums
+
+@isEdit = @{ existing.isDefined }
+@actionUrl = @{
+  existing.flatMap(_.id).map(id => routes.AdminEventController.update(id))
+    .getOrElse(routes.AdminEventController.create())
+}
+
+@err(field: String) = @{
+  formErrors.get(field).map { msg =>
+    play.twirl.api.Html(s"""<small class="ed-bo__field-error">$msg</small>""")
+  }.getOrElse(play.twirl.api.Html(""))
+}
+
+@v(field: String) = @{ formData.getOrElse(field, "") }
+
+@admin.adminLayout(if(isEdit) "Editar evento" else "Nuevo evento", "events") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">@if(isEdit){Editar evento} else {Nuevo evento}</h1>
+      <p class="ed-bo__page-lead">Los campos marcados con * son obligatorios.</p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-ghost" href="@routes.AdminEventController.list(None, 0)">Volver</a>
+    </div>
+  </div>
+
+  @if(formErrors.nonEmpty) {
+    <div class="ed-flash ed-flash--error">Revisa los campos marcados.</div>
+  }
+
+  <form method="POST" action="@actionUrl" class="ed-bo__form ed-event-form">
+    @helper.CSRF.formField
+
+    <fieldset class="ed-event-form__group">
+      <legend>Identidad</legend>
+
+      <div class="ed-bo__field">
+        <label for="title">Titulo *</label>
+        <input id="title" name="title" type="text" value="@v("title")" required>
+        @err("title")
+      </div>
+
+      <div class="ed-bo__field">
+        <label for="slug">Slug *</label>
+        <input id="slug" name="slug" type="text" value="@v("slug")" pattern="^[a-z0-9-]+$" required>
+        <small class="ed-bo__field-hint">Solo a-z, 0-9 y guiones.</small>
+        @err("slug")
+      </div>
+
+      <div class="ed-bo__field">
+        <label for="summary">Resumen</label>
+        <textarea id="summary" name="summary" rows="2">@v("summary")</textarea>
+      </div>
+
+      <div class="ed-bo__field">
+        <label for="descriptionHtml">Descripcion (HTML) *</label>
+        <textarea id="descriptionHtml" name="descriptionHtml" rows="10" required>@v("descriptionHtml")</textarea>
+        @err("descriptionHtml")
+      </div>
+    </fieldset>
+
+    <fieldset class="ed-event-form__group">
+      <legend>Clasificacion</legend>
+
+      <div class="ed-bo__field-row">
+        <div class="ed-bo__field">
+          <label for="eventType">Tipo *</label>
+          <select id="eventType" name="eventType">
+            @for(t <- EventEnums.EventType.all) {
+              <option value="@t" @if(v("eventType") == t){selected}>@EventEnums.EventType.label(t)</option>
+            }
+          </select>
+        </div>
+
+        <div class="ed-bo__field">
+          <label for="modality">Modalidad *</label>
+          <select id="modality" name="modality">
+            @for(m <- EventEnums.Modality.all) {
+              <option value="@m" @if(v("modality") == m){selected}>@EventEnums.Modality.label(m)</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="ed-bo__field">
+        <label for="tagsPipe">Tags (separados por |)</label>
+        <input id="tagsPipe" name="tagsPipe" type="text" value="@v("tagsPipe")" placeholder="akka|streams|persistence">
+      </div>
+
+      <div class="ed-bo__field-row">
+        <div class="ed-bo__field">
+          <label for="accentColor">Color de acento (token o HEX)</label>
+          <input id="accentColor" name="accentColor" type="text" value="@v("accentColor")" placeholder="responsive | #FF6B35">
+        </div>
+        <div class="ed-bo__field">
+          <label for="coverImage">URL de portada</label>
+          <input id="coverImage" name="coverImage" type="url" value="@v("coverImage")">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="ed-event-form__group">
+      <legend>Cuando</legend>
+
+      <div class="ed-bo__field-row">
+        <div class="ed-bo__field">
+          <label for="startsAtLocal">Inicio (hora local) *</label>
+          <input id="startsAtLocal" name="startsAtLocal" type="datetime-local" value="@v("startsAtLocal")" required>
+          @err("startsAtLocal")
+        </div>
+        <div class="ed-bo__field">
+          <label for="endsAtLocal">Fin (hora local) *</label>
+          <input id="endsAtLocal" name="endsAtLocal" type="datetime-local" value="@v("endsAtLocal")" required>
+          @err("endsAtLocal")
+        </div>
+      </div>
+
+      <div class="ed-bo__field">
+        <label for="timezone">Zona horaria</label>
+        <input id="timezone" name="timezone" type="text" value="@v("timezone")" placeholder="America/Argentina/Cordoba">
+      </div>
+    </fieldset>
+
+    <fieldset class="ed-event-form__group">
+      <legend>Donde</legend>
+
+      <div class="ed-bo__field-row">
+        <div class="ed-bo__field">
+          <label for="locationName">Lugar / plataforma</label>
+          <input id="locationName" name="locationName" type="text" value="@v("locationName")" placeholder="Zoom · CCEC · YouTube Live">
+        </div>
+        <div class="ed-bo__field">
+          <label for="capacity">Cupo</label>
+          <input id="capacity" name="capacity" type="number" min="0" value="@v("capacity")">
+          @err("capacity")
+        </div>
+      </div>
+
+      <div class="ed-bo__field">
+        <label for="locationUrl">URL del evento</label>
+        <input id="locationUrl" name="locationUrl" type="url" value="@v("locationUrl")">
+      </div>
+
+      <div class="ed-bo__field">
+        <label for="locationDetail">Detalle (sala / direccion)</label>
+        <input id="locationDetail" name="locationDetail" type="text" value="@v("locationDetail")">
+      </div>
+    </fieldset>
+
+    <fieldset class="ed-event-form__group">
+      <legend>Oradores (JSON)</legend>
+      <p class="ed-bo__field-hint">
+        Formato: <code>[{"name":"Federico","role":"Backend","bio":"..."}, ...]</code>
+      </p>
+      <div class="ed-bo__field">
+        <label for="speakersJson">JSON de oradores</label>
+        <textarea id="speakersJson" name="speakersJson" rows="6">@v("speakersJson")</textarea>
+        @err("speakersJson")
+      </div>
+    </fieldset>
+
+    <div class="ed-bo__form-actions">
+      <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios} else {Crear borrador}</button>
+      <a class="ed-btn-ghost" href="@routes.AdminEventController.list(None, 0)">Cancelar</a>
+    </div>
+  </form>
+}

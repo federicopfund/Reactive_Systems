@@ -1,0 +1,53 @@
+@(grouped: Seq[(String, Seq[models.CommunityEvent])],
+  userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
+
+@*
+  Vista cronograma — listado vertical agrupado por mes.
+*@
+
+@labelOf(monthKey: String) = @{
+  val parts = monthKey.split("-")
+  if (parts.length == 2) {
+    val ym = java.time.YearMonth.of(parts(0).toInt, parts(1).toInt)
+    ym.getMonth.getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es")).capitalize + " " + ym.getYear
+  } else monthKey
+}
+
+@main("Cronograma de eventos") {
+
+  <section class="ed-events-timeline">
+    <header class="ed-events-timeline__header">
+      <div class="ed-events-timeline__eyebrow">Agenda editorial</div>
+      <h1 class="ed-events-timeline__title">Cronograma <em>completo</em></h1>
+      <p class="ed-events-timeline__lead">Todos los eventos publicados, ordenados cronologicamente.</p>
+      <div class="ed-events-timeline__actions">
+        <a class="ed-btn-secondary" href="@routes.EventController.index()">Volver al mes</a>
+        <a class="ed-btn-primary" href="@routes.EventController.calendarIcs()" download>Suscribirse (.ics)</a>
+      </div>
+    </header>
+
+    @if(grouped.isEmpty) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "calendar",
+        title = "Sin eventos publicados",
+        body = "Todavia no hay eventos en el cronograma."
+      )
+    } else {
+      <ol class="ed-timeline">
+        @grouped.map { case (key, list) =>
+          <li class="ed-timeline__group">
+            <h2 class="ed-timeline__group-label">@labelOf(key)</h2>
+            <ul class="ed-timeline__events">
+              @list.map { e =>
+                <li class="ed-timeline__event">
+                  @partials.eventCard(e)
+                </li>
+              }
+            </ul>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+}

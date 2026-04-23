@@ -176,6 +176,61 @@ de la comunidad</div>
     </div>
   </section>
 
+  @* ── PROXIMOS EVENTOS (Issue #19) ── *@
+  <section class="ed-section ed-upcoming-events">
+    <div class="ed-section-header">
+      <div class="ed-section-label">II.5 — Agenda editorial</div>
+      <a href="@routes.EventController.index()" class="ed-recent-link">Ver agenda completa →</a>
+    </div>
+    <div class="ed-events-mini-list ed-events-mini-list--grid" data-upcoming-events>
+      <p class="ed-muted" data-upcoming-loading>Cargando proximos eventos...</p>
+    </div>
+  </section>
+  <script>
+    (function () {
+      const root = document.querySelector('[data-upcoming-events]');
+      if (!root) return;
+      const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+      fetch('/api/eventos/upcoming?limit=6', { headers: { 'Accept': 'application/json' } })
+        .then(r => r.ok ? r.json() : { events: [] })
+        .then(data => {
+          const events = (data && data.events) || [];
+          if (events.length === 0) {
+            root.innerHTML = '<p class="ed-muted">No hay eventos en agenda. <a href="/eventos">Ver cronograma</a>.</p>';
+            return;
+          }
+          root.innerHTML = events.map(e => {
+            const d = new Date(e.startsAt);
+            const day = d.getDate();
+            const month = d.toLocaleString('es', { month: 'short' }).toUpperCase();
+            const weekday = d.toLocaleString('es', { weekday: 'short' }).toUpperCase();
+            const time = d.toLocaleString('es', { hour: '2-digit', minute: '2-digit' });
+            const accent = escapeHtml(e.accent || 'accent');
+            const url = escapeHtml(e.url || '#');
+            const type = escapeHtml(e.type || '');
+            const title = escapeHtml(e.title || '');
+            const modality = escapeHtml(e.modality || '');
+            return `<a class="ed-event-mini ed-event-mini--accent-${accent}" href="${url}" aria-label="${title} — ${day} ${month} ${time}">
+              <div class="ed-event-mini__date" aria-hidden="true">
+                <span class="ed-event-mini__weekday">${weekday}</span>
+                <span class="ed-event-mini__day">${day}</span>
+                <span class="ed-event-mini__month">${month}</span>
+              </div>
+              <div class="ed-event-mini__body">
+                <div class="ed-event-mini__type">${type}${modality ? ` · ${modality}` : ''}</div>
+                <div class="ed-event-mini__title">${title}</div>
+                <div class="ed-event-mini__time"><span class="ed-event-mini__time-icon" aria-hidden="true">◷</span> ${time}</div>
+              </div>
+              <span class="ed-event-mini__cta" aria-hidden="true">→</span>
+            </a>`;
+          }).join('');
+        })
+        .catch(() => { root.innerHTML = '<p class="ed-muted">No pudimos cargar la agenda.</p>'; });
+    })();
+  </script>
+
   @* ── RECIENTES ── *@
   @if(communityPublications.nonEmpty) {
     <section class="ed-recents">

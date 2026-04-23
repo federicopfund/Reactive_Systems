@@ -1,0 +1,44 @@
+@(events: Seq[models.CommunityEvent],
+  page: Int,
+  pageSize: Int,
+  userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
+
+@main("Eventos pasados") {
+
+  <section class="ed-events-agenda">
+    <header class="ed-events-agenda__header">
+      <div>
+        <div class="ed-events-agenda__eyebrow">Archivo de la comunidad</div>
+        <h1 class="ed-events-agenda__title">Eventos <em>pasados</em></h1>
+        <p class="ed-events-agenda__lead">Lo que ya paso, ordenado por fecha descendente.</p>
+      </div>
+      <div class="ed-events-agenda__actions">
+        <a class="ed-btn-secondary" href="@routes.EventController.index()">Proximos</a>
+        <a class="ed-btn-secondary" href="@routes.EventController.timeline()">Cronograma</a>
+      </div>
+    </header>
+
+    @if(events.isEmpty) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "calendar",
+        title = "No hay eventos pasados",
+        body = "Cuando termine el primer evento, aparecera aqui."
+      )
+    } else {
+      <div class="ed-events-grid">
+        @events.map { e => @partials.eventCard(e) }
+      </div>
+
+      <nav class="ed-pagination" aria-label="Paginacion">
+        @if(page > 0) {
+          <a class="ed-btn-ghost" href="@routes.EventController.past(page - 1)">‹ Anterior</a>
+        }
+        <span class="ed-pagination__current">Pagina @{page + 1}</span>
+        @if(events.size == pageSize) {
+          <a class="ed-btn-ghost" href="@routes.EventController.past(page + 1)">Siguiente ›</a>
+        }
+      </nav>
+    }
+  </section>
+}

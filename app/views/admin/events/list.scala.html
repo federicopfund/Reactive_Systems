@@ -1,0 +1,86 @@
+@(events: Seq[models.CommunityEvent],
+  statusFilter: Option[String],
+  page: Int,
+  pageSize: Int,
+  total: Int,
+  countsByStatus: Map[String, Int])(implicit request: RequestHeader)
+
+@import models.EventEnums
+
+@admin.adminLayout("Eventos", "events") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">Eventos de la comunidad</h1>
+      <p class="ed-bo__page-lead">@total evento(s) en total. Gestiona la agenda editorial.</p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-primary" href="@routes.AdminEventController.newForm()">+ Nuevo evento</a>
+    </div>
+  </div>
+
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+  @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
+
+  <nav class="ed-bo__filters" aria-label="Filtro por estado">
+    <a class="ed-bo__chip @if(statusFilter.isEmpty){is-active}" href="@routes.AdminEventController.list(None, 0)">
+      Todos (@total)
+    </a>
+    @for(s <- EventEnums.EventStatus.all) {
+      <a class="ed-bo__chip @if(statusFilter.contains(s)){is-active}" href="@routes.AdminEventController.list(Some(s), 0)">
+        @EventEnums.EventStatus.label(s) (@countsByStatus.getOrElse(s, 0))
+      </a>
+    }
+  </nav>
+
+  @if(events.isEmpty) {
+    <div class="ed-bo__empty">
+      <h2>Sin eventos</h2>
+      <p>Crea el primer evento de la agenda editorial.</p>
+    </div>
+  } else {
+    <table class="ed-bo__table">
+      <thead>
+        <tr>
+          <th>Titulo</th>
+          <th>Tipo</th>
+          <th>Modalidad</th>
+          <th>Inicio</th>
+          <th>Estado</th>
+          <th>Vistas</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @events.map { e =>
+          <tr>
+            <td>
+              <a href="@routes.AdminEventController.view(e.id.get)"><strong>@e.title</strong></a>
+              <div class="ed-bo__cell-sub"><code>@e.slug</code></div>
+            </td>
+            <td>@EventEnums.EventType.label(e.eventType)</td>
+            <td>@EventEnums.Modality.label(e.modality)</td>
+            <td>@e.localStart.toString.replace("T", " ")</td>
+            <td><span class="ed-bo__badge ed-bo__badge--@e.status">@EventEnums.EventStatus.label(e.status)</span></td>
+            <td>@e.viewCount</td>
+            <td class="ed-bo__cell-actions">
+              <a href="@routes.AdminEventController.view(e.id.get)">Ver</a> ·
+              <a href="@routes.AdminEventController.editForm(e.id.get)">Editar</a> ·
+              <a href="@routes.AdminEventController.attendees(e.id.get)">Asistentes</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <nav class="ed-pagination">
+      @if(page > 0) {
+        <a class="ed-btn-ghost" href="@routes.AdminEventController.list(statusFilter, page - 1)">‹ Anterior</a>
+      }
+      <span>Pagina @{page + 1}</span>
+      @if(events.size == pageSize) {
+        <a class="ed-btn-ghost" href="@routes.AdminEventController.list(statusFilter, page + 1)">Siguiente ›</a>
+      }
+    </nav>
+  }
+}

@@ -1,0 +1,16 @@
+@(s: models.EventSpeaker)
+
+<div class="ed-speaker-card">
+  <div class="ed-speaker-card__avatar" aria-hidden="true">
+    @s.avatar.map { url =>
+      <img src="@url" alt="@s.name" loading="lazy">
+    }.getOrElse {
+      <span class="ed-speaker-card__initials">@s.initials</span>
+    }
+  </div>
+  <div class="ed-speaker-card__body">
+    <div class="ed-speaker-card__name">@s.name</div>
+    @if(s.role.nonEmpty) { <div class="ed-speaker-card__role">@s.role</div> }
+    @if(s.bio.nonEmpty)  { <p class="ed-speaker-card__bio">@s.bio</p> }
+  </div>
+</div>

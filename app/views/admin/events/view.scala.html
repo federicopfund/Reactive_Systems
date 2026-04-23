@@ -1,0 +1,99 @@
+@(e: models.CommunityEvent, rsvpCounts: Map[String, Int])(implicit request: RequestHeader)
+
+@import models.EventEnums
+
+@admin.adminLayout(s"Evento: ${e.title}", "events") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <div class="ed-bo__breadcrumb">
+        <a href="@routes.AdminEventController.list(None, 0)">Eventos</a> /
+        <span>@e.title</span>
+      </div>
+      <h1 class="ed-bo__page-title">@e.title</h1>
+      <p class="ed-bo__page-lead">
+        <code>@e.slug</code> · <span class="ed-bo__badge ed-bo__badge--@e.status">@EventEnums.EventStatus.label(e.status)</span>
+      </p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-secondary" href="@routes.EventController.detail(e.slug)" target="_blank" rel="noopener">Ver pieza publica ↗</a>
+      <a class="ed-btn-secondary" href="@routes.AdminEventController.editForm(e.id.get)">Editar</a>
+    </div>
+  </div>
+
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+  @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
+
+  <div class="ed-bo__cards">
+    <article class="ed-bo__card">
+      <h2>Datos clave</h2>
+      <dl class="ed-bo__dl">
+        <dt>Tipo</dt><dd>@EventEnums.EventType.label(e.eventType)</dd>
+        <dt>Modalidad</dt><dd>@EventEnums.Modality.label(e.modality)</dd>
+        <dt>Inicio</dt><dd>@e.localStart.toString.replace("T", " ") (@e.timezone)</dd>
+        <dt>Fin</dt><dd>@e.localEnd.toString.replace("T", " ")</dd>
+        <dt>Duracion</dt><dd>@e.durationMinutes min</dd>
+        <dt>Cupo</dt><dd>@e.capacity.map(_.toString).getOrElse("Sin limite")</dd>
+        <dt>Vistas</dt><dd>@e.viewCount</dd>
+      </dl>
+    </article>
+
+    <article class="ed-bo__card">
+      <h2>RSVP</h2>
+      <ul class="ed-bo__metric-list">
+        @for(s <- EventEnums.RsvpStatus.all) {
+          <li><strong>@rsvpCounts.getOrElse(s, 0)</strong> @EventEnums.RsvpStatus.label(s)</li>
+        }
+      </ul>
+      <a class="ed-btn-secondary" href="@routes.AdminEventController.attendees(e.id.get)">Ver asistentes</a>
+    </article>
+
+    <article class="ed-bo__card">
+      <h2>Cambiar estado</h2>
+      @{
+        val nexts = EventEnums.EventStatus.allowedNext(e.status)
+        if (nexts.isEmpty) play.twirl.api.Html("<p>Estado final.</p>")
+        else play.twirl.api.Html("")
+      }
+      @for(next <- EventEnums.EventStatus.allowedNext(e.status).toSeq.sorted) {
+        <form method="POST" action="@routes.AdminEventController.changeStatus(e.id.get)" class="ed-bo__inline-form">
+          @helper.CSRF.formField
+          <input type="hidden" name="status" value="@next">
+          @if(next == EventEnums.EventStatus.Cancelled) {
+            <input type="text" name="reason" placeholder="Motivo (opcional)">
+          }
+          <button type="submit" class="ed-btn-secondary">→ @EventEnums.EventStatus.label(next)</button>
+        </form>
+      }
+
+      @if(e.status == EventEnums.EventStatus.Draft) {
+        <hr>
+        <form method="POST" action="@routes.AdminEventController.delete(e.id.get)" onsubmit="return confirm('¿Eliminar borrador? Esta accion no se puede deshacer.');">
+          @helper.CSRF.formField
+          <button type="submit" class="ed-btn-danger">Eliminar borrador</button>
+        </form>
+      }
+    </article>
+  </div>
+
+  <article class="ed-bo__card">
+    <h2>Descripcion</h2>
+    <div class="ed-event-description">@Html(e.descriptionHtml)</div>
+  </article>
+
+  @if(e.tags.nonEmpty) {
+    <article class="ed-bo__card">
+      <h2>Tags</h2>
+      @e.tags.map { t => <span class="ed-event-tag">#@t</span> }
+    </article>
+  }
+
+  @if(e.speakers.nonEmpty) {
+    <article class="ed-bo__card">
+      <h2>Oradores</h2>
+      <div class="ed-speaker-grid">
+        @e.speakers.map { s => @partials.speakerCard(s) }
+      </div>
+    </article>
+  }
+}

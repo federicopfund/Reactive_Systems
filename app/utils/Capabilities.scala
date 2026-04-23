@@ -34,13 +34,18 @@ object Capabilities {
     case object StatsView              extends Cap { val key = "stats.view";               val label = "Ver estadísticas" }
     case object DashboardView          extends Cap { val key = "dashboard.view";           val label = "Acceder al backoffice" }
 
+    case object EventsView             extends Cap { val key = "events.view";              val label = "Ver agenda editorial" }
+    case object EventsManage           extends Cap { val key = "events.manage";            val label = "Crear y editar eventos" }
+    case object EventsPublish          extends Cap { val key = "events.publish";           val label = "Publicar / cancelar eventos" }
+
     val all: Seq[Cap] = Seq(
       GovernanceManageAdmins,
       PublicationsReview, PublicationsDelete, PublicationsEditNotes,
       PublicationsFeedback, PublicationsExport,
       ContactsView, ContactsEditStatus, ContactsDelete,
       NewsletterView, NewsletterManage,
-      StatsView, DashboardView
+      StatsView, DashboardView,
+      EventsView, EventsManage, EventsPublish
     )
   }
 }
@@ -76,7 +81,8 @@ object RolePolicy {
         DashboardView, StatsView,
         PublicationsReview, PublicationsDelete, PublicationsEditNotes,
         PublicationsFeedback, PublicationsExport,
-        ContactsView
+        ContactsView,
+        EventsView, EventsManage, EventsPublish
       )
     ),
     RoleDef(
@@ -85,7 +91,8 @@ object RolePolicy {
       description = "Curación de la cola de revisión. Aprueba, rechaza y deja feedback técnico. NO puede eliminar.",
       caps = Set(
         DashboardView, StatsView,
-        PublicationsReview, PublicationsEditNotes, PublicationsFeedback, PublicationsExport
+        PublicationsReview, PublicationsEditNotes, PublicationsFeedback, PublicationsExport,
+        EventsView, EventsManage
       )
     ),
     RoleDef(
@@ -94,7 +101,8 @@ object RolePolicy {
       description = "Bandeja de contactos: ver, cambiar estado y eliminar. Sin acceso a publicaciones ni newsletter.",
       caps = Set(
         DashboardView, StatsView,
-        ContactsView, ContactsEditStatus, ContactsDelete
+        ContactsView, ContactsEditStatus, ContactsDelete,
+        EventsView
       )
     ),
     RoleDef(
@@ -112,7 +120,8 @@ object RolePolicy {
       description = "Solo lectura: dashboard, estadísticas, contactos, newsletter y exportes. Cero acciones destructivas.",
       caps = Set(
         DashboardView, StatsView,
-        ContactsView, NewsletterView, PublicationsExport
+        ContactsView, NewsletterView, PublicationsExport,
+        EventsView
       )
     )
   )

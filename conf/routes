@@ -153,5 +153,34 @@ POST    /admin/admins/:id/role      controllers.AdminController.changeAdminRole(
 # API
 GET     /api/admin/publications     controllers.AdminController.listAllPublicationsJson()
 
+# ============================================
+# COMMUNITY EVENTS — Issue #19 (Calendario Editorial)
+# ============================================
+
+# Public agenda
+GET     /eventos                    controllers.EventController.index()
+GET     /eventos/mes/:ym            controllers.EventController.month(ym: String)
+GET     /eventos/timeline           controllers.EventController.timeline()
+GET     /eventos/pasados            controllers.EventController.past(page: Int ?= 0)
+GET     /eventos/calendar.ics       controllers.EventController.calendarIcs()
+GET     /api/eventos/upcoming       controllers.EventController.upcomingJson(limit: Int ?= 5)
+GET     /api/eventos/calendario     controllers.EventController.calendarJson(from: Option[String] ?= None, to: Option[String] ?= None)
+GET     /eventos/:slug              controllers.EventController.detail(slug: String)
+GET     /eventos/:slug/ics          controllers.EventController.singleIcs(slug: String)
+POST    /eventos/:slug/rsvp         controllers.EventController.rsvp(slug: String)
+POST    /eventos/:slug/recordatorio controllers.EventController.toggleReminder(slug: String)
+
+# Admin
+GET     /admin/events                       controllers.AdminEventController.list(status: Option[String] ?= None, page: Int ?= 0)
+GET     /admin/events/new                   controllers.AdminEventController.newForm()
+POST    /admin/events/new                   controllers.AdminEventController.create()
+GET     /admin/events/:id                   controllers.AdminEventController.view(id: Long)
+GET     /admin/events/:id/edit              controllers.AdminEventController.editForm(id: Long)
+POST    /admin/events/:id/edit              controllers.AdminEventController.update(id: Long)
+POST    /admin/events/:id/status            controllers.AdminEventController.changeStatus(id: Long)
+POST    /admin/events/:id/delete            controllers.AdminEventController.delete(id: Long)
+GET     /admin/events/:id/attendees         controllers.AdminEventController.attendees(id: Long)
+GET     /admin/events/:id/attendees.csv     controllers.AdminEventController.attendeesCsv(id: Long)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

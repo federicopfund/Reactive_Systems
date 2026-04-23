@@ -64,6 +64,12 @@
          @if(isActive("/publicaciones")){aria-current="page"}>
         <span class="ed-nav-dot" aria-hidden="true"></span>Artículos
       </a>
+      <a href="@routes.EventController.index()"
+         class="@navAttrs(isActive("/eventos"))"
+         data-tip="Agenda"
+         @if(isActive("/eventos")){aria-current="page"}>
+        <span class="ed-nav-dot" aria-hidden="true"></span>Agenda
+      </a>
       <a href="@routes.HomeController.portafolio()"
          class="@navAttrs(isActive("/portafolio"))"
          data-tip="Colecciones"

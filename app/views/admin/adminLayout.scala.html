@@ -42,6 +42,7 @@
     case "stats"        => "Estadísticas"
     case "newsletter"   => "Newsletter"
     case "admins"       => "Administradores"
+    case "events"       => "Agenda editorial"
     case _              => "Backoffice"
   }
 }
@@ -142,6 +143,15 @@
                 <span class="ed-bo__nav-dot"></span>Catálogo
               </a>
             }
+          </div>
+        }
+
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.EventsView)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Eventos</span>
+            <a class="ed-bo__nav-item @isActive("events")" href="@routes.AdminEventController.list(None, 0)">
+              <span class="ed-bo__nav-dot"></span>Agenda editorial
+            </a>
           </div>
         }
 
