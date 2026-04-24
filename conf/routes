@@ -23,6 +23,9 @@ GET     /portafolio/:colSlug/pieza/:pieceSlug  controllers.HomeController.openFr
 GET     /privacidad                 controllers.HomeController.politicaPrivacidad()
 GET     /terminos                   controllers.HomeController.terminosDeUso()
 
+# Editorial identity (Issue #21)
+GET     /acerca-de                  controllers.HomeController.acercaDe()
+
 # Contact form
 POST    /contact                    controllers.HomeController.submitContact()
 
@@ -206,6 +209,10 @@ GET     /admin/agents/settings                      controllers.AdminAgentSettin
 POST    /admin/agents/settings                      controllers.AdminAgentSettingsController.save()
 POST    /admin/agents/settings/reset/:key           controllers.AdminAgentSettingsController.resetOne(key: String)
 GET     /admin/agents/settings/runtime.json         controllers.AdminAgentSettingsController.runtimeJson()
+
+# Identidad editorial — Issue #21 (backoffice)
+GET     /admin/editorial-identity                   controllers.AdminEditorialIdentityController.list()
+POST    /admin/editorial-identity/:key              controllers.AdminEditorialIdentityController.update(key: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

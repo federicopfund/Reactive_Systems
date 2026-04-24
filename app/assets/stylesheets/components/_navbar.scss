@@ -105,7 +105,26 @@
     .ed-nav-item[data-tip]::before { transition: none; }
   }
 
-  .ed-sidebar-brand { padding: 0 0 1rem; text-align: center; border-bottom: 1px solid var(--color-border-subtle); }
+  .ed-sidebar-brand {
+    padding: 0 0 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--color-border-subtle);
+    position: relative;
+
+    // Ornamento editorial — reemplaza visualmente al brand cuando el rail
+    // está colapsado. Hereda color del acento y respeta ambos temas.
+    a::before {
+      content: '\2766';                       // ❦ — Floral Heart
+      display: block;
+      font-family: $font-display;
+      font-size: 1.35rem;
+      line-height: 1;
+      color: var(--ed-accent);
+      padding: 0.35rem 0;
+      letter-spacing: 0;
+      user-select: none;
+    }
+  }
   .ed-nav-section { padding: 0 0.5rem; }
   .ed-sidebar-auth { padding: 0.5rem; text-align: center; }
 

@@ -1,0 +1,130 @@
+@(blocks: Seq[models.EditorialIdentity])(implicit request: RequestHeader, messages: Messages)
+
+@*
+  Issue #21 — /acerca-de.
+  Identidad editorial leída desde DB. Diseño editorial: hero con número
+  colgante, drop cap, índice del documento, pullquote tipográfico, grid
+  asimétrico para audiencias, marca de cierre.
+*@
+
+@byKey = @{ blocks.map(b => b.sectionKey -> b).toMap }
+
+@mission           = @{ byKey.get(models.EditorialIdentity.KeyMission) }
+@thesis            = @{ byKey.get(models.EditorialIdentity.KeyThesis) }
+@promise           = @{ byKey.get(models.EditorialIdentity.KeyPromise) }
+@audiencePrimary   = @{ byKey.get(models.EditorialIdentity.KeyAudiencePrimary) }
+@audienceSecondary = @{ byKey.get(models.EditorialIdentity.KeyAudienceSecondary) }
+@weAreNot          = @{ byKey.get(models.EditorialIdentity.KeyWeAreNot) }
+
+@missionPlain = @{
+  mission.map(_.bodyHtml.replaceAll("<[^>]+>", "").trim).getOrElse(
+    "Manifiesto Reactivo — edición digital sobre la práctica de los sistemas reactivos."
+  )
+}
+
+@main("Acerca de", fullBleed = false, metaDescription = Some(missionPlain)) {
+
+  <article class="ed-about" role="main" aria-label="Identidad editorial de Manifiesto Reactivo">
+
+    @mission.map { m =>
+      <header class="ed-about__hero">
+        <div class="ed-about__meta">
+          <span class="ed-about__meta-mark" aria-hidden="true">¶</span>
+          <span class="ed-about__meta-label">Manifiesto Reactivo</span>
+          <span class="ed-about__meta-sep" aria-hidden="true">/</span>
+          <span class="ed-about__meta-kind">Documento editorial</span>
+          <span class="ed-about__meta-sep" aria-hidden="true">/</span>
+          <span class="ed-about__meta-version">vigente</span>
+        </div>
+        <div class="ed-about__hero-grid">
+          <div class="ed-about__hero-num" aria-hidden="true">01</div>
+          <div class="ed-about__hero-main">
+            <div class="ed-about__eyebrow">Identidad editorial</div>
+            <h1 class="ed-about__title">@m.title</h1>
+            <div class="ed-about__lede">@Html(m.bodyHtml)</div>
+          </div>
+        </div>
+        <nav class="ed-about__index" aria-label="Índice del documento">
+          <a class="ed-about__index-item" href="#about-thesis"><span class="ed-about__index-num">02</span><span class="ed-about__index-label">Tesis</span></a>
+          <a class="ed-about__index-item" href="#about-promise"><span class="ed-about__index-num">03</span><span class="ed-about__index-label">Promesa</span></a>
+          <a class="ed-about__index-item" href="#about-audience"><span class="ed-about__index-num">04</span><span class="ed-about__index-label">Audiencia</span></a>
+          <a class="ed-about__index-item" href="#about-not"><span class="ed-about__index-num">05</span><span class="ed-about__index-label">Encuadre</span></a>
+        </nav>
+      </header>
+    }
+
+    @thesis.map { t =>
+      <section id="about-thesis" class="ed-about__section ed-about__section--thesis" aria-labelledby="about-thesis-title">
+        <div class="ed-about__rule">
+          <span class="ed-about__rule-num">02</span>
+          <span class="ed-about__rule-label">Tesis</span>
+          <span class="ed-about__rule-line" aria-hidden="true"></span>
+        </div>
+        <h2 id="about-thesis-title" class="ed-about__heading">@t.title</h2>
+        <blockquote class="ed-about__thesis">@Html(t.bodyHtml)</blockquote>
+      </section>
+    }
+
+    @promise.map { p =>
+      <section id="about-promise" class="ed-about__section ed-about__section--promise" aria-labelledby="about-promise-title">
+        <div class="ed-about__rule">
+          <span class="ed-about__rule-num">03</span>
+          <span class="ed-about__rule-label">Promesa</span>
+          <span class="ed-about__rule-line" aria-hidden="true"></span>
+        </div>
+        <h2 id="about-promise-title" class="ed-about__heading">@p.title</h2>
+        <div class="ed-about__promise">@Html(p.bodyHtml)</div>
+      </section>
+    }
+
+    @if(audiencePrimary.isDefined || audienceSecondary.isDefined) {
+      <section id="about-audience" class="ed-about__section ed-about__section--audience" aria-labelledby="about-audience-title">
+        <div class="ed-about__rule">
+          <span class="ed-about__rule-num">04</span>
+          <span class="ed-about__rule-label">Audiencia</span>
+          <span class="ed-about__rule-line" aria-hidden="true"></span>
+        </div>
+        <h2 id="about-audience-title" class="ed-about__heading">Para quién escribimos</h2>
+        <div class="ed-about__audience-grid">
+          @audiencePrimary.map { a =>
+            <article class="ed-about__audience ed-about__audience--primary">
+              <div class="ed-about__audience-tag">Primaria</div>
+              <h3 class="ed-about__audience-title">@a.title</h3>
+              <div class="ed-about__audience-body">@Html(a.bodyHtml)</div>
+            </article>
+          }
+          @audienceSecondary.map { a =>
+            <article class="ed-about__audience ed-about__audience--secondary">
+              <div class="ed-about__audience-tag">Secundaria</div>
+              <h3 class="ed-about__audience-title">@a.title</h3>
+              <div class="ed-about__audience-body">@Html(a.bodyHtml)</div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    @weAreNot.map { w =>
+      <section id="about-not" class="ed-about__section ed-about__section--negative" aria-labelledby="about-not-title">
+        <div class="ed-about__rule">
+          <span class="ed-about__rule-num">05</span>
+          <span class="ed-about__rule-label">Encuadre</span>
+          <span class="ed-about__rule-line" aria-hidden="true"></span>
+        </div>
+        <h2 id="about-not-title" class="ed-about__heading">@w.title</h2>
+        <div class="ed-about__not">@Html(w.bodyHtml)</div>
+      </section>
+    }
+
+    <footer class="ed-about__footer">
+      <div class="ed-about__mark" aria-hidden="true">§</div>
+      <p class="ed-about__footer-text">
+        ¿Tienes una pieza que encaja con esta línea?
+        <a href="@routes.HomeController.index()#contact">Escríbenos.</a>
+      </p>
+      <p class="ed-about__footer-meta">
+        Este documento vive en la base de datos. Puede cambiar sin aviso conforme la práctica madura.
+      </p>
+    </footer>
+  </article>
+}

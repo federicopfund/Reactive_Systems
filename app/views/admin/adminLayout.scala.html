@@ -46,6 +46,7 @@
     case "collections"  => "Colecciones"
     case "agents"       => "Agentes y Guardians"
     case "agent-settings" => "Configuración de agentes"
+    case "editorial-identity" => "Identidad editorial"
     case _              => "Backoffice"
   }
 }
@@ -135,7 +136,7 @@
           }
         </div>
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport)) {
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport) || utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage)) {
           <div class="ed-bo__nav-group">
             <span class="ed-bo__nav-label">Editorial</span>
             @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview)) {
@@ -144,6 +145,11 @@
               </a>
               <a class="ed-bo__nav-item @isActive("publications")" href="@routes.AdminController.allPublications(None)">
                 <span class="ed-bo__nav-dot"></span>Catálogo
+              </a>
+            }
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage)) {
+              <a class="ed-bo__nav-item @isActive("editorial-identity")" href="@routes.AdminEditorialIdentityController.list()">
+                <span class="ed-bo__nav-dot"></span>Identidad editorial
               </a>
             }
           </div>

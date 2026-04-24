@@ -1,0 +1,68 @@
+@(blocks: Seq[models.EditorialIdentity], role: String, username: String)(implicit request: RequestHeader)
+
+@import helper.CSRF
+
+@admin.adminLayout("Identidad editorial", "editorial-identity") {
+
+  <header class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">Identidad editorial</h1>
+      <p class="ed-bo__page-lead">
+        Estos seis bloques componen la página pública
+        <a href="@routes.HomeController.acercaDe()" target="_blank" rel="noopener">/acerca-de</a>.
+        Editalos sin redeploy. El HTML del cuerpo se renderiza tal cual; usá
+        <code>&lt;p&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;strong&gt;</code>
+        y nada más.
+      </p>
+    </div>
+  </header>
+
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  <div class="ed-identity-admin">
+    @for(b <- blocks) {
+      <details class="ed-identity-admin__block @if(!b.active){is-inactive}" @if(blocks.headOption.contains(b)){open}>
+        <summary class="ed-identity-admin__summary">
+          <span class="ed-identity-admin__key"><code>@b.sectionKey</code></span>
+          <span class="ed-identity-admin__title">@b.title</span>
+          <span class="ed-identity-admin__meta">
+            orden @b.orderIndex ·
+            @if(b.active) { <span class="ed-identity-admin__pill ed-identity-admin__pill--on">activo</span> }
+            else          { <span class="ed-identity-admin__pill ed-identity-admin__pill--off">inactivo</span> }
+            · actualizado @b.updatedAt.toString.take(16).replace("T", " ")
+          </span>
+        </summary>
+
+        <form method="POST" action="@routes.AdminEditorialIdentityController.update(b.sectionKey)" class="ed-identity-admin__form">
+          @CSRF.formField
+
+          <label class="ed-identity-admin__label">
+            Título
+            <input class="ed-identity-admin__input" type="text" name="title" value="@b.title" maxlength="200" required />
+          </label>
+
+          <label class="ed-identity-admin__label">
+            Cuerpo (HTML)
+            <textarea class="ed-identity-admin__textarea" name="bodyHtml" rows="12" required>@b.bodyHtml</textarea>
+          </label>
+
+          <div class="ed-identity-admin__row">
+            <label class="ed-identity-admin__label ed-identity-admin__label--inline">
+              Orden
+              <input class="ed-identity-admin__input ed-identity-admin__input--narrow" type="number" name="orderIndex" value="@b.orderIndex" min="0" max="9999" required />
+            </label>
+            <label class="ed-identity-admin__label ed-identity-admin__label--inline">
+              <input type="checkbox" name="active" value="true" @if(b.active){checked} />
+              Visible en la página pública
+            </label>
+          </div>
+
+          <div class="ed-identity-admin__actions">
+            <button type="submit" class="ed-btn-primary">Guardar “@b.sectionKey”</button>
+          </div>
+        </form>
+      </details>
+    }
+  </div>
+}

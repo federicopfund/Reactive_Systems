@@ -45,6 +45,8 @@ object Capabilities {
     case object ObservabilityView      extends Cap { val key = "observability.view";      val label = "Ver dashboard de agentes y guardians" }
     case object ObservabilityManage    extends Cap { val key = "observability.manage";    val label = "Configurar variables de los agentes" }
 
+    case object EditorialIdentityManage extends Cap { val key = "editorial_identity.manage"; val label = "Editar identidad editorial (misión, tesis, audiencia)" }
+
     val all: Seq[Cap] = Seq(
       GovernanceManageAdmins,
       PublicationsReview, PublicationsDelete, PublicationsEditNotes,
@@ -54,7 +56,8 @@ object Capabilities {
       StatsView, DashboardView,
       EventsView, EventsManage, EventsPublish,
       CollectionsCurate, CollectionsReview, CollectionsPublish,
-      ObservabilityView, ObservabilityManage
+      ObservabilityView, ObservabilityManage,
+      EditorialIdentityManage
     )
   }
 }
@@ -92,7 +95,8 @@ object RolePolicy {
         PublicationsFeedback, PublicationsExport,
         ContactsView,
         EventsView, EventsManage, EventsPublish,
-        CollectionsCurate, CollectionsReview, CollectionsPublish
+        CollectionsCurate, CollectionsReview, CollectionsPublish,
+        EditorialIdentityManage
       )
     ),
     RoleDef(

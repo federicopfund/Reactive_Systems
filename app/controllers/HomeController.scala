@@ -11,7 +11,8 @@ import services.ReactiveAnalyticsAdapter
 import repositories.{
   ContactRepository, ReactionRepository, CommentRepository, BookmarkRepository,
   NewsletterRepository, PublicationCategoryRepository, ManifestoPillarRepository,
-  LegalDocumentRepository, CollectionRepository, EditorialArticleRepository
+  LegalDocumentRepository, CollectionRepository, EditorialArticleRepository,
+  EditorialIdentityRepository
 }
 import core.{Contact, ContactSubmitted, ContactError}
 import actions.{OptionalAuthAction, OptionalAuthRequest}
@@ -36,6 +37,7 @@ class HomeController @Inject()(
   legalRepo: LegalDocumentRepository,
   collectionRepo: CollectionRepository,
   editorialArticleRepo: EditorialArticleRepository,
+  identityRepo: EditorialIdentityRepository,
   optionalAuth: OptionalAuthAction
 )(implicit ec: ExecutionContext) extends BaseController with I18nSupport {
 
@@ -185,6 +187,13 @@ class HomeController @Inject()(
     legalRepo.findPublishedBySlug("terminos").map {
       case Some(doc) => Ok(views.html.legal.legalDocument(doc))
       case None      => NotFound("Documento no disponible")
+    }
+  }
+
+  /** Issue #21 — Página /acerca-de: identidad editorial servida desde DB. */
+  def acercaDe() = Action.async { implicit request: Request[AnyContent] =>
+    identityRepo.findActive().map { blocks =>
+      Ok(views.html.about(blocks))
     }
   }
 

@@ -103,7 +103,7 @@
     }
 
     @* ── Explorar — primario si guest, secundario (colapsable) si autenticado ── *@
-    @defining(isActive("/") || isActive("/publicaciones") || isActive("/eventos") || isActive("/portafolio")) { exploreActive =>
+    @defining(isActive("/") || isActive("/acerca-de") || isActive("/publicaciones") || isActive("/eventos") || isActive("/portafolio")) { exploreActive =>
       <details class="ed-nav-section ed-nav-section--collapsible"
                data-section="explorar"
                @if(userId.isEmpty || exploreActive){open}>
@@ -120,6 +120,12 @@
              data-tip="Portada"
              @if(isActive("/")){aria-current="page"}>
             <span class="ed-nav-dot" aria-hidden="true"></span>Portada
+          </a>
+          <a href="@routes.HomeController.acercaDe()"
+             class="@navAttrs(isActive("/acerca-de"))"
+             data-tip="Acerca de"
+             @if(isActive("/acerca-de")){aria-current="page"}>
+            <span class="ed-nav-dot" aria-hidden="true"></span>Acerca de
           </a>
           <a href="@routes.HomeController.publicaciones()"
              class="@navAttrs(isActive("/publicaciones"))"

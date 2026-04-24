@@ -1,4 +1,4 @@
-@(title: String, fullBleed: Boolean = true)(content: Html)(implicit request: RequestHeader)
+@(title: String, fullBleed: Boolean = true, metaDescription: Option[String] = None)(content: Html)(implicit request: RequestHeader)
 
 @*
   Layout principal — Editorial Reactiva.
@@ -19,12 +19,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <title>@title — Manifiesto Reactivo</title>
-  <meta name="description" content="Manifiesto Reactivo — edición digital sobre sistemas Responsivos, Resilientes, Elásticos y Orientados a Mensajes.">
+  <meta name="description" content="@metaDescription.getOrElse("Manifiesto Reactivo — edición digital sobre sistemas Responsivos, Resilientes, Elásticos y Orientados a Mensajes.")">
   <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="@title — Manifiesto Reactivo">
-  <meta property="og:description" content="Edición digital sobre programación reactiva.">
+  <meta property="og:description" content="@metaDescription.getOrElse("Edición digital sobre programación reactiva.")">
   <meta property="og:site_name" content="Manifiesto Reactivo">
   <meta name="twitter:card" content="summary">
 

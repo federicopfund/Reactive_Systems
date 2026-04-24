@@ -1,0 +1,1137 @@
+// ============================================================================
+// About — Identidad editorial (Issue #21)
+// Página /acerca-de + backoffice /admin/editorial-identity.
+//
+// Filosofía visual:
+//   - Tipografía como protagonista. Display grande, escala fluida.
+//   - Números de sección como elemento gráfico (no decorativo).
+//   - Asimetría calculada: hero con num colgante, audiencias con grid 5/7.
+//   - Densidad cromática mínima — dejar que el texto respire.
+//   - Microinteracciones discretas, respetando reduced-motion.
+//   - Print-friendly: la tinta editorial se imprime bien.
+// ============================================================================
+
+// ───────────────────────────────────────────────────────────
+//  Contenedor raíz
+// ───────────────────────────────────────────────────────────
+.ed-about {
+  --about-max:        72rem;
+  --about-text-max:   38rem;
+  --about-rule-color: var(--ed-border-strong, #{$ed-border-strong});
+  --about-num-color:  var(--ed-accent, #{$ed-accent});
+
+  max-width: var(--about-max);
+  margin: 0 auto;
+  padding: clamp(2.5rem, 4vw, 4.5rem) clamp(1.25rem, 4vw, $content-padding-x) 6rem;
+  font-family: $font-body;
+  color: var(--ed-text);
+  font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  // Scroll suave para el índice (respeta reduced-motion globalmente).
+  scroll-behavior: smooth;
+
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
+  }
+
+  // Anclajes con respiro visual al saltar.
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+//  HERO
+// ───────────────────────────────────────────────────────────
+.ed-about__hero {
+  position: relative;
+  margin-bottom: clamp(3rem, 6vw, 5rem);
+  padding-bottom: clamp(2rem, 4vw, 3rem);
+
+  // Línea de cierre del hero, más afinada y centrada.
+  &::after {
+    content: '';
+    display: block;
+    width: 4rem;
+    height: 1px;
+    margin: 3rem auto 0;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--about-rule-color),
+      transparent
+    );
+  }
+}
+
+.ed-about__meta {
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--ed-text-faint);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+  text-transform: uppercase;
+
+  &-mark {
+    font-family: $font-display;
+    font-size: 1rem;
+    color: var(--about-num-color);
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  &-label {
+    color: var(--ed-text-dim);
+    font-weight: 500;
+  }
+
+  &-sep {
+    color: var(--ed-text-faint);
+    opacity: 0.6;
+  }
+
+  &-version {
+    padding: 0.15rem 0.55rem;
+    border: 1px solid var(--ed-border-strong, #{$ed-border-strong});
+    border-radius: 999px;
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+  }
+}
+
+// Grid hero: número de sección + bloque principal.
+// Mobile: número arriba, contenido debajo. Desktop: número colgante a la izquierda.
+.ed-about__hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+
+  @media (min-width: 720px) {
+    grid-template-columns: minmax(4rem, 6rem) 1fr;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    align-items: start;
+  }
+}
+
+.ed-about__hero-num {
+  font-family: $font-display;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 900;
+  line-height: 0.95;
+  color: var(--about-num-color);
+  letter-spacing: -0.04em;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+  user-select: none;
+
+  // En desktop, alinea visualmente con la cap-height del título.
+  @media (min-width: 720px) {
+    margin-top: 0.4rem;
+    text-align: right;
+    padding-right: 0.25rem;
+    border-right: 1px solid var(--about-rule-color);
+  }
+}
+
+.ed-about__eyebrow {
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--about-num-color);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.ed-about__title {
+  font-family: $font-display;
+  font-size: clamp(2.6rem, 6.5vw, 5rem);
+  font-weight: 900;
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  color: var(--ed-text);
+  margin: 0 0 1.75rem;
+  text-wrap: balance;
+  font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
+}
+
+// Lede: párrafo de apertura — primera letra como drop cap.
+.ed-about__lede {
+  font-family: $font-body;
+  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+  line-height: 1.7;
+  color: var(--ed-text-dim);
+  max-width: var(--about-text-max);
+
+  p {
+    margin: 0 0 1rem;
+    text-wrap: pretty;
+    hyphens: auto;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  // Drop cap solo en la primera letra del primer párrafo.
+  p:first-of-type::first-letter {
+    font-family: $font-display;
+    font-size: 3.6em;
+    font-weight: 900;
+    float: left;
+    line-height: 0.85;
+    margin: 0.1em 0.12em -0.05em 0;
+    color: var(--about-num-color);
+    text-transform: uppercase;
+    font-feature-settings: "lnum" 1;
+  }
+}
+
+// Índice del documento — chip-row arriba del primer corte.
+.ed-about__index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: clamp(2.5rem, 4vw, 3.5rem);
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--ed-border-strong, #{$ed-border-strong});
+
+  &-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--ed-border, #{$ed-border});
+    border-radius: 999px;
+    font-family: $font-mono;
+    font-size: 0.72rem;
+    color: var(--ed-text-dim);
+    text-decoration: none;
+    background: transparent;
+    transition: border-color $duration-base $ease-out,
+                color $duration-base $ease-out,
+                background $duration-base $ease-out,
+                transform $duration-base $ease-out;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--about-num-color);
+      color: var(--ed-text);
+      background: var(--ed-accent-soft, transparent);
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--about-num-color);
+      outline-offset: 2px;
+    }
+  }
+
+  &-num {
+    font-size: 0.62rem;
+    color: var(--about-num-color);
+    letter-spacing: 0.08em;
+    font-feature-settings: "tnum" 1;
+  }
+
+  &-label {
+    letter-spacing: 0.04em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &-item { transition: none; }
+    &-item:hover { transform: none; }
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+//  Sección genérica (rule + heading)
+// ───────────────────────────────────────────────────────────
+.ed-about__section {
+  margin: clamp(3.5rem, 6vw, 5.5rem) 0;
+
+  // Cada sección entra en grid para alinear contenido al área de texto.
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (min-width: 720px) {
+    grid-template-columns: minmax(4rem, 6rem) 1fr;
+    column-gap: clamp(1.5rem, 3vw, 2.5rem);
+    row-gap: 1.25rem;
+  }
+}
+
+// Rule = fila con num + label + filete.
+.ed-about__rule {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+
+  @media (min-width: 720px) {
+    grid-column: 1 / -1;
+  }
+
+  &-num {
+    color: var(--about-num-color);
+    font-weight: 600;
+    font-feature-settings: "tnum" 1;
+  }
+
+  &-label {
+    color: var(--ed-text-dim);
+  }
+
+  &-line {
+    flex: 1;
+    height: 1px;
+    background: var(--about-rule-color);
+    margin-left: 0.5rem;
+  }
+}
+
+.ed-about__heading {
+  font-family: $font-display;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ed-text);
+  margin: 0 0 1.25rem;
+  text-wrap: balance;
+
+  @media (min-width: 720px) {
+    grid-column: 2 / -1;
+  }
+}
+
+// El cuerpo de cada sección se restringe al area derecha en desktop.
+.ed-about__section > :not(.ed-about__rule):not(.ed-about__heading) {
+  max-width: var(--about-text-max);
+
+  @media (min-width: 720px) {
+    grid-column: 2 / -1;
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+//  Tesis — pullquote tipográfico
+//  Ocupa todo el ancho del área de texto (override del cap genérico).
+// ───────────────────────────────────────────────────────────
+.ed-about__section--thesis > .ed-about__thesis {
+  max-width: none;
+}
+
+.ed-about__thesis {
+  position: relative;
+  margin: 0;
+  padding: 1.75rem 0 0 2rem;
+  font-family: $font-display;
+  font-size: clamp(0.98rem, 1.4vw, 1.1rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.65;
+  color: var(--ed-text);
+  letter-spacing: 0;
+  width: 100%;
+
+  // Comilla tipográfica ornamental — más compacta y alineada al inicio.
+  &::before {
+    content: '\201C';
+    position: absolute;
+    top: -0.4rem;
+    left: -0.1rem;
+    font-family: $font-display;
+    font-size: 3.25rem;
+    font-style: normal;
+    line-height: 1;
+    color: var(--about-num-color);
+    opacity: 0.45;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  p {
+    margin: 0 0 0.85rem;
+    text-wrap: pretty;
+    hyphens: auto;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  strong, b {
+    color: var(--ed-text);
+    font-style: normal;
+    font-weight: 700;
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+//  Promesa — lista numerada con dígitos como elemento gráfico
+// ───────────────────────────────────────────────────────────
+.ed-about__promise {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ed-text-dim);
+
+  ul, ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: promise;
+  }
+
+  li {
+    counter-increment: promise;
+    position: relative;
+    padding: 1.1rem 0 1.1rem 3rem;
+    border-bottom: 1px solid var(--ed-border, #{$ed-border});
+    transition: padding-left $duration-base $ease-out;
+    text-wrap: pretty;
+
+    &:first-child { padding-top: 0.5rem; }
+    &:last-child  { border-bottom: 0; padding-bottom: 0.5rem; }
+
+    &::before {
+      content: counter(promise, decimal-leading-zero);
+      position: absolute;
+      left: 0;
+      top: 1.1rem;
+      width: 2.25rem;
+      font-family: $font-mono;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: var(--about-num-color);
+      font-weight: 600;
+      font-feature-settings: "tnum" 1;
+    }
+
+    &:first-child::before { top: 0.5rem; }
+
+    &:hover {
+      padding-left: 3.25rem;
+    }
+  }
+
+  strong, b {
+    color: var(--ed-text);
+    font-weight: 600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    li, li:hover { transition: none; padding-left: 3rem; }
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+//  Audiencias — grid asimétrico 7/5 con tarjetas tipográficas
+// ───────────────────────────────────────────────────────────
+.ed-about__section--audience > .ed-about__audience-grid {
+  max-width: none;
+}
+
+.ed-about__audience-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  width: 100%;
+
+  @media (min-width: 760px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.ed-about__audience {
+  position: relative;
+  padding: clamp(1.5rem, 3vw, 2rem);
+  border: 1px solid var(--ed-border, #{$ed-border});
+  background: var(--ed-bg-elev, transparent);
+  border-radius: $radius-md;
+  transition: border-color $duration-base $ease-out,
+              transform $duration-base $ease-out,
+              box-shadow $duration-base $ease-out;
+
+  // Filete superior de acento.
+  &::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    height: 2px;
+    background: var(--about-num-color);
+    border-radius: $radius-md $radius-md 0 0;
+    transform: scaleX(0.25);
+    transform-origin: left center;
+    transition: transform $duration-slow $ease-out;
+  }
+
+  &:hover {
+    border-color: var(--ed-border-strong, #{$ed-border-strong});
+    box-shadow: $shadow-md;
+
+    &::before {
+      transform: scaleX(1);
+    }
+  }
+
+  &--primary {
+    background: var(--ed-bg-elev, var(--ed-bg, transparent));
+  }
+
+  &--secondary {
+    background: transparent;
+    border-style: dashed;
+
+    &::before { background: var(--ed-text-faint); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &::before { transition: none; transform: scaleX(1); }
+    &:hover { box-shadow: none; }
+  }
+}
+
+.ed-about__audience-tag {
+  display: inline-block;
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  margin-bottom: 0.85rem;
+  padding: 0.18rem 0.55rem;
+  border: 1px solid var(--ed-border-strong, #{$ed-border-strong});
+  border-radius: 999px;
+
+  .ed-about__audience--primary & {
+    color: var(--about-num-color);
+    border-color: currentColor;
+  }
+}
+
+.ed-about__audience-title {
+  font-family: $font-display;
+  font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ed-text);
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.ed-about__audience-body {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ed-text-dim);
+
+  p { margin: 0 0 0.6rem; text-wrap: pretty; hyphens: auto; }
+  p:last-child { margin-bottom: 0; }
+
+  strong { color: var(--ed-text); font-weight: 600; }
+}
+
+// ───────────────────────────────────────────────────────────
+//  "Lo que no somos" — lista negativa con marca tipográfica
+// ───────────────────────────────────────────────────────────
+.ed-about__not {
+  font-size: 0.97rem;
+  line-height: 1.7;
+  color: var(--ed-text-dim);
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    position: relative;
+    padding: 0.7rem 0 0.7rem 1.75rem;
+    text-wrap: pretty;
+
+    &::before {
+      content: '\2014';                       // em dash
+      position: absolute;
+      left: 0;
+      top: 0.7rem;
+      color: var(--ed-text-faint);
+      font-weight: 400;
+    }
+
+    & + li {
+      border-top: 1px dotted var(--ed-border, #{$ed-border});
+    }
+  }
+
+  strong { color: var(--ed-text); font-weight: 600; }
+}
+
+// ───────────────────────────────────────────────────────────
+//  Footer del documento
+// ───────────────────────────────────────────────────────────
+.ed-about__footer {
+  margin-top: clamp(4rem, 7vw, 6rem);
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--ed-border, #{$ed-border});
+  text-align: center;
+}
+
+.ed-about__mark {
+  font-family: $font-display;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--about-num-color);
+  margin-bottom: 1.25rem;
+  user-select: none;
+}
+
+.ed-about__footer-text {
+  font-family: $font-display;
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--ed-text);
+  margin: 0 0 0.75rem;
+
+  a {
+    color: var(--about-num-color);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    font-style: normal;
+    font-weight: 600;
+
+    &:hover { opacity: 0.8; }
+  }
+}
+
+.ed-about__footer-meta {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--ed-text-faint);
+  margin: 0;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-wrap: balance;
+}
+
+// ───────────────────────────────────────────────────────────
+//  Print — limpio, sin fondos ni sombras
+// ───────────────────────────────────────────────────────────
+@media print {
+  .ed-about {
+    color: #000;
+    max-width: 100%;
+    padding: 0;
+
+    &__index,
+    &__footer { display: none; }
+
+    &__hero-num,
+    &__rule-num,
+    &__eyebrow,
+    &__lede p:first-of-type::first-letter { color: #000; }
+
+    &__audience {
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+      &::before { display: none; }
+    }
+
+    &__thesis::before { color: #999; }
+  }
+}
+
+// ============================================================================
+// Admin — /admin/editorial-identity
+// ============================================================================
+.ed-identity-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+
+  &__block {
+    border: 1px solid var(--ed-border);
+    border-radius: $radius-md;
+    background: var(--ed-bg-elev, var(--ed-bg));
+    transition: border-color $duration-base $ease-out;
+
+    &.is-inactive { opacity: 0.65; }
+
+    &[open] {
+      border-color: var(--ed-accent);
+      box-shadow: $shadow-sm;
+    }
+  }
+
+  &__summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1rem 1.25rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+
+    &::-webkit-details-marker { display: none; }
+  }
+
+  &__key code {
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    color: var(--ed-accent);
+    background: transparent;
+    padding: 0;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-weight: 700;
+    color: var(--ed-text);
+  }
+
+  &__meta {
+    font-family: $font-mono;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    color: var(--ed-text-faint);
+  }
+
+  &__pill {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+
+    &--on  { background: rgba(40, 160, 90, 0.18);  color: #2e8b57; }
+    &--off { background: rgba(180, 180, 180, 0.2); color: var(--ed-text-faint); }
+  }
+
+  &__form {
+    padding: 0 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-top: 1px dashed var(--ed-border);
+    padding-top: 1.25rem;
+  }
+
+  &__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: var(--ed-text-faint);
+
+    &--inline {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  &__input,
+  &__textarea {
+    font-family: $font-mono;
+    font-size: 0.85rem;
+    color: var(--ed-text);
+    background: var(--ed-bg);
+    border: 1px solid var(--ed-border);
+    border-radius: $radius-md;
+    padding: 0.6rem 0.75rem;
+    width: 100%;
+
+    &:focus {
+      outline: none;
+      border-color: var(--ed-accent);
+      box-shadow: 0 0 0 3px var(--ed-accent-soft, rgba(193, 68, 14, 0.12));
+    }
+  }
+
+  &__textarea {
+    resize: vertical;
+    min-height: 12rem;
+    line-height: 1.6;
+    font-family: $font-mono;
+  }
+
+  &__input--narrow {
+    width: 6rem;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+// ============================================
+// About — Identidad editorial (Issue #21)
+// Estilos para /acerca-de + admin /admin/editorial-identity.
+// ============================================
+
+.ed-about {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 3.5rem $content-padding-x 5rem;
+  font-family: $font-body;
+  color: var(--ed-text);
+}
+
+// ───── HERO · Misión ─────
+.ed-about-hero {
+  margin-bottom: 4rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--ed-border);
+}
+
+.ed-about-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+  margin-bottom: 1.2rem;
+}
+
+.ed-about-title {
+  font-family: $font-display;
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--ed-text);
+  margin: 0 0 1.5rem;
+}
+
+.ed-about-mission {
+  font-family: $font-body;
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: var(--ed-text-dim);
+
+  p { margin: 0 0 1rem; }
+  p:last-child { margin-bottom: 0; }
+}
+
+// ───── Secciones genéricas ─────
+.ed-about-section {
+  margin: 3.5rem 0;
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ed-text-faint);
+    margin-bottom: 0.75rem;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+    font-weight: 800;
+    color: var(--ed-text);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0 0 1.5rem;
+  }
+}
+
+// ───── Tesis (pullquote) ─────
+.ed-about-thesis {
+  font-family: $font-display;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  line-height: 1.55;
+  color: var(--ed-text);
+  border-left: 3px solid var(--ed-accent);
+  padding: 0.5rem 0 0.5rem 1.5rem;
+  margin: 0;
+  font-style: normal;
+
+  p { margin: 0 0 1rem; }
+  p:last-child { margin-bottom: 0; }
+}
+
+// ───── Promesa ─────
+.ed-about-promise {
+  font-size: 0.98rem;
+  line-height: 1.75;
+  color: var(--ed-text-dim);
+
+  ul, ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    position: relative;
+    padding: 0.85rem 0 0.85rem 2rem;
+    border-bottom: 1px solid var(--ed-border-faint, var(--ed-border));
+
+    &:last-child { border-bottom: 0; }
+
+    &::before {
+      content: counter(promise, decimal-leading-zero);
+      counter-increment: promise;
+      position: absolute;
+      left: 0;
+      top: 0.85rem;
+      font-family: $font-mono;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--ed-accent);
+      font-weight: 500;
+    }
+  }
+
+  ul, ol { counter-reset: promise; }
+}
+
+// ───── Audiencias (2 columnas) ─────
+.ed-about-audience-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.ed-about-audience {
+  padding: 1.75rem;
+  border: 1px solid var(--ed-border);
+  background: var(--ed-bg-elev, transparent);
+  border-radius: 4px;
+
+  &__title {
+    font-family: $font-display;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ed-text);
+    margin: 0 0 1rem;
+  }
+
+  &__body {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--ed-text-dim);
+
+    p { margin: 0 0 0.75rem; }
+    p:last-child { margin-bottom: 0; }
+  }
+
+  &--secondary {
+    border-style: dashed;
+  }
+}
+
+// ───── No somos ─────
+.ed-about-not {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ed-text-dim);
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    padding: 0.6rem 0 0.6rem 1.5rem;
+    position: relative;
+
+    &::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--ed-text-faint);
+    }
+  }
+}
+
+// ───── Footer ─────
+.ed-about-footer {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--ed-border);
+  text-align: center;
+
+  &__text {
+    font-family: $font-mono;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--ed-text-faint);
+    margin: 0;
+
+    a {
+      color: var(--ed-accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+
+      &:hover {
+        border-bottom-color: var(--ed-accent);
+      }
+    }
+  }
+}
+
+// ============================================
+// Admin — /admin/editorial-identity
+// ============================================
+.ed-identity-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+
+  &__block {
+    border: 1px solid var(--ed-border);
+    border-radius: 4px;
+    background: var(--ed-bg-elev, var(--ed-bg));
+
+    &.is-inactive {
+      opacity: 0.65;
+    }
+
+    &[open] {
+      border-color: var(--ed-accent);
+    }
+  }
+
+  &__summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1rem 1.25rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+
+    &::-webkit-details-marker { display: none; }
+  }
+
+  &__key code {
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    color: var(--ed-accent);
+    background: transparent;
+    padding: 0;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-weight: 700;
+    color: var(--ed-text);
+  }
+
+  &__meta {
+    font-family: $font-mono;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    color: var(--ed-text-faint);
+  }
+
+  &__pill {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+
+    &--on  { background: rgba(40, 160, 90, 0.18);  color: #2e8b57; }
+    &--off { background: rgba(180, 180, 180, 0.2); color: var(--ed-text-faint); }
+  }
+
+  &__form {
+    padding: 0 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-top: 1px dashed var(--ed-border);
+    padding-top: 1.25rem;
+  }
+
+  &__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: var(--ed-text-faint);
+
+    &--inline {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  &__input,
+  &__textarea {
+    font-family: $font-body;
+    font-size: 0.9rem;
+    color: var(--ed-text);
+    background: var(--ed-bg);
+    border: 1px solid var(--ed-border);
+    border-radius: 3px;
+    padding: 0.55rem 0.7rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--ed-accent);
+    }
+
+    &--narrow { width: 6rem; }
+  }
+
+  &__textarea {
+    font-family: $font-mono;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 9rem;
+  }
+
+  &__row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
