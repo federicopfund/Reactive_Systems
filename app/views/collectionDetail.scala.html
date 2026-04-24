@@ -1,0 +1,167 @@
+@(isAuthenticated: Boolean,
+  username: Option[String],
+  coll: models.Collection,
+  items: Seq[models.ResolvedCollectionItem],
+  related: Seq[models.CollectionWithCount])(implicit request: RequestHeader, messages: Messages)
+
+@import models.{CollectionItemType}
+
+@main(s"${coll.name} · Colección") {
+
+  @* ── Hero de detalle ─────────────────────────────────────────── *@
+  <section class="ed-collection-hero ed-collection-hero--@coll.accent">
+    <div class="ed-collection-hero__inner">
+      <a class="ed-collection-hero__back" href="@routes.HomeController.portafolio()">
+        ← Todas las colecciones
+      </a>
+      <span class="ed-collection-hero__eyebrow">@coll.coverLabel</span>
+      <h1 class="ed-collection-hero__title">@coll.name</h1>
+      @coll.description.map { d =>
+        <p class="ed-collection-hero__lead">@d</p>
+      }
+      <div class="ed-collection-hero__meta">
+        <span class="ed-collection-hero__chip">@items.size @if(items.size == 1){pieza}else{piezas}</span>
+        @coll.publishedAt.map { p =>
+          <span class="ed-collection-hero__chip ed-collection-hero__chip--ghost">
+            curado · @p.toString.take(10)
+          </span>
+        }
+      </div>
+    </div>
+  </section>
+
+  @* ── Layout principal: piezas + sidebar ─────────────────────────── *@
+  <section class="ed-collection-detail">
+    <div class="ed-collection-detail__inner">
+
+      @* ── Lista de piezas curadas ───────────────────────────────── *@
+      <main class="ed-collection-pieces">
+
+        @if(items.isEmpty) {
+          <div class="ed-collection-empty">
+            <h2>Esta colección aún no tiene piezas</h2>
+            <p>El equipo editorial está terminando la curaduría. Volvé pronto.</p>
+          </div>
+        } else {
+
+          <h2 class="ed-collection-pieces__title">Recorrido curado</h2>
+
+          <ol class="ed-collection-pieces__list">
+            @for((it, idx) <- items.zipWithIndex) {
+              <li class="ed-piece-card @if(!it.existing){is-orphan}">
+                <div class="ed-piece-card__index" aria-hidden="true">@{f"${idx + 1}%02d"}</div>
+                <div class="ed-piece-card__body">
+                  <span class="ed-piece-card__type">
+                    @if(it.item.itemType == CollectionItemType.Publication){PUBLICACIÓN}else{ARTÍCULO EDITORIAL}
+                  </span>
+                  @if(it.existing) {
+                    <a class="ed-piece-card__title" href="@routes.HomeController.openFromCollection(coll.slug, it.slug)">
+                      @it.title
+                    </a>
+                  } else {
+                    <span class="ed-piece-card__title is-disabled">@it.title</span>
+                  }
+                  <div class="ed-piece-card__author">por @it.author</div>
+                  @it.item.curatorNote.map { n =>
+                    <blockquote class="ed-piece-card__note">
+                      <span class="ed-piece-card__note-label">Nota del curador</span>
+                      @n
+                    </blockquote>
+                  }
+                </div>
+                @if(it.existing) {
+                  <a class="ed-piece-card__cta" href="@routes.HomeController.openFromCollection(coll.slug, it.slug)" aria-label="Leer @it.title">
+                    Leer →
+                  </a>
+                }
+              </li>
+            }
+          </ol>
+        }
+      </main>
+
+      @* ── Sidebar: sumario + acciones ───────────────────────────── *@
+      <aside class="ed-collection-aside">
+        @if(items.nonEmpty) {
+          <div class="ed-collection-aside__panel">
+            <h3 class="ed-collection-aside__title">En esta colección</h3>
+            <ul class="ed-collection-aside__toc">
+              @for((it, idx) <- items.zipWithIndex) {
+                <li>
+                  <span class="ed-collection-aside__num">@{f"${idx + 1}%02d"}</span>
+                  @if(it.existing) {
+                    <a href="@routes.HomeController.openFromCollection(coll.slug, it.slug)">@it.title</a>
+                  } else {
+                    <span class="is-disabled">@it.title</span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <div class="ed-collection-aside__panel ed-collection-aside__panel--share">
+          <h3 class="ed-collection-aside__title">Compartir</h3>
+          <div class="ed-collection-aside__share">
+            <button type="button" class="ed-share-btn" data-share-copy
+                    data-href="@request.host@routes.HomeController.collectionDetail(coll.slug)">
+              📋 Copiar enlace
+            </button>
+            @if(isAuthenticated) {
+              <a class="ed-share-btn ed-share-btn--ghost" href="@routes.UserPublicationController.dashboard()">
+                ✦ Mi espacio · @username.getOrElse("")
+              </a>
+            } else {
+              <a class="ed-share-btn ed-share-btn--ghost" href="@routes.AuthController.registerPage()">
+                ✦ Sumate a la edición
+              </a>
+            }
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  @* ── Otras colecciones ─────────────────────────────────────────── *@
+  @if(related.nonEmpty) {
+    <section class="ed-collection-related">
+      <div class="ed-collection-related__inner">
+        <h2 class="ed-collection-related__title">Seguí explorando</h2>
+        <div class="ed-collections-grid">
+          @for(cwc <- related) {
+            @defining(cwc.collection) { c =>
+              <a class="ed-collection-card ed-collection-card--@c.accent ed-collection-card--link"
+                 href="@routes.HomeController.collectionDetail(c.slug)">
+                <header class="ed-collection-card__head">
+                  <span class="ed-collection-card__eyebrow">@c.coverLabel</span>
+                  <span class="ed-collection-card__count">@cwc.itemCount @if(cwc.itemCount == 1){pieza}else{piezas}</span>
+                </header>
+                <h3 class="ed-collection-card__title">@c.name</h3>
+                @c.description.map { d => <p class="ed-collection-card__desc">@d</p> }
+              </a>
+            }
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  <script>
+    (function () {
+      var btn = document.querySelector('[data-share-copy]');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var url = btn.getAttribute('data-href');
+        if (!/^https?:/.test(url)) url = window.location.protocol + '//' + url;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () {
+            var prev = btn.textContent;
+            btn.textContent = '✓ Enlace copiado';
+            btn.classList.add('is-copied');
+            setTimeout(function () { btn.textContent = prev; btn.classList.remove('is-copied'); }, 1800);
+          });
+        }
+      });
+    })();
+  </script>
+}

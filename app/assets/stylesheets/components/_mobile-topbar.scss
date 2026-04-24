@@ -1,0 +1,72 @@
+// ============================================
+// Mobile Topbar — barra superior fija para viewports < 900px
+// Issue #17-B
+// ============================================
+
+.ed-mobile-topbar {
+  display: none; // se enciende en _responsive.scss y por media query abajo
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
+  min-height: 52px;
+}
+
+.ed-mobile-topbar__menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-md;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  @include focus-ring(2px);
+
+  svg { width: 18px; height: 18px; }
+  &:hover { background: var(--color-surface-sunken); }
+}
+
+.ed-mobile-topbar__brand {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  line-height: 1.1;
+
+  .ed-mobile-topbar__eyebrow {
+    font-family: $font-mono;
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .ed-mobile-topbar__title {
+    font-family: $font-display;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.ed-mobile-topbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+@media (max-width: $bp-md) {
+  .ed-mobile-topbar { display: flex; }
+}

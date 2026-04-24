@@ -1,0 +1,86 @@
+// ============================================
+// Alerts — Flash messages
+// ============================================
+
+.ed-flash {
+  padding: 0.85rem 1.25rem;
+  border: 1px solid var(--ed-border-strong);
+  font-family: $font-mono;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  &--success {
+    color: $color-success;
+    border-color: rgba(107, 143, 113, 0.4);
+    background: rgba(107, 143, 113, 0.06);
+  }
+
+  &--error,
+  &--danger {
+    color: $color-danger;
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.06);
+  }
+
+  &--warning {
+    color: $color-warning;
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.06);
+  }
+
+  &--info {
+    color: var(--ed-accent);
+    border-color: rgba(212, 255, 0, 0.3);
+    background: rgba(212, 255, 0, 0.04);
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.6;
+
+    &:hover { opacity: 1; }
+  }
+}
+
+// Compatibilidad legado (clases antiguas)
+.flash-message,
+.alert {
+  @extend .ed-flash;
+}
+.flash-message.success,
+.alert.success      { @extend .ed-flash--success; }
+.flash-message.error,
+.flash-message.danger,
+.alert.error,
+.alert.danger       { @extend .ed-flash--error; }
+.flash-message.warning,
+.alert.warning      { @extend .ed-flash--warning; }
+.flash-message.info,
+.alert.info         { @extend .ed-flash--info; }
+
+// Badges
+.ed-badge {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid;
+  display: inline-block;
+
+  &--accent  { color: var(--ed-accent); border-color: rgba(212, 255, 0, 0.3); }
+  &--warn    { color: $color-warning; border-color: rgba(245, 158, 11, 0.4); }
+  &--success { color: $color-success; border-color: rgba(107, 143, 113, 0.4); }
+  &--danger  { color: $color-danger;  border-color: rgba(239, 68, 68, 0.4); }
+  &--neutral { color: var(--ed-text-faint); border-color: var(--ed-border-strong); }
+}

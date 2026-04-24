@@ -1,0 +1,116 @@
+@(coll: models.Collection,
+  items: Seq[models.ResolvedCollectionItem],
+  history: Seq[models.CollectionStatusEntry],
+  available: Seq[utils.CollectionWorkflowPolicy.Transition])(implicit request: RequestHeader)
+
+@import models.{CollectionStatus, CollectionItemType, CollectionAccent}
+
+@admin.adminLayout(s"Colección · ${coll.name}", "collections") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">@coll.name</h1>
+      <p class="ed-bo__page-lead">
+        <span class="ed-bo__badge ed-bo__badge--@CollectionStatus.tone(coll.status)">@CollectionStatus.label(coll.status)</span>
+        · /@coll.slug
+        · acento <span class="ed-bo__accent-dot ed-bo__accent-dot--@coll.accent"></span> @CollectionAccent.label(coll.accent)
+      </p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-ghost" href="@routes.AdminCollectionController.list(None)">← Listado</a>
+      @if(coll.isEditable) {
+        <a class="ed-btn-primary" href="@routes.AdminCollectionController.editForm(coll.id.get)">Editar metadatos</a>
+      }
+    </div>
+  </div>
+
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+  @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
+
+  <div class="ed-bo__detail-grid">
+
+    @* ── Columna principal ── *@
+    <section class="ed-bo__panel">
+      <h2 class="ed-bo__panel-title">Descripción</h2>
+      @coll.description.map { d => <p>@d</p> }.getOrElse {
+        <p class="ed-bo__muted">Sin descripción.</p>
+      }
+
+      <h2 class="ed-bo__panel-title">Piezas curadas (@items.size)</h2>
+
+      @if(coll.isEditable) {
+        <form method="POST" action="@routes.AdminCollectionController.addItem(coll.id.get)" class="ed-bo__items-add"
+              data-collection-id="@coll.id.get"
+              data-pickable-url="@routes.AdminCollectionController.pickableItems(coll.id.get, "")"
+              data-csrf-token="@helper.CSRF.getToken.value">
+          @helper.CSRF.formField
+          <div class="ed-bo__items-add-row">
+            <input class="ed-bo__input" type="search" id="ed-pick-search" placeholder="Buscar publicación o artículo..." autocomplete="off">
+            <input type="hidden" name="itemType" id="ed-pick-type">
+            <input type="hidden" name="itemId" id="ed-pick-id">
+            <input class="ed-bo__input" type="text" name="note" placeholder="Nota del curador (opcional)" maxlength="240">
+            <button class="ed-btn-primary" type="submit" id="ed-pick-submit" disabled>Agregar</button>
+          </div>
+          <ul class="ed-bo__pick-suggest" id="ed-pick-suggest" hidden></ul>
+        </form>
+      }
+
+      @if(items.isEmpty) {
+        <p class="ed-bo__muted">Todavía no hay piezas en esta colección.</p>
+      } else {
+        <ol class="ed-bo__items-list"
+            data-reorder-url="@routes.AdminCollectionController.reorderItems(coll.id.get)"
+            data-csrf-token="@helper.CSRF.getToken.value">
+          @for(it <- items) {
+            <li class="ed-bo__item-row @if(!it.existing){is-orphan}" data-item-row-id="@it.item.id.get">
+              <div class="ed-bo__item-meta">
+                <span class="ed-bo__item-type">@CollectionItemType.label(it.item.itemType)</span>
+                <strong class="ed-bo__item-title">@it.title</strong>
+                <span class="ed-bo__item-author">por @it.author</span>
+                @it.item.curatorNote.map { n => <p class="ed-bo__item-note">@n</p> }
+              </div>
+              <div class="ed-bo__item-actions">
+                @if(coll.isEditable) {
+                  <button class="ed-bo__order-btn" data-dir="up" type="button" aria-label="Subir">↑</button>
+                  <button class="ed-bo__order-btn" data-dir="down" type="button" aria-label="Bajar">↓</button>
+                  <form method="POST" action="@routes.AdminCollectionController.removeItem(coll.id.get, it.item.id.get)" style="display:inline">
+                    @helper.CSRF.formField
+                    <button class="ed-bo__link ed-bo__link--danger" type="submit"
+                            onclick="return confirm('¿Quitar esta pieza?')">Quitar</button>
+                  </form>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+      }
+    </section>
+
+    @* ── Columna lateral: workflow ── *@
+    <aside class="ed-bo__panel">
+      <h2 class="ed-bo__panel-title">Acciones disponibles</h2>
+      @if(available.isEmpty) {
+        <p class="ed-bo__muted">No hay transiciones disponibles para tu rol en este estado.</p>
+      } else {
+        @for(t <- available) {
+          <form method="POST" action="@routes.AdminCollectionController.transition(coll.id.get)" class="ed-bo__transition">
+            @helper.CSRF.formField
+            <input type="hidden" name="action" value="@t.action">
+            @if(t.requiresComment) {
+              <textarea class="ed-bo__textarea" name="comment" rows="3" required
+                        placeholder="Comentario obligatorio..."></textarea>
+            }
+            <button class="ed-btn-primary ed-btn--@t.style" type="submit">@t.label</button>
+          </form>
+        }
+      }
+
+      <h2 class="ed-bo__panel-title">Historial</h2>
+      @admin.collections._historyTimeline(history)
+    </aside>
+  </div>
+
+  @if(coll.isEditable) {
+    <script src="@routes.Assets.versioned("javascripts/collection-items.js")?v=@System.currentTimeMillis"></script>
+  }
+}

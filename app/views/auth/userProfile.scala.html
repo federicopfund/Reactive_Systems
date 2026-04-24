@@ -1,0 +1,32 @@
+@(user: models.User)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Perfil · " + user.username) {
+  <section class="ed-profile-page">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">Tu perfil</div>
+      <h1 class="ed-dash-title">@user.fullName</h1>
+      <p class="ed-dash-sub">@user.email</p>
+    </header>
+
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+    <article class="ed-profile-card">
+      <div class="ed-profile-row"><span>Usuario</span><strong>@user.username</strong></div>
+      <div class="ed-profile-row"><span>Rol</span><strong>@user.role</strong></div>
+      <div class="ed-profile-row"><span>Email verificado</span><strong>@if(user.emailVerified){Sí}else{No}</strong></div>
+      <div class="ed-profile-row"><span>Miembro desde</span><strong>@user.createdAt.toString.take(10)</strong></div>
+      @if(user.bio.nonEmpty) {
+        <div class="ed-profile-bio">
+          <h3>Bio</h3>
+          <p>@user.bio</p>
+        </div>
+      }
+    </article>
+
+    <div class="ed-dash-actions">
+      <a href="@routes.UserPublicationController.editProfileForm()" class="ed-btn-primary">Editar perfil</a>
+      <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ir a mi espacio</a>
+    </div>
+  </section>
+}

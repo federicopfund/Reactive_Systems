@@ -1,21 +1,21 @@
 package services
 
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorRef, Scheduler}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
 import core._
+import core.guardian._
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 @Singleton
-class ReactiveContactAdapter @Inject()(system: ActorSystem[ContactCommand])(implicit ec: ExecutionContext) {
-  
-  implicit val timeout: Timeout = 5.seconds
-  implicit val scheduler: akka.actor.typed.Scheduler = system.scheduler
-
-  def submitContact(contact: Contact): Future[ContactResponse] = {
-    system.ask[ContactResponse](replyTo => SubmitContact(contact, replyTo))
-  }
+class ReactiveContactAdapter @Inject()(
+  guardian: ActorRef[DomainGuardianCommand],
+  implicit val scheduler: Scheduler
+)(implicit ec: ExecutionContext) {
+  private implicit val timeout: Timeout = 5.seconds
+  def submitContact(contact: Contact): Future[ContactResponse] =
+    guardian.ask[ContactResponse](replyTo => ForwardContact(SubmitContact(contact, replyTo)))
 }

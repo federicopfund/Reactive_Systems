@@ -1,0 +1,157 @@
+// ============================================
+// Auth — Login / Register pages (full-page)
+// ============================================
+
+.ed-auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  background: var(--ed-bg);
+}
+
+.ed-auth-side {
+  padding: 4rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid var(--ed-border);
+  background: var(--ed-bg);
+
+  &__brand {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    margin-bottom: 0.5rem;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(2rem, 3.5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ed-text);
+    margin-bottom: 1.25rem;
+
+    em { font-style: italic; color: var(--ed-accent); }
+  }
+
+  &__lead {
+    font-family: $font-body;
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ed-text-dim);
+    max-width: 38ch;
+  }
+
+  &__footer {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--ed-text-faint);
+
+    a {
+      color: var(--ed-accent);
+      text-decoration: none;
+      &:hover { opacity: 0.8; }
+    }
+  }
+}
+
+.ed-auth-form-wrap {
+  padding: 4rem 3rem;
+  background: var(--ed-bg2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ed-auth-form {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--ed-text);
+    margin-bottom: 0.4rem;
+    line-height: 1.1;
+  }
+
+  &__sub {
+    font-size: 0.82rem;
+    color: var(--ed-text-dim);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+
+  &__footer {
+    margin-top: 1.5rem;
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    color: var(--ed-text-faint);
+    text-align: center;
+    letter-spacing: 0.05em;
+
+    a {
+      color: var(--ed-accent);
+      text-decoration: none;
+      &:hover { opacity: 0.8; }
+    }
+  }
+}
+
+// Modal overlay (cuando login se invoca como modal)
+.ed-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.ed-modal-box {
+  background: var(--ed-bg2);
+  border: 1px solid var(--ed-border-strong);
+  width: 380px;
+  max-width: 92vw;
+  padding: 2.5rem;
+}
+
+.ed-modal-close {
+  float: right;
+  background: none;
+  border: none;
+  color: var(--ed-text-faint);
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-top: -0.25rem;
+
+  &:hover { color: var(--ed-text); }
+}
+
+@include respond-to(md) {
+  .ed-auth-page {
+    grid-template-columns: 1fr;
+  }
+  .ed-auth-side { border-right: none; border-bottom: 1px solid var(--ed-border); padding: 2rem 1.5rem; }
+  .ed-auth-form-wrap { padding: 2rem 1.5rem; }
+}

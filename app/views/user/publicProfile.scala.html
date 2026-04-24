@@ -1,0 +1,79 @@
+@(user: models.User, pubs: List[models.Publication], badges: List[models.UserBadge], totalReactions: Int, totalViews: Int)(implicit request: RequestHeader, messages: Messages)
+
+@main(user.fullName + " · @" + user.username) {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">Perfil público</div>
+      <h1 class="ed-dash-title">@user.fullName</h1>
+      <p class="ed-dash-sub">@@@user.username @if(user.location.nonEmpty){· @user.location}</p>
+    </header>
+
+    <article class="ed-profile-card">
+      @if(user.bio.nonEmpty) {
+        <p class="ed-profile-bio-text">@user.bio</p>
+      }
+      <div class="ed-profile-stats">
+        <div><strong>@pubs.size</strong> publicaciones</div>
+        <div><strong>@totalReactions</strong> reacciones</div>
+        <div><strong>@totalViews</strong> vistas</div>
+        <div><strong>@badges.size</strong> insignias</div>
+      </div>
+      @if(user.website.nonEmpty) {
+        <div class="ed-profile-row"><span>Sitio</span><a href="@user.website" target="_blank" rel="noopener">@user.website</a></div>
+      }
+    </article>
+
+    @if(badges.nonEmpty) {
+      <section class="ed-dash-section">
+        <h2 class="ed-dash-section__title">Insignias</h2>
+        <div class="ed-badge-grid">
+          @badges.map { b =>
+            @models.BadgeDefinition.get(b.badgeKey).map { def0 =>
+              <div class="ed-badge">
+                <span class="ed-badge__icon">@def0.icon</span>
+                <div>
+                  <div class="ed-badge__name">@def0.name</div>
+                  <div class="ed-badge__desc">@def0.description</div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    }
+
+    <section class="ed-dash-section">
+      <h2 class="ed-dash-section__title">Publicaciones aprobadas</h2>
+      @if(pubs.isEmpty) {
+        <p class="ed-dash-empty">@user.username aún no tiene publicaciones aprobadas.</p>
+      } else {
+        <div class="ed-articles-grid">
+          @pubs.map { p =>
+            <a class="ed-article-card" href="@routes.HomeController.publicacion(p.slug)">
+              <div class="ed-article-meta">
+                <span class="ed-article-cat">@p.category</span>
+                <span class="ed-article-date">@p.publishedAt.map(_.toString.take(10)).getOrElse("")</span>
+              </div>
+              <h3 class="ed-article-title">@p.title</h3>
+              <p class="ed-article-excerpt">@p.excerpt.getOrElse(p.content.take(160))</p>
+              <span class="ed-article-link">Leer</span>
+            </a>
+          }
+        </div>
+      }
+    </section>
+
+    @if(request.session.get("userId").exists(_.toLong != user.id.getOrElse(-1L))) {
+      <section class="ed-dash-section">
+        <h2 class="ed-dash-section__title">Enviar mensaje</h2>
+        <form method="POST" action="@routes.UserPublicationController.sendDirectMessage()" class="ed-form">
+          @helper.CSRF.formField
+          <input type="hidden" name="receiverId" value="@user.id.getOrElse(0L)">
+          <div class="ed-field"><label>Asunto</label><input type="text" name="subject" required></div>
+          <div class="ed-field"><label>Mensaje</label><textarea name="content" rows="4" required></textarea></div>
+          <button type="submit" class="ed-btn-primary">Enviar</button>
+        </form>
+      </section>
+    }
+  </section>
+}

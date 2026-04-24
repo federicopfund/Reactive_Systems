@@ -1,0 +1,12 @@
+@()(implicit request: RequestHeader)
+
+@main("404 — No encontrado") {
+  <section class="ed-error-page">
+    <div class="ed-error-card">
+      <div class="ed-error-code">404</div>
+      <h1 class="ed-error-title">Esta pieza no existe</h1>
+      <p class="ed-error-desc">El enlace puede estar roto o la publicación pudo haberse retirado de la edición.</p>
+      <a href="@routes.HomeController.index()" class="ed-btn-primary">Volver a la portada</a>
+    </div>
+  </section>
+}

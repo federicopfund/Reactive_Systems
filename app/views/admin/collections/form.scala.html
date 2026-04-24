@@ -1,0 +1,91 @@
+@(existing: Option[models.Collection],
+  formErrors: Map[String, String],
+  formData: Map[String, String])(implicit request: RequestHeader)
+
+@import models.CollectionAccent
+
+@isEdit = @{ existing.isDefined }
+@actionUrl = @{ existing.flatMap(_.id) match {
+  case Some(id) => routes.AdminCollectionController.update(id)
+  case None     => routes.AdminCollectionController.create()
+}}
+@title = @{ if(isEdit) s"Editar colección · ${existing.get.name}" else "Nueva colección" }
+
+@admin.adminLayout(title, "collections") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">@title</h1>
+      <p class="ed-bo__page-lead">Editás los metadatos. Las piezas se gestionan desde el detalle.</p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-ghost" href="@routes.AdminCollectionController.list(None)">← Volver</a>
+    </div>
+  </div>
+
+  @if(formErrors.nonEmpty) {
+    <div class="ed-flash ed-flash--error">
+      <strong>Revisá los errores:</strong>
+      <ul>@for((_, msg) <- formErrors) { <li>@msg</li> }</ul>
+    </div>
+  }
+
+  <form method="POST" action="@actionUrl" class="ed-bo__form">
+    @helper.CSRF.formField
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="name">Nombre</label>
+      <input class="ed-bo__input @if(formErrors.contains("name")){is-error}" id="name" name="name" required maxlength="120"
+             value="@formData.getOrElse("name", "")">
+      @formErrors.get("name").map { e => <small class="ed-bo__error">@e</small> }
+    </div>
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="slug">Slug</label>
+      <input class="ed-bo__input @if(formErrors.contains("slug")){is-error}" id="slug" name="slug" required
+             pattern="[a-z0-9]+(-[a-z0-9]+)*" value="@formData.getOrElse("slug", "")">
+      <small class="ed-bo__hint">Solo minúsculas, números y guiones.</small>
+      @formErrors.get("slug").map { e => <small class="ed-bo__error">@e</small> }
+    </div>
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="coverLabel">Etiqueta de portada</label>
+      <input class="ed-bo__input" id="coverLabel" name="coverLabel" maxlength="60"
+             value="@formData.getOrElse("coverLabel", "COLECCIÓN")">
+    </div>
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="description">Descripción</label>
+      <textarea class="ed-bo__textarea" id="description" name="description" rows="4">@formData.getOrElse("description", "")</textarea>
+    </div>
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="accentColor">Color de acento</label>
+      <select class="ed-bo__input" id="accentColor" name="accentColor">
+        @for(token <- CollectionAccent.all) {
+          <option value="@token" @if(formData.getOrElse("accentColor", CollectionAccent.Terracota) == token){selected}>
+            @CollectionAccent.label(token)
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="ed-bo__form-row ed-bo__form-row--inline">
+      <div>
+        <label class="ed-bo__label" for="curatorId">Curador (opcional, ID de usuario)</label>
+        <input class="ed-bo__input" id="curatorId" name="curatorId" inputmode="numeric"
+               value="@formData.getOrElse("curatorId", "")">
+      </div>
+      <div>
+        <label class="ed-bo__label" for="orderIndex">Orden</label>
+        <input class="ed-bo__input" id="orderIndex" name="orderIndex" type="number" min="0" max="9999"
+               value="@formData.getOrElse("orderIndex", "100")">
+      </div>
+    </div>
+
+    <div class="ed-bo__form-actions">
+      <button class="ed-btn-primary" type="submit">@if(isEdit){Guardar cambios}else{Crear colección}</button>
+      <a class="ed-btn-ghost" href="@routes.AdminCollectionController.list(None)">Cancelar</a>
+    </div>
+  </form>
+}

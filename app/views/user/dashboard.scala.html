@@ -1,0 +1,101 @@
+@(username: String, publications: List[models.Publication], stats: Map[String, Int], feedbackCounts: Map[Long, Int], badges: List[models.UserBadge], userEmail: String, newsletterSubscribed: Boolean)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Mis publicaciones") {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@username</div>
+      <h1 class="ed-dash-title">Mis publicaciones</h1>
+      <p class="ed-dash-sub">Lleva el control de tus piezas: borradores, en revisión y publicadas.</p>
+    </header>
+
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+    <div class="ed-dash-stats">
+      <div class="ed-dash-stat"><div class="ed-dash-stat__num">@stats.getOrElse("total", 0)</div><div class="ed-dash-stat__label">Total</div></div>
+      <div class="ed-dash-stat"><div class="ed-dash-stat__num">@stats.getOrElse("approved", 0)</div><div class="ed-dash-stat__label">Aprobadas</div></div>
+      <div class="ed-dash-stat"><div class="ed-dash-stat__num">@stats.getOrElse("pending", 0)</div><div class="ed-dash-stat__label">En revisión</div></div>
+      <div class="ed-dash-stat"><div class="ed-dash-stat__num">@stats.getOrElse("draft", 0)</div><div class="ed-dash-stat__label">Borradores</div></div>
+    </div>
+
+    <div class="ed-dash-actions">
+      <a href="@routes.UserPublicationController.newPublicationForm()" class="ed-btn-primary">+ Nueva publicación</a>
+      <a href="@routes.UserPublicationController.bookmarks()" class="ed-btn-ghost">Mis marcadores</a>
+      <a href="@routes.UserPublicationController.notifications()" class="ed-btn-ghost">Notificaciones</a>
+      <a href="@routes.UserPublicationController.listPublicationsJson()" class="ed-btn-ghost" target="_blank" rel="noopener" download="mis-publicaciones.json" title="Exportar mis publicaciones como JSON">Exportar JSON ↓</a>
+    </div>
+
+    @* ── Widget newsletter: alta/baja self-service ─────────────── *@
+    <aside class="ed-newsletter-card" aria-label="Suscripción al newsletter">
+      <div class="ed-newsletter-card__icon" aria-hidden="true">📰</div>
+      <div class="ed-newsletter-card__body">
+        <div class="ed-newsletter-card__title">Novedades de la comunidad</div>
+        @if(newsletterSubscribed) {
+          <p class="ed-newsletter-card__text">
+            Estás suscrito con <strong>@userEmail</strong>. Recibirás aviso cuando
+            se publique una nueva pieza en la portada.
+          </p>
+        } else {
+          <p class="ed-newsletter-card__text">
+            Suscríbete para recibir una notificación cada vez que un autor
+            publique una pieza nueva en la comunidad.
+          </p>
+        }
+      </div>
+      <form method="POST" action="@if(newsletterSubscribed) { @routes.UserPublicationController.unsubscribeNewsletter() } else { @routes.UserPublicationController.subscribeNewsletter() }" class="ed-newsletter-card__form">
+        @helper.CSRF.formField
+        @if(newsletterSubscribed) {
+          <button type="submit" class="ed-btn-ghost">Darme de baja</button>
+        } else {
+          <button type="submit" class="ed-btn-primary">Suscribirme</button>
+        }
+      </form>
+    </aside>
+
+    @if(badges.nonEmpty) {
+      <section class="ed-dash-section">
+        <h2 class="ed-dash-section__title">Insignias</h2>
+        <div class="ed-badge-grid">
+          @badges.map { b =>
+            @models.BadgeDefinition.get(b.badgeKey).map { def0 =>
+              <div class="ed-badge">
+                <span class="ed-badge__icon">@def0.icon</span>
+                <div>
+                  <div class="ed-badge__name">@def0.name</div>
+                  <div class="ed-badge__desc">@def0.description</div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    }
+
+    <section class="ed-dash-section">
+      <h2 class="ed-dash-section__title">Tus piezas</h2>
+      @if(publications.isEmpty) {
+        <p class="ed-dash-empty">Aún no tienes publicaciones. <a href="@routes.UserPublicationController.newPublicationForm()">Crea la primera</a>.</p>
+      } else {
+        <div class="ed-submission-list">
+          @publications.map { p =>
+            <div class="ed-submission">
+              <div class="ed-submission__main">
+                <div class="ed-submission__title">@p.title</div>
+                <div class="ed-submission__meta">@p.category · @p.createdAt.toString.take(10) · @p.viewCount vistas</div>
+              </div>
+              <span class="ed-sub-badge ed-sub-badge--@p.status">@p.status</span>
+              @p.id.map { pid =>
+                @if(feedbackCounts.getOrElse(pid, 0) > 0) {
+                  <span class="ed-sub-feedback">@feedbackCounts(pid) feedback</span>
+                }
+                <a href="@routes.UserPublicationController.viewPublication(pid)" class="ed-link-btn">Ver</a>
+                <a href="@routes.UserPublicationController.publicationHistory(pid)" class="ed-link-btn" title="Hilo de trazabilidad editorial">Hilo</a>
+                <a href="@routes.UserPublicationController.editPublicationForm(pid)" class="ed-link-btn">Editar</a>
+              }
+            </div>
+          }
+        </div>
+      }
+    </section>
+  </section>
+}

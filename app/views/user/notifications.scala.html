@@ -1,0 +1,38 @@
+@(username: String, notifs: List[models.UserNotification])(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Notificaciones") {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@username</div>
+      <h1 class="ed-dash-title">Notificaciones</h1>
+      <p class="ed-dash-sub">Actividad reciente sobre tus piezas y mensajes.</p>
+    </header>
+
+    @if(notifs.isEmpty) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "bolt",
+        title = "Sin notificaciones",
+        body = "Aquí verás avisos cuando alguien comente tu publicación, te envíe un mensaje o cambien el estado editorial de una pieza.",
+        ctaLabel = Some("Ver mis publicaciones"),
+        ctaHref = Some(routes.UserPublicationController.dashboard().url)
+      )
+    } else {
+      <ul class="ed-notif-list">
+        @notifs.map { n =>
+          <li class="ed-notif @if(!n.isRead){is-unread}">
+            <span class="ed-notif__icon">@models.NotificationType.icon(n.notificationType)</span>
+            <div class="ed-notif__body">
+              <div class="ed-notif__title">@n.title</div>
+              <div class="ed-notif__msg">@n.message</div>
+              <div class="ed-notif__date">@n.createdAt.toString.take(16).replace("T", " ")</div>
+            </div>
+            @n.publicationId.map { pid =>
+              <a href="@routes.UserPublicationController.viewPublication(pid)" class="ed-link-btn">Ver pieza</a>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+}

@@ -1,0 +1,55 @@
+// ============================================
+// Animations — Editorial Reactiva
+// Wrapped in `motion-safe` to honour `prefers-reduced-motion: reduce` (Issue #16-E).
+// ============================================
+
+@keyframes ed-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ed-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ed-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ed-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+@include motion-safe {
+  .ed-animate-fade-in  { animation: ed-fade-in 0.35s $ease-out; }
+  .ed-animate-slide-up { animation: ed-slide-up 0.4s  $ease-out; }
+  .ed-animate-fade     { animation: ed-fade 0.3s $ease-out; }
+  .ed-animate-pulse    { animation: ed-pulse 1.6s ease-in-out infinite; }
+}
+
+// ── Issue #18-C: Stagger de cards al entrar en grid ──
+@keyframes ed-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@include motion-safe {
+  .ed-articles-grid > .ed-article-card {
+    animation: ed-card-in 0.35s $ease-out both;
+    animation-delay: calc(var(--i, 0) * 35ms);
+  }
+}
+
+// ── Issue #18-C: Crossfade al cambiar de tema (clase aplicada por animations.js) ──
+@include motion-safe {
+  html.ed-theming,
+  html.ed-theming * {
+    transition:
+      background-color 280ms $ease-out,
+      color           280ms $ease-out,
+      border-color    280ms $ease-out !important;
+  }
+}

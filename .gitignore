@@ -7,30 +7,5 @@ target
 /.project
 /.settings
 /RUNNING_PID
-
-# Environment variables
-.env
-.env.local
-.env.production
-
-# Metals (Scala IDE)
-.metals
-.bloop
-metals.sbt
-
-# VS Code
-.vscode/
-
-# macOS
-.DS_Store
-
-# Build artifacts
-dist/
-lib/
-tmp/
-
-# Database
-*.db
-*.sql
-*.sqlite
 *.env.example
+*.vscode

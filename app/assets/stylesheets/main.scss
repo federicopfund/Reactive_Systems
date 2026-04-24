@@ -1,0 +1,76 @@
+// ============================================
+// Main SCSS — Editorial Reactiva
+// Punto de entrada único.
+//
+// Orden de capas (Issue #16):
+//   0. Tokens (primitivos + maps semánticos)
+//   1. Variables legacy + mixins (consumen tokens)
+//   2. Animations (consume mixins)
+//   3. Base (emite CSS vars semánticas en :root y por tema)
+//   4. Componentes
+//   5. Responsive overrides
+//   6. Backoffice (al final, pisa estilos públicos vía body.ed-admin-body-root)
+// ============================================
+
+// 0. Tokens
+@import 'tokens';
+
+// 1. Configuración legacy + helpers
+@import 'variables';
+@import 'mixins';
+
+// 2. Animations
+@import 'animations';
+
+// 3. Base
+@import 'base';
+
+// 4. Layout / utilidades
+@import 'components/typography';
+@import 'components/layout';
+
+// 5. Componentes — navegación
+@import 'components/navbar';   // sidebar editorial
+@import 'components/footer';
+@import 'components/theme-toggle';
+@import 'components/mobile-topbar';
+@import 'components/breadcrumbs';
+
+// 6. Componentes — UI core
+@import 'components/buttons';
+@import 'components/forms';
+@import 'components/cards';
+@import 'components/alerts';
+
+// 7. Componentes — secciones de página
+@import 'components/hero';
+@import 'components/sections';
+@import 'components/publications';
+@import 'components/articles';
+@import 'components/portfolio';
+@import 'components/collections-public';
+@import 'components/collections-admin';
+@import 'components/agents-dashboard';
+@import 'components/agent-settings';
+@import 'components/events';
+
+// 8. Componentes — flujos de usuario
+@import 'components/auth';
+@import 'components/dashboard';
+@import 'components/verification';
+@import 'components/publication-form';
+@import 'components/publication-editor';
+@import 'components/legal';
+@import 'components/graph-popup';
+@import 'components/messages';
+
+// 8b. Componentes transversales (Issue #18)
+@import 'components/states';
+@import 'components/skeleton';
+@import 'components/toast';
+
+// 9. Responsive (overrides públicos)
+@import 'components/responsive';
+
+// 10. Backoffice — DEBE ir al final.
+@import 'components/admin';

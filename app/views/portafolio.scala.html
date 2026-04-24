@@ -1,280 +1,75 @@
-@()(implicit request: RequestHeader, messages: Messages)
+@(isAuthenticated: Boolean,
+  username: Option[String],
+  collections: Seq[models.CollectionWithCount])(implicit request: RequestHeader, messages: Messages)
 
-@main("Portafolio") {
-    <!-- Hero Section -->
-    <section class="hero hero-secondary">
-        <div class="container">
-            <div class="hero-content">
-                <h2 class="hero-title">Portafolio</h2>
-                <p class="hero-subtitle">Proyectos y soluciones construidas con arquitectura reactiva</p>
-            </div>
-        </div>
-    </section>
+@import models.CollectionAccent
 
-    <!-- Portfolio Grid -->
-    <section class="portfolio-section">
-        <div class="container">
-            <!-- Filter Buttons -->
-            <div class="portfolio-filters">
-                <button class="filter-btn active" data-filter="all">✨ Todos</button>
-                <button class="filter-btn" data-filter="web">🌐 Web</button>
-                <button class="filter-btn" data-filter="microservices">🔗 Microservicios</button>
-                <button class="filter-btn" data-filter="streaming">📊 Streaming</button>
-            </div>
+@main("Colecciones") {
 
-            <div class="portfolio-grid">
-                <!-- Project 1 -->
-                <div class="portfolio-card" data-category="web">
-                    <div class="portfolio-image">
-                        <div class="portfolio-placeholder">
-                            <span class="portfolio-icon">🌐</span>
-                        </div>
-                    </div>
-                    <div class="portfolio-content">
-                        <h3 class="portfolio-title">E-Commerce Reactivo</h3>
-                        <p class="portfolio-description">
-                            Plataforma de comercio electrónico construida con Play Framework y Akka, 
-                            capaz de manejar miles de transacciones concurrentes con alta disponibilidad.
-                        </p>
-                        
-                        <div class="portfolio-stack">
-                            <h4>Stack Técnico</h4>
-                            <ul class="stack-list">
-                                <li><strong>Backend:</strong> Play Framework 3.0 con Scala 2.13</li>
-                                <li><strong>Concurrencia:</strong> Akka Actors para gestión de carritos de compra</li>
-                                <li><strong>Base de Datos:</strong> PostgreSQL con Slick para ORM reactivo</li>
-                                <li><strong>Cache:</strong> Redis para sesiones y catálogo de productos</li>
-                                <li><strong>Testing:</strong> ScalaTest con Akka TestKit</li>
-                            </ul>
-                        </div>
+  <section class="ed-collections-hero">
+    <div class="ed-collections-hero__inner">
+      <div class="ed-collections-hero__eyebrow">
+        Portafolio editorial · Edición Nº @{f"${collections.size}%02d"}
+      </div>
+      <h1 class="ed-collections-hero__title">Colecciones<br/>de la edición</h1>
+      <div class="ed-collections-hero__rule" aria-hidden="true">
+        <span class="ed-collections-hero__rule-line"></span>
+        <span class="ed-collections-hero__rule-mark">❦</span>
+        <span class="ed-collections-hero__rule-line"></span>
+      </div>
+      <p class="ed-collections-hero__lead">
+        Recorridos temáticos sobre el manifiesto reactivo: piezas seleccionadas y
+        ordenadas por la curaduría editorial para leer en serie.
+      </p>
+    </div>
+  </section>
 
-                    
+  <section class="ed-collections-grid-wrap">
+  @if(collections.isEmpty) {
+    <div class="ed-collections-empty">
+      <div class="ed-collections-empty__ornament" aria-hidden="true">❧</div>
+      <h2>Sin colecciones publicadas todavía</h2>
+      <p>El equipo editorial está preparando las primeras curadurías. Volvé pronto.</p>
+    </div>
+  } else {
+    <div class="ed-collections-section-head">
+      <span class="ed-collections-section-head__line" aria-hidden="true"></span>
+      <span class="ed-collections-section-head__label">Tomos en circulación</span>
+      <span class="ed-collections-section-head__line" aria-hidden="true"></span>
+    </div>
 
-                        <div class="portfolio-tech">
-                            <span class="tech-badge">Scala</span>
-                            <span class="tech-badge">Play</span>
-                            <span class="tech-badge">Akka</span>
-                            <span class="tech-badge">PostgreSQL</span>
-                        </div>
-                        <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
-                        </div>
-                    </div>
-                </div>
+    <div class="ed-collections-grid">
+    @for((cwc, idx) <- collections.zipWithIndex) {
+      @defining(cwc.collection) { c =>
+        <a class="ed-collection-card ed-collection-card--@c.accent ed-collection-card--link"
+           href="@routes.HomeController.collectionDetail(c.slug)">
+          <div class="ed-collection-card__folio" aria-hidden="true">N.º @{f"${idx + 1}%02d"}</div>
+          <header class="ed-collection-card__head">
+            <span class="ed-collection-card__eyebrow">@c.coverLabel</span>
+            <span class="ed-collection-card__count">@cwc.itemCount @if(cwc.itemCount == 1){pieza}else{piezas}</span>
+          </header>
+          <h2 class="ed-collection-card__title">@c.name</h2>
+          @c.description.map { d =>
+            <p class="ed-collection-card__desc">@d</p>
+          }
+          <div class="ed-collection-card__sep" aria-hidden="true"></div>
+          <footer class="ed-collection-card__foot">
+            <span class="ed-collection-card__meta">curado · @c.publishedAt.map(_.toString.take(10)).getOrElse("")</span>
+            <span class="ed-collection-card__cta">Abrir →</span>
+          </footer>
+        </a>
+      }
+    }
+    </div>
+  }
+  </section>
 
-                <!-- Project 2 -->
-                <div class="portfolio-card" data-category="microservices">
-                    <div class="portfolio-image">
-                        <div class="portfolio-placeholder">
-                            <span class="portfolio-icon">🔗</span>
-                        </div>
-                    </div>
-                    <div class="portfolio-content">
-                        <h3 class="portfolio-title">Sistema de Microservicios Distribuido</h3>
-                        <p class="portfolio-description">
-                            Arquitectura de microservicios resiliente usando Akka Cluster y Akka HTTP, 
-                            con comunicación asíncrona y tolerancia a fallos.
-                        </p>
-                        
-                        <div class="portfolio-stack">
-                            <h4>Stack Técnico</h4>
-                            <ul class="stack-list">
-                                <li><strong>Orquestación:</strong> Akka Cluster con Cluster Sharding</li>
-                                <li><strong>API Gateway:</strong> Akka HTTP con routing dinámico</li>
-                                <li><strong>Message Broker:</strong> Apache Kafka para event-driven communication</li>
-                                <li><strong>Service Discovery:</strong> Akka Management con Kubernetes</li>
-                                <li><strong>Observabilidad:</strong> Prometheus + Grafana + Jaeger</li>
-                            </ul>
-                        </div>
-
-
-                        <div class="portfolio-tech">
-                            <span class="tech-badge">Akka Cluster</span>
-                            <span class="tech-badge">Akka HTTP</span>
-                            <span class="tech-badge">Kafka</span>
-                            <span class="tech-badge">Docker</span>
-                        </div>
-                        <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Caso de Estudio →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 3 -->
-                <div class="portfolio-card" data-category="streaming">
-                    <div class="portfolio-image">
-                        <div class="portfolio-placeholder">
-                            <span class="portfolio-icon">📊</span>
-                        </div>
-                    </div>
-                    <div class="portfolio-content">
-                        <h3 class="portfolio-title">Pipeline de Procesamiento de Datos en Tiempo Real</h3>
-                        <p class="portfolio-description">
-                            Sistema de procesamiento de streams con Akka Streams para analizar 
-                            millones de eventos por segundo con backpressure automático.
-                        </p>
-                        
-                        <div class="portfolio-stack">
-                            <h4>Stack Técnico</h4>
-                            <ul class="stack-list">
-                                <li><strong>Stream Processing:</strong> Akka Streams con operadores personalizados</li>
-                                <li><strong>Ingestion:</strong> Apache Kafka con múltiples particiones</li>
-                                <li><strong>Storage:</strong> Apache Cassandra para series temporales</li>
-                                <li><strong>Analytics:</strong> Flink SQL para análisis en tiempo real</li>
-                                <li><strong>Visualización:</strong> Grafana con dashboards dinámicos</li>
-                            </ul>
-                        </div>
-
-                        
-
-                        <div class="portfolio-tech">
-                            <span class="tech-badge">Akka Streams</span>
-                            <span class="tech-badge">Kafka</span>
-                            <span class="tech-badge">Cassandra</span>
-                            <span class="tech-badge">Grafana</span>
-                        </div>
-                        <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">Documentación →</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 4 -->
-                <div class="portfolio-card" data-category="web">
-                    <div class="portfolio-image">
-                        <div class="portfolio-placeholder">
-                            <span class="portfolio-icon">💬</span>
-                        </div>
-                    </div>
-                    <div class="portfolio-content">
-                        <h3 class="portfolio-title">Aplicación de Chat en Tiempo Real</h3>
-                        <p class="portfolio-description">
-                            Plataforma de mensajería instantánea con websockets, persistencia de actores 
-                            y clustering para escalabilidad horizontal.
-                        </p>
-                        
-                        <div class="portfolio-stack">
-                            <h4>Stack Técnico</h4>
-                            <ul class="stack-list">
-                                <li><strong>Real-time:</strong> WebSockets con Akka HTTP y Play Framework</li>
-                                <li><strong>Persistencia:</strong> Akka Persistence con Event Sourcing</li>
-                                <li><strong>Distribución:</strong> Akka Cluster con Pub-Sub distribuido</li>
-                                <li><strong>Cache:</strong> Redis para presencia de usuarios y mensajes recientes</li>
-                                <li><strong>Storage:</strong> MongoDB para historial de conversaciones</li>
-                            </ul>
-                        </div>
-
-                        
-
-                        <div class="portfolio-tech">
-                            <span class="tech-badge">Akka Persistence</span>
-                            <span class="tech-badge">WebSockets</span>
-                            <span class="tech-badge">Redis</span>
-                            <span class="tech-badge">MongoDB</span>
-                        </div>
-                        <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 5 -->
-                <div class="portfolio-card" data-category="microservices">
-                    <div class="portfolio-image">
-                        <div class="portfolio-placeholder">
-                            <span class="portfolio-icon">🏦</span>
-                        </div>
-                    </div>
-                    <div class="portfolio-content">
-                        <h3 class="portfolio-title">Sistema Bancario Reactivo</h3>
-                        <p class="portfolio-description">
-                            Plataforma bancaria con transacciones ACID, Event Sourcing y CQRS 
-                            para garantizar consistencia y auditabilidad completa.
-                        </p>
-                        
-                        <div class="portfolio-stack">
-                            <h4>Stack Técnico</h4>
-                            <ul class="stack-list">
-                                <li><strong>Arquitectura:</strong> CQRS con Event Sourcing y Domain-Driven Design</li>
-                                <li><strong>Event Store:</strong> EventStoreDB para persistencia de eventos</li>
-                                <li><strong>Command Side:</strong> Akka Typed con validaciones de negocio</li>
-                                <li><strong>Query Side:</strong> PostgreSQL con vistas materializadas</li>
-                                <li><strong>Seguridad:</strong> OAuth2/JWT con auditoría completa de transacciones</li>
-                            </ul>
-                        </div>
-
-                        
-
-                        <div class="portfolio-tech">
-                            <span class="tech-badge">Event Sourcing</span>
-                            <span class="tech-badge">CQRS</span>
-                            <span class="tech-badge">Akka Persistence</span>
-                            <span class="tech-badge">EventStore</span>
-                        </div>
-                        <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Caso de Estudio →</a>
-                            <a href="#" class="portfolio-link">Whitepaper →</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 6 -->
-                <div class="portfolio-card" data-category="streaming">
-                    <div class="portfolio-image">
-                        <div class="portfolio-placeholder">
-                            <span class="portfolio-icon">🎮</span>
-                        </div>
-                    </div>
-                    <div class="portfolio-content">
-                        <h3 class="portfolio-title">Servidor de Juego Multijugador</h3>
-                        <p class="portfolio-description">
-                            Motor de juego en tiempo real con sincronización de estado, 
-                            matchmaking y soporte para miles de jugadores concurrentes.
-                        </p>
-                        
-                        <div class="portfolio-stack">
-                            <h4>Stack Técnico</h4>
-                            <ul class="stack-list">
-                                <li><strong>Game Server:</strong> Akka Typed con actores fuertemente tipados</li>
-                                <li><strong>Networking:</strong> gRPC para comunicación bidireccional de baja latencia</li>
-                                <li><strong>Matchmaking:</strong> Akka Cluster Sharding con algoritmos de ranking</li>
-                                <li><strong>State Sync:</strong> CRDT (Conflict-free Replicated Data Types)</li>
-                                <li><strong>Infrastructure:</strong> Kubernetes con auto-scaling basado en carga</li>
-                            </ul>
-                        </div>
-
-
-                        <div class="portfolio-tech">
-                            <span class="tech-badge">Akka Cluster</span>
-                            <span class="tech-badge">Akka Typed</span>
-                            <span class="tech-badge">gRPC</span>
-                            <span class="tech-badge">K8s</span>
-                        </div>
-                        <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="container">
-            <div class="cta-content">
-                <h2 class="section-title">¿Tienes un proyecto en mente?</h2>
-                <p class="section-subtitle">Trabajemos juntos para construir soluciones reactivas escalables</p>
-                <div class="cta-buttons">
-                    <a href="@routes.HomeController.index()#contact" class="btn btn-primary btn-lg">✉️ Contáctanos</a>
-                    <a href="@routes.HomeController.publicaciones()" class="btn btn-outline btn-lg">📚 Ver Publicaciones</a>
-                </div>
-            </div>
-        </div>
-    </section>
+  <section class="ed-collections-cta">
+    <div class="ed-collections-cta__ornament" aria-hidden="true">·  ·  ·</div>
+    @if(isAuthenticated) {
+      <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-primary">Ir a mi espacio · @username.getOrElse("")</a>
+    } else {
+      <a href="@routes.AuthController.registerPage()" class="ed-btn-primary">Únete a la edición</a>
+    }
+  </section>
 }

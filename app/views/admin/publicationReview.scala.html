@@ -1,0 +1,54 @@
+@(publications: List[models.PublicationWithAuthor], stages: Seq[models.EditorialStage])(implicit request: RequestHeader)
+
+@stageLabel(pwa: models.PublicationWithAuthor) = @{
+  pwa.publication.currentStageId.flatMap(sid => stages.find(_.id.contains(sid)).map(_.label))
+    .getOrElse(pwa.publication.status)
+}
+
+@admin.adminLayout("Cola de revisión", "review") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Cola editorial</div>
+      <h1 class="ed-admin-title">Publicaciones pendientes</h1>
+      <p class="ed-dash-sub">@publications.size pieza(s) esperan resolución.</p>
+    </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo completo</a>
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+    </div>
+  </header>
+
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  @if(publications.isEmpty) {
+    <p class="ed-dash-empty">No hay publicaciones pendientes de revisión.</p>
+  } else {
+    <ul class="ed-revision-list" style="list-style:none;padding:0;">
+      @publications.map { pwa =>
+        <li class="ed-revision-row">
+          <div class="ed-revision-row__main">
+            <div class="ed-revision-row__title">@pwa.publication.title</div>
+            <div class="ed-revision-row__meta">@@@pwa.authorUsername · <span>@pwa.publication.category</span> · <span class="ed-stage-chip">@stageLabel(pwa)</span> · @pwa.publication.createdAt.toString.take(10)</div>
+            <p class="ed-revision-row__excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(180))…</p>
+          </div>
+          <div class="ed-revision-row__actions">
+            @pwa.publication.id.map { id =>
+              <a class="ed-rev-btn ed-rev-btn--view" href="@routes.AdminController.reviewPublicationDetail(id)">Revisar</a>
+              <form method="POST" action="@routes.AdminController.approvePublication(id)" class="ed-inline-form">
+                @helper.CSRF.formField
+                <button class="ed-rev-btn ed-rev-btn--approve">Aprobar</button>
+              </form>
+              <form method="POST" action="@routes.AdminController.rejectPublication(id)" class="ed-inline-form" onsubmit="var r=prompt('Motivo del rechazo (opcional)');if(r===null)return false;this.elements['rejectionReason'].value=r;return true;">
+                @helper.CSRF.formField
+                <input type="hidden" name="rejectionReason" value="">
+                <button class="ed-rev-btn ed-rev-btn--reject">Rechazar</button>
+              </form>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+}

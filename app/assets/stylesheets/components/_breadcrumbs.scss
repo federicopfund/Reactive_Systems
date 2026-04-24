@@ -1,0 +1,47 @@
+// ============================================
+// Breadcrumbs — navegación contextual
+// Issue #17-C
+// ============================================
+
+.ed-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-3 $content-padding-x;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.ed-breadcrumbs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+
+  a {
+    color: var(--color-text-tertiary);
+    text-decoration: none;
+    transition: color $duration-fast $ease-out;
+    @include focus-ring(2px);
+
+    &:hover { color: var(--color-accent); }
+  }
+
+  &:last-child {
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+}
+
+.ed-breadcrumbs__sep {
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+  user-select: none;
+}
+
+@media (max-width: $bp-md) {
+  .ed-breadcrumbs { padding: $space-3 $space-4; }
+}

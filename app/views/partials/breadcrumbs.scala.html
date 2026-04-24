@@ -1,0 +1,28 @@
+@(items: Seq[(String, Option[Call])])
+
+@*
+  Breadcrumbs accesibles — Issue #17-C.
+  items: secuencia de (label, Option[ruta]). El último item siempre va sin link.
+  Ejemplo:
+    @partials.breadcrumbs(Seq(
+      "Mi espacio" -> Some(routes.UserPublicationController.dashboard()),
+      "Mis propuestas" -> Some(routes.UserPublicationController.dashboard()),
+      "Vista previa" -> None
+    ))
+*@
+
+@if(items.nonEmpty) {
+  <nav class="ed-breadcrumbs" aria-label="Migas de pan">
+    @items.zipWithIndex.map { case ((label, link), idx) =>
+      @if(idx > 0) {
+        <span class="ed-breadcrumbs__sep" aria-hidden="true">·</span>
+      }
+      <span class="ed-breadcrumbs__item">
+        @link match {
+          case Some(call) => { <a href="@call">@label</a> }
+          case None       => { <span aria-current="page">@label</span> }
+        }
+      </span>
+    }
+  </nav>
+}

@@ -1,0 +1,50 @@
+@(contact: models.ContactRecord)(implicit request: RequestHeader)
+
+@admin.adminLayout("Contacto · " + contact.name, "contacts") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Contacto</div>
+      <h1 class="ed-admin-title">@contact.name</h1>
+    </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Bandeja</a>
+      @contact.id.map { id => <a href="@routes.AdminController.editContactPage(id)" class="ed-link-btn ed-link-btn--accent">Editar</a> }
+      @contact.id.map { id =>
+        <form method="POST" action="@routes.AdminController.deleteContact(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este contacto?');">
+          @helper.CSRF.formField
+          <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>
+        </form>
+      }
+    </div>
+  </header>
+
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  <article class="ed-profile-card">
+    <div class="ed-profile-row"><span>Email</span><strong>@contact.email</strong></div>
+    <div class="ed-profile-row"><span>Estado actual</span><strong><span class="ed-status-pill ed-status-pill--@contact.status">@contact.status</span></strong></div>
+    <div class="ed-profile-row"><span>Recibido</span><strong>@contact.createdAt.toString.take(16).replace("T", " ")</strong></div>
+
+    <div class="ed-profile-bio">
+      <h3>Mensaje</h3>
+      <p>@contact.message</p>
+    </div>
+
+    @contact.id.map { id =>
+      <div class="ed-profile-bio">
+        <h3>Cambio rápido de estado</h3>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          @for(s <- List("pending","in_progress","resolved","spam","archived")) {
+            <form method="POST" action="@routes.AdminController.updateStatus(id, s)" class="ed-inline-form">
+              @helper.CSRF.formField
+              <button class="ed-link-btn @if(contact.status == s){ed-link-btn--accent}">@s</button>
+            </form>
+          }
+        </div>
+        <p class="ed-dash-sub" style="padding-top:0.6rem;">Las acciones se aplican vía POST a <code>/admin/contacts/:id/status/:status</code> y devuelven JSON.</p>
+      </div>
+    }
+  </article>
+}

@@ -1,0 +1,164 @@
+@(e: models.CommunityEvent,
+  userRsvp: Option[models.EventAttendee],
+  rsvpCounts: Map[String, Int],
+  userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
+
+@*
+  Detalle de evento — incluye RSVP, countdown, share, ICS, agregar a Google.
+*@
+
+@import models.EventEnums
+
+@startsAtIso = @{ e.startsAt.toString }
+@gcalUrl = @{
+  val fmt = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(java.time.ZoneOffset.UTC)
+  val dates = fmt.format(e.startsAt) + "/" + fmt.format(e.endsAt)
+  val text = java.net.URLEncoder.encode(e.title, "UTF-8")
+  val details = java.net.URLEncoder.encode(e.summary.getOrElse(""), "UTF-8")
+  val location = java.net.URLEncoder.encode(e.locationName.getOrElse("") + " " + e.locationDetail.getOrElse(""), "UTF-8").trim
+  s"https://calendar.google.com/calendar/render?action=TEMPLATE&text=$text&dates=$dates&details=$details&location=$location"
+}
+
+@main(s"${e.title} — Agenda") {
+
+  @request.flash.get("success").map { msg => <div class="ed-section"><div class="ed-flash ed-flash--success">@msg</div></div> }
+  @request.flash.get("error").map   { msg => <div class="ed-section"><div class="ed-flash ed-flash--error">@msg</div></div> }
+
+  <article class="ed-event-detail ed-event-detail--accent-@e.accentToken" data-event-slug="@e.slug">
+
+    <header class="ed-event-detail__header">
+      <nav class="ed-event-detail__breadcrumb" aria-label="Breadcrumb">
+        <a href="@routes.EventController.index()">Agenda</a>
+        <span aria-hidden="true">/</span>
+        <span class="ed-event-detail__crumb-current">@EventEnums.EventType.label(e.eventType)</span>
+      </nav>
+
+      <div class="ed-event-detail__meta">
+        <span class="ed-event-detail__type">@EventEnums.EventType.label(e.eventType)</span>
+        <span class="ed-event-detail__dot" aria-hidden="true">·</span>
+        <span class="ed-event-detail__modality">@EventEnums.Modality.label(e.modality)</span>
+        @if(e.status == EventEnums.EventStatus.Cancelled) {
+          <span class="ed-event-detail__cancelled">Cancelado</span>
+        } else if(e.isLive) {
+          <span class="ed-event-detail__live">EN VIVO</span>
+        } else if(e.isPast) {
+          <span class="ed-event-detail__past">Finalizado</span>
+        }
+      </div>
+
+      <h1 class="ed-event-detail__title">@e.title</h1>
+
+      @e.summary.map { s =>
+        <p class="ed-event-detail__summary">@s</p>
+      }
+
+      <dl class="ed-event-detail__facts">
+        <div>
+          <dt>Cuando</dt>
+          <dd>
+            <time datetime="@startsAtIso">
+              @{
+                val locale = new java.util.Locale("es")
+                val fmt = java.time.format.DateTimeFormatter.ofPattern("EEEE d 'de' MMMM, yyyy · HH:mm", locale)
+                e.localStart.format(fmt)
+              }
+            </time>
+            <span class="ed-event-detail__tz">(@e.timezone, dura @e.durationMinutes min)</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Donde</dt>
+          <dd>
+            @e.locationName.getOrElse(EventEnums.Modality.label(e.modality))
+            @e.locationDetail.map { d => <div class="ed-muted">@d</div> }
+            @e.locationUrl.map { u => <div><a href="@u" target="_blank" rel="noopener">Abrir enlace ↗</a></div> }
+          </dd>
+        </div>
+        @e.capacity.map { c =>
+          <div>
+            <dt>Cupo</dt>
+            <dd>@c personas</dd>
+          </div>
+        }
+      </dl>
+
+      @if(!e.isPast && e.status == EventEnums.EventStatus.Published) {
+        <div class="ed-event-countdown" data-countdown-target="@startsAtIso" aria-live="polite">
+          <span class="ed-event-countdown__label">Faltan</span>
+          <span class="ed-event-countdown__value" data-countdown-display>—</span>
+        </div>
+      }
+
+      <div class="ed-event-detail__actions">
+        @userInfo match {
+          case Some(_) => {
+            <form method="POST" action="@routes.EventController.rsvp(e.slug)" class="ed-rsvp-form" data-rsvp-form>
+              @helper.CSRF.formField
+              <fieldset class="ed-rsvp-fieldset">
+                <legend class="ed-visually-hidden">Tu RSVP</legend>
+                @for(opt <- EventEnums.RsvpStatus.all) {
+                  <button type="submit" name="status" value="@opt"
+                          class="ed-rsvp-btn @if(userRsvp.exists(_.rsvpStatus == opt)){is-active}"
+                          data-rsvp-option="@opt">
+                    @EventEnums.RsvpStatus.label(opt)
+                  </button>
+                }
+              </fieldset>
+              <label class="ed-rsvp-reminder">
+                <input type="checkbox" name="reminder" @if(userRsvp.exists(_.reminderOptin)){checked}>
+                Avisame por email 24hs antes
+              </label>
+            </form>
+          }
+          case None => {
+            <a href="@routes.AuthController.loginPage()" class="ed-btn-primary">Iniciar sesion para RSVP</a>
+          }
+        }
+
+        <div class="ed-event-detail__share" data-share data-share-title="@e.title" data-share-url="@routes.EventController.detail(e.slug).absoluteURL()">
+          <a class="ed-btn-secondary" href="@routes.EventController.singleIcs(e.slug)" download>Agregar a mi calendario (.ics)</a>
+          <a class="ed-btn-secondary" href="@gcalUrl" target="_blank" rel="noopener">Google Calendar</a>
+          <button type="button" class="ed-btn-ghost" data-share-trigger>Compartir</button>
+        </div>
+
+        <div class="ed-rsvp-counts" aria-live="polite">
+          @for(s <- EventEnums.RsvpStatus.all) {
+            <span class="ed-rsvp-counts__chip" data-rsvp-count="@s">
+              @EventEnums.RsvpStatus.label(s): <strong>@rsvpCounts.getOrElse(s, 0)</strong>
+            </span>
+          }
+        </div>
+      </div>
+    </header>
+
+    @if(e.tags.nonEmpty) {
+      <div class="ed-event-detail__tags">
+        @e.tags.map { t => <span class="ed-event-tag">#@t</span> }
+      </div>
+    }
+
+    <div class="ed-event-detail__body">
+      @Html(e.descriptionHtml)
+    </div>
+
+    @if(e.speakers.nonEmpty) {
+      <section class="ed-event-detail__speakers">
+        <h2>Quienes participan</h2>
+        <div class="ed-speaker-grid">
+          @e.speakers.map { s => @partials.speakerCard(s) }
+        </div>
+      </section>
+    }
+
+    @if(e.status == EventEnums.EventStatus.Cancelled) {
+      <aside class="ed-event-detail__notice ed-event-detail__notice--cancelled">
+        <strong>Evento cancelado.</strong>
+        @e.cancellationReason.map { r => <p>@r</p> }
+      </aside>
+    }
+  </article>
+
+  <script defer src="@routes.Assets.versioned("javascripts/events-countdown.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/events-rsvp.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/events-share.js")"></script>
+}

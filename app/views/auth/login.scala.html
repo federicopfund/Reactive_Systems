@@ -1,0 +1,50 @@
+@(loginForm: Form[controllers.UserLoginForm])(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Iniciar sesión") {
+  <section class="ed-auth-page">
+    <aside class="ed-auth-side">
+      <div class="ed-auth-side__eyebrow">Edición Reactiva</div>
+      <h1 class="ed-auth-side__title">Vuelve a tu<br/>espacio editorial.</h1>
+      <p class="ed-auth-side__desc">Tus borradores, publicaciones y conversaciones siguen donde las dejaste. Inicia sesión para continuar.</p>
+      <div class="ed-auth-side__list">
+        <div>· Publica tus piezas</div>
+        <div>· Guarda lecturas</div>
+        <div>· Sigue la conversación</div>
+      </div>
+    </aside>
+
+    <div class="ed-auth-form-wrap">
+      <div class="ed-auth-form-eyebrow">Acceso</div>
+      <h2 class="ed-auth-form-title">Iniciar sesión</h2>
+
+      @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+      @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+      @loginForm.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
+
+      <form method="POST" action="@routes.AuthController.login()" class="ed-form">
+        @helper.CSRF.formField
+
+        <div class="ed-field">
+          <label for="username">Usuario o email</label>
+          <input type="text" id="username" name="username" value="@loginForm("username").value.getOrElse("")" required autocomplete="username">
+          @loginForm("username").error.map { e => <div class="ed-field-error">@e.message</div> }
+        </div>
+
+        <div class="ed-field">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password">
+          @loginForm("password").error.map { e => <div class="ed-field-error">@e.message</div> }
+        </div>
+
+        <input type="hidden" name="loginType" value="user">
+
+        <button type="submit" class="ed-btn-primary ed-btn-block">Entrar a la edición</button>
+      </form>
+
+      <div class="ed-auth-aux">
+        ¿Aún no tienes cuenta?
+        <a href="@routes.AuthController.registerPage()">Crear una cuenta</a>
+      </div>
+    </div>
+  </section>
+}

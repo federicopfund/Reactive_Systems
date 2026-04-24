@@ -1,37 +1,352 @@
 // Dark Mode Theme Toggle
 document.addEventListener('DOMContentLoaded', function() {
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
+    // ============================================
+    // Mobile Menu Toggle
+    // ============================================
+    const MOBILE_BREAKPOINT = 768; // Match SCSS $breakpoint-md
+    const hamburger = document.getElementById('hamburger');
+    const navbarMenu = document.getElementById('navbarMenu');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const navLinks = document.querySelectorAll('.navbar-menu .nav-link');
+
+    function toggleMobileMenu() {
+        const isActive = hamburger.classList.contains('active');
+        
+        hamburger.classList.toggle('active');
+        navbarMenu.classList.toggle('active');
+        mobileOverlay.classList.toggle('active');
+        
+        // Update ARIA attribute
+        hamburger.setAttribute('aria-expanded', !isActive);
+        
+        // Prevent body scroll when menu is open
+        if (!isActive) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    function closeMobileMenu() {
+        hamburger.classList.remove('active');
+        navbarMenu.classList.remove('active');
+        mobileOverlay.classList.remove('active');
+        hamburger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+
+    // Toggle menu on hamburger click
+    if (hamburger) {
+        hamburger.addEventListener('click', toggleMobileMenu);
+    }
+
+    // Close menu on overlay click
+    if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+    }
+
+    // Close menu when clicking nav links
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            // Small delay to allow navigation to start
+            setTimeout(closeMobileMenu, 150);
+        });
+    });
+
+    // Close menu on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && navbarMenu.classList.contains('active')) {
+            closeMobileMenu();
+        }
+    });
+
+    // Handle window resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            // Close mobile menu if window is resized to desktop
+            if (window.innerWidth > MOBILE_BREAKPOINT && navbarMenu.classList.contains('active')) {
+                closeMobileMenu();
+            }
+        }, 250);
+    });
+
+    // ============================================
+    // Interactive Graph Popup
+    // ============================================
+    const graphIconTrigger = document.getElementById('graphIconTrigger');
+    const graphPopup = document.getElementById('graphPopup');
+    const graphInfo = document.getElementById('graphInfo');
+
+    // Datos de los nodos
+    const nodes = [
+        {
+            id: 'responsive',
+            label: 'Responsivo',
+            icon: '📱',
+            x: 300,
+            y: 80,
+            color: '#4CAF50',
+            description: 'El sistema responde de manera oportuna y consistente. La capacidad de respuesta es fundamental para la usabilidad.',
+            connections: ['resilient', 'elastic']
+        },
+        {
+            id: 'resilient',
+            label: 'Resiliente',
+            icon: '🛡️',
+            x: 480,
+            y: 200,
+            color: '#2196F3',
+            description: 'El sistema permanece responsivo ante fallos mediante replicación, contención y aislamiento de componentes.',
+            connections: ['responsive', 'message']
+        },
+        {
+            id: 'elastic',
+            label: 'Elástico',
+            icon: '📈',
+            x: 120,
+            y: 200,
+            color: '#FF9800',
+            description: 'El sistema se adapta a cargas variables mediante escalado dinámico y distribución de carga.',
+            connections: ['responsive', 'message']
+        },
+        {
+            id: 'message',
+            label: 'Orientado a Mensajes',
+            icon: '💬',
+            x: 300,
+            y: 320,
+            color: '#9C27B0',
+            description: 'Los componentes se comunican mediante paso asíncrono de mensajes, creando límites claros.',
+            connections: ['resilient', 'elastic']
+        }
+    ];
+
+    let activeNode = null;
+
+    // Función para crear el grafo
+    function createGraph() {
+        const svg = document.getElementById('graphSvg');
+        const connectionsGroup = document.getElementById('connections');
+        const nodesGroup = document.getElementById('nodes');
+
+        // Limpiar contenido previo
+        connectionsGroup.innerHTML = '';
+        nodesGroup.innerHTML = '';
+
+        // Crear conexiones
+        nodes.forEach(node => {
+            node.connections.forEach(targetId => {
+                const targetNode = nodes.find(n => n.id === targetId);
+                if (targetNode && nodes.indexOf(node) < nodes.indexOf(targetNode)) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', node.x);
+                    line.setAttribute('y1', node.y);
+                    line.setAttribute('x2', targetNode.x);
+                    line.setAttribute('y2', targetNode.y);
+                    line.setAttribute('class', 'connection-line');
+                    line.setAttribute('data-from', node.id);
+                    line.setAttribute('data-to', targetId);
+                    connectionsGroup.appendChild(line);
+
+                    // Añadir flecha en el punto medio
+                    const midX = (node.x + targetNode.x) / 2;
+                    const midY = (node.y + targetNode.y) / 2;
+                    const angle = Math.atan2(targetNode.y - node.y, targetNode.x - node.x);
+                    
+                    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    const size = 8;
+                    const points = [
+                        [midX, midY - size],
+                        [midX + size * 1.5, midY],
+                        [midX, midY + size]
+                    ].map(([x, y]) => {
+                        const rotatedX = midX + (x - midX) * Math.cos(angle) - (y - midY) * Math.sin(angle);
+                        const rotatedY = midY + (x - midX) * Math.sin(angle) + (y - midY) * Math.cos(angle);
+                        return `${rotatedX},${rotatedY}`;
+                    }).join(' ');
+                    
+                    arrow.setAttribute('points', points);
+                    arrow.setAttribute('class', 'connection-arrow');
+                    arrow.setAttribute('data-from', node.id);
+                    arrow.setAttribute('data-to', targetId);
+                    connectionsGroup.appendChild(arrow);
+                }
+            });
+        });
+
+        // Crear nodos
+        nodes.forEach(node => {
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', `node-group node-${node.id}`);
+            group.setAttribute('data-node-id', node.id);
+            group.style.cursor = 'pointer';
+
+            // Círculo del nodo
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', node.x);
+            circle.setAttribute('cy', node.y);
+            circle.setAttribute('r', 40);
+            circle.setAttribute('class', 'node-circle');
+            circle.setAttribute('fill', node.color);
+            circle.setAttribute('stroke', node.color);
+            group.appendChild(circle);
+
+            // Icono del nodo
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            icon.setAttribute('x', node.x);
+            icon.setAttribute('y', node.y + 5);
+            icon.setAttribute('class', 'node-icon');
+            icon.textContent = node.icon;
+            group.appendChild(icon);
+
+            // Texto del nodo
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', node.x);
+            text.setAttribute('y', node.y + 60);
+            text.setAttribute('class', 'node-text');
+            text.textContent = node.label;
+            group.appendChild(text);
+
+            // Event listeners
+            group.addEventListener('click', () => selectNode(node));
+            group.addEventListener('mouseenter', () => highlightConnections(node));
+            group.addEventListener('mouseleave', () => clearHighlights());
+
+            nodesGroup.appendChild(group);
+        });
+    }
+
+    // Función para seleccionar un nodo
+    function selectNode(node) {
+        activeNode = node;
+        
+        // Actualizar información
+        graphInfo.innerHTML = `
+            <strong>${node.icon} ${node.label}</strong>
+            <p>${node.description}</p>
+            <p style="margin-top: 8px; color: rgba(255, 255, 255, 0.6); font-size: 12px;">
+                Conectado con: ${node.connections.map(id => {
+                    const connNode = nodes.find(n => n.id === id);
+                    return connNode.label;
+                }).join(', ')}
+            </p>
+        `;
+
+        // Activar nodo
+        document.querySelectorAll('.node-group').forEach(g => g.classList.remove('active'));
+        document.querySelector(`[data-node-id="${node.id}"]`).classList.add('active');
+        
+        highlightConnections(node);
+    }
+
+    // Función para resaltar conexiones
+    function highlightConnections(node) {
+        document.querySelectorAll('.connection-line, .connection-arrow').forEach(el => {
+            const from = el.getAttribute('data-from');
+            const to = el.getAttribute('data-to');
+            
+            if (from === node.id || to === node.id) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+    }
+
+    // Función para limpiar resaltados
+    function clearHighlights() {
+        if (!activeNode) {
+            document.querySelectorAll('.connection-line, .connection-arrow').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+    }
+
+    // Abrir popup
+    if (graphIconTrigger) {
+        graphIconTrigger.addEventListener('mouseenter', () => {
+            graphPopup.classList.add('active');
+            createGraph();
+            
+            // Mostrar información inicial
+            graphInfo.innerHTML = '<p>Haz clic en un nodo para ver su descripción y conexiones</p>';
+        });
+    }
+
+    // Cerrar popup al hacer clic fuera
+    if (graphPopup) {
+        graphPopup.addEventListener('click', (e) => {
+            if (e.target === graphPopup) {
+                graphPopup.classList.remove('active');
+                activeNode = null;
+            }
+        });
+
+        // Cerrar con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && graphPopup.classList.contains('active')) {
+                graphPopup.classList.remove('active');
+                activeNode = null;
+            }
+        });
+    }
+
+    // ============================================
+    // Theme Toggle
+    // ============================================
+    const themeToggleMobile = document.getElementById('theme-toggle');
+    const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
+    const themeIconMobile = document.getElementById('theme-icon');
+    const themeIconDesktop = document.getElementById('theme-icon-desktop');
     const htmlElement = document.documentElement;
     
     // Obtener tema actual (ya aplicado por el script inline en head)
     const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
     
-    // Sincronizar icono con el tema actual
-    if (themeIcon) {
-        themeIcon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    // Sincronizar iconos con el tema actual
+    function updateThemeIcons(theme) {
+        const icon = theme === 'dark' ? '☀️' : '🌙';
+        if (themeIconMobile) themeIconMobile.textContent = icon;
+        if (themeIconDesktop) themeIconDesktop.textContent = icon;
     }
     
-    // Toggle theme con animación
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function() {
-            const currentTheme = htmlElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            // Agregar clase de animación
-            themeToggle.classList.add('switching');
-            
-            // Cambiar tema
-            htmlElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            // Actualizar icono
-            themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            
-            // Remover clase de animación
-            setTimeout(() => {
-                themeToggle.classList.remove('switching');
-            }, 600);
+    updateThemeIcons(currentTheme);
+    
+    // Función para cambiar el tema
+    function toggleTheme(button) {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        // Agregar clase de animación a ambos botones
+        if (themeToggleMobile) themeToggleMobile.classList.add('switching');
+        if (themeToggleDesktop) themeToggleDesktop.classList.add('switching');
+        
+        // Cambiar tema
+        htmlElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Actualizar iconos
+        updateThemeIcons(newTheme);
+        
+        // Remover clase de animación
+        setTimeout(() => {
+            if (themeToggleMobile) themeToggleMobile.classList.remove('switching');
+            if (themeToggleDesktop) themeToggleDesktop.classList.remove('switching');
+        }, 600);
+    }
+    
+    // Toggle theme con animación para ambos botones
+    if (themeToggleMobile) {
+        themeToggleMobile.addEventListener('click', function() {
+            toggleTheme(this);
+        });
+    }
+    
+    if (themeToggleDesktop) {
+        themeToggleDesktop.addEventListener('click', function() {
+            toggleTheme(this);
         });
     }
     
@@ -40,9 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!localStorage.getItem('theme')) {
             const newTheme = e.matches ? 'dark' : 'light';
             htmlElement.setAttribute('data-theme', newTheme);
-            if (themeIcon) {
-                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            }
+            updateThemeIcons(newTheme);
         }
     });
 

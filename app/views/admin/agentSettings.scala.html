@@ -1,0 +1,145 @@
+@(grouped:   Seq[(models.AgentSettingCategory, Seq[models.AgentSettingDef])],
+  overrides: Map[String, models.AgentSetting],
+  audit:     Seq[models.AgentSettingAudit],
+  canManage: Boolean,
+  username:  String)(implicit request: RequestHeader)
+
+@import models.AgentSettingType
+@import helper.CSRF
+
+@effective(d: models.AgentSettingDef) = @{ overrides.get(d.key).map(_.valueText).getOrElse(d.defaultValue) }
+@isOverride(d: models.AgentSettingDef) = @{ overrides.contains(d.key) }
+
+@admin.adminLayout("Configuración de agentes", "agent-settings") {
+
+  <header class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">Configuración de agentes</h1>
+      <p class="ed-bo__page-lead">
+        Modificá las variables que rigen el comportamiento de los <strong>guardians</strong> y
+        <strong>engines</strong>. Los valores marcados como <em>“Requiere reinicio”</em> se
+        aplican al próximo arranque; el resto entra en vigor inmediatamente.
+      </p>
+    </div>
+    <div class="ed-agents__global">
+      <a class="ed-bo__chip" href="@routes.AdminAgentsController.dashboard()">← Volver al dashboard</a>
+    </div>
+  </header>
+
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  <form method="POST" action="@routes.AdminAgentSettingsController.save()" class="ed-agent-settings__form">
+    @CSRF.formField
+
+    @for((cat, defs) <- grouped) {
+      <section class="ed-agent-settings__group">
+        <header class="ed-agent-settings__group-head">
+          <h2 class="ed-agent-settings__group-title">@cat.label</h2>
+          <span class="ed-agent-settings__group-count">@defs.size variables</span>
+        </header>
+
+        <div class="ed-agent-settings__rows">
+        @for(d <- defs) {
+          <div class="ed-agent-settings__row @if(isOverride(d)){is-override}">
+            <div class="ed-agent-settings__row-info">
+              <div class="ed-agent-settings__row-key">
+                <code>@d.key</code>
+                @if(d.requiresRestart) {
+                  <span class="ed-agent-settings__badge ed-agent-settings__badge--warn">requiere reinicio</span>
+                } else {
+                  <span class="ed-agent-settings__badge ed-agent-settings__badge--live">en vivo</span>
+                }
+                @if(isOverride(d)) {
+                  <span class="ed-agent-settings__badge ed-agent-settings__badge--override">override</span>
+                }
+              </div>
+              <div class="ed-agent-settings__row-label">@d.label</div>
+              <div class="ed-agent-settings__row-desc">@d.description</div>
+              <div class="ed-agent-settings__row-meta">
+                Default: <code>@d.defaultValue</code>
+                @d.unit.map { u => · @u }
+                @for(mn <- d.min; mx <- d.max) { · rango: @mn–@mx }
+              </div>
+            </div>
+
+            <div class="ed-agent-settings__row-control">
+              @d.valueType match {
+                case AgentSettingType.BoolT => {
+                  <label class="ed-agent-settings__switch">
+                    <input type="checkbox"
+                           name="setting.@d.key"
+                           value="true"
+                           @if(effective(d) == "true"){checked}
+                           @if(!canManage){disabled} />
+                    <span class="ed-agent-settings__switch-track" aria-hidden="true"></span>
+                    <span class="ed-agent-settings__switch-text">@if(effective(d) == "true"){Habilitado}else{Deshabilitado}</span>
+                  </label>
+                }
+                case AgentSettingType.IntT | AgentSettingType.LongT | AgentSettingType.DurationT => {
+                  <input class="ed-agent-settings__input"
+                         type="number"
+                         name="setting.@d.key"
+                         value="@effective(d)"
+                         min="@d.min.getOrElse(0L)"
+                         max="@d.max.getOrElse(Int.MaxValue.toLong)"
+                         @if(!canManage){disabled} />
+                }
+                case _ => {
+                  <input class="ed-agent-settings__input"
+                         type="text"
+                         name="setting.@d.key"
+                         value="@effective(d)"
+                         @if(!canManage){disabled} />
+                }
+              }
+
+              @if(isOverride(d) && canManage) {
+                <button type="submit"
+                        formaction="@routes.AdminAgentSettingsController.resetOne(d.key)"
+                        formmethod="POST"
+                        class="ed-agent-settings__reset"
+                        title="Restablecer al default">↺ default</button>
+              }
+            </div>
+          </div>
+        }
+        </div>
+      </section>
+    }
+
+    @if(canManage) {
+      <div class="ed-agent-settings__actions">
+        <button type="submit" class="ed-btn-primary">Guardar configuración</button>
+        <span class="ed-agent-settings__hint">Los cambios se guardan como overrides; restablecé para volver al default.</span>
+      </div>
+    } else {
+      <div class="ed-agent-settings__hint">Tu rol puede ver pero no modificar estos valores.</div>
+    }
+  </form>
+
+  <section class="ed-agent-settings__audit">
+    <h2 class="ed-agent-settings__audit-title">Historial reciente</h2>
+    @if(audit.isEmpty) {
+      <p class="ed-agent-settings__hint">Aún no se registraron cambios.</p>
+    } else {
+      <table class="ed-agent-settings__audit-table">
+        <thead>
+          <tr><th>Cuándo</th><th>Quién</th><th>Variable</th><th>Anterior</th><th>Nuevo</th><th>Motivo</th></tr>
+        </thead>
+        <tbody>
+        @for(a <- audit) {
+          <tr>
+            <td>@a.changedAt.toString.take(19).replace("T", " ")</td>
+            <td>@a.changedByName.getOrElse("—")</td>
+            <td><code>@a.settingKey</code></td>
+            <td><code>@a.oldValue.getOrElse("—")</code></td>
+            <td><code>@a.newValue</code></td>
+            <td>@a.reason</td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
+  </section>
+}

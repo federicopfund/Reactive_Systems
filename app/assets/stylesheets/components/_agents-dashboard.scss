@@ -1,0 +1,263 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Backoffice — Dashboard de agentes y guardians (Issue #21)
+// Namespace: .ed-agents__*
+// libsass: NO usar min(px, %).
+// ─────────────────────────────────────────────────────────────────────────────
+
+.ed-agents__global {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+
+  .ed-bo__chip { margin-left: 0.4rem; }
+}
+
+.ed-agents__global-text {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+// ── Dot de estado ──
+.ed-agents__dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #999;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+.ed-agents__dot--healthy   { background: #2f9c5a; box-shadow: 0 0 0 2px rgba(47,156,90,.18), 0 0 8px rgba(47,156,90,.4); }
+.ed-agents__dot--degraded  { background: #d68a1e; box-shadow: 0 0 0 2px rgba(214,138,30,.18); animation: edAgentsPulse 1.6s ease-in-out infinite; }
+.ed-agents__dot--dead      { background: #b54034; box-shadow: 0 0 0 2px rgba(181,64,52,.18); animation: edAgentsPulse 0.9s ease-in-out infinite; }
+.ed-agents__dot--unknown   { background: #aaa; }
+
+@keyframes edAgentsPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+// ── Métricas resumen ──
+.ed-agents__meta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.ed-agents__meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 4px;
+}
+
+.ed-agents__meta-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ed-agents__meta-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #2d2418;
+}
+
+// ── Grid de capas ──
+.ed-agents__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.ed-agents__placeholder {
+  grid-column: 1 / -1;
+  padding: 2rem;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.5);
+  font-style: italic;
+  border: 1px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+}
+.ed-agents__placeholder--err {
+  color: #b54034;
+  border-color: rgba(181, 64, 52, 0.3);
+  background: rgba(181, 64, 52, 0.04);
+  font-style: normal;
+}
+
+.ed-agents__card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ed-agents__card--ok {
+  border-top: 3px solid #2f9c5a;
+}
+.ed-agents__card--down {
+  border-top: 3px solid #b54034;
+  box-shadow: 0 1px 0 rgba(181, 64, 52, 0.08);
+}
+
+.ed-agents__card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ed-agents__card-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ed-agents__card-title {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  flex: 1;
+  color: #2d2418;
+}
+
+.ed-agents__card-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+}
+.ed-agents__card-badge--ok   { background: rgba(47,156,90,.12); color: #1f6e3f; }
+.ed-agents__card-badge--down { background: rgba(181,64,52,.12); color: #8a2e24; }
+
+.ed-agents__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ed-agents__child {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+  &:last-child { border-bottom: none; }
+}
+
+.ed-agents__child-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ed-agents__child-name {
+  flex: 1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #2d2418;
+}
+
+.ed-agents__child-status {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ed-agents__child--healthy  .ed-agents__child-status { color: #1f6e3f; }
+.ed-agents__child--degraded .ed-agents__child-status { color: #8a5a14; }
+.ed-agents__child--dead     .ed-agents__child-status { color: #8a2e24; font-weight: 600; }
+
+.ed-agents__child-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0.55rem 0 0;
+  padding-left: 1.55rem;
+}
+
+.ed-agents__child-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ed-agents__child-stats dt {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.45);
+  margin: 0;
+}
+
+.ed-agents__child-stats dd {
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #2d2418;
+}
+
+.ed-agents__child-error {
+  margin: 0.5rem 0 0 1.55rem;
+  padding: 0.5rem 0.7rem;
+  background: rgba(181, 64, 52, 0.06);
+  border-left: 2px solid #b54034;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: #6b2218;
+  word-break: break-word;
+}
+
+// ── Leyenda colapsable ──
+.ed-agents__legend {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 2rem;
+
+  summary {
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  .ed-agents__dot { vertical-align: middle; margin-right: 0.35rem; }
+}
+
+@media (max-width: 720px) {
+  .ed-agents__meta { grid-template-columns: repeat(2, 1fr); }
+  .ed-agents__child-stats { grid-template-columns: 1fr 1fr; padding-left: 0; }
+  .ed-agents__child-error { margin-left: 0; }
+}

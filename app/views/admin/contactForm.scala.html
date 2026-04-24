@@ -1,0 +1,40 @@
+@(form: Form[controllers.ContactForm], contact: Option[models.ContactRecord])(implicit request: RequestHeader)
+
+@admin.adminLayout("Nuevo contacto", "contacts") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Bandeja de contacto</div>
+      <h1 class="ed-admin-title">Nuevo contacto</h1>
+      <p class="ed-dash-sub">Alta manual desde el backoffice (sin pasar por el formulario público).</p>
+    </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Bandeja</a>
+    </div>
+  </header>
+
+  @form.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
+
+  <form method="POST" action="@routes.AdminController.createContact()" class="ed-form">
+    @helper.CSRF.formField
+    <div class="ed-field">
+      <label for="name">Nombre</label>
+      <input type="text" id="name" name="name" value="@form("name").value.getOrElse("")" required>
+      @form("name").error.map { e => <div class="ed-field-error">@e.message</div> }
+    </div>
+    <div class="ed-field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="@form("email").value.getOrElse("")" required>
+      @form("email").error.map { e => <div class="ed-field-error">@e.message</div> }
+    </div>
+    <div class="ed-field">
+      <label for="message">Mensaje</label>
+      <textarea id="message" name="message" rows="6" required>@form("message").value.getOrElse("")</textarea>
+      @form("message").error.map { e => <div class="ed-field-error">@e.message</div> }
+    </div>
+    <div class="ed-form-actions">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">Cancelar</a>
+      <button type="submit" class="ed-link-btn ed-link-btn--accent">Guardar contacto</button>
+    </div>
+  </form>
+}

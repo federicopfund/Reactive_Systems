@@ -1,0 +1,154 @@
+// ============================================
+// Cards — Editorial Reactiva
+// (pillars, recents, articles, generic)
+// ============================================
+
+// Pilares (4 columnas con borders)
+.ed-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--ed-border);
+}
+
+.ed-pillar {
+  padding: 1.75rem 1.5rem;
+  border-right: 1px solid var(--ed-border);
+  transition: background 0.2s;
+
+  &:last-child { border-right: none; }
+  &:hover { background: var(--ed-border); }
+}
+
+.ed-pillar-num {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  color: var(--ed-accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+}
+
+.ed-pillar-name {
+  font-family: $font-display;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin-bottom: 0.6rem;
+  line-height: 1.2;
+}
+
+.ed-pillar-desc {
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--ed-text-dim);
+}
+
+.ed-pillar-tags {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ed-pillar-tag {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  color: var(--ed-text-faint);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &::before {
+    content: '↳';
+    color: var(--ed-border-strong);
+  }
+}
+
+// Recents (3 cards horizontales)
+.ed-recents-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ed-recent-card {
+  padding: 1.75rem 2rem;
+  border-right: 1px solid var(--ed-border);
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+
+  &:last-child { border-right: none; }
+  &:hover { background: var(--ed-bg2); }
+}
+
+.ed-recent-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+  margin-bottom: 0.5rem;
+}
+
+.ed-recent-title {
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  line-height: 1.25;
+  margin-bottom: 0.5rem;
+  text-wrap: pretty;
+}
+
+.ed-recent-excerpt {
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--ed-text-dim);
+  margin-bottom: 0.75rem;
+}
+
+.ed-recent-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  color: var(--ed-text-faint);
+}
+
+.ed-recent-link {
+  color: var(--ed-accent);
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  &::after { content: '→'; }
+}
+
+// Card genérica (admin, contact, etc.)
+.ed-card {
+  border: 1px solid var(--ed-border);
+  background: var(--ed-bg);
+  padding: 1.5rem;
+
+  &--alt { background: var(--ed-bg2); }
+  &--padded-lg { padding: 2.5rem; }
+}
+
+.ed-card-title {
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin-bottom: 0.5rem;
+}
+
+.ed-card-meta {
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  color: var(--ed-text-faint);
+  letter-spacing: 0.05em;
+}

@@ -1,0 +1,48 @@
+@()(implicit request: RequestHeader)
+
+@*
+  Mobile topbar — Issue #17-B.
+  Visible en viewports < 900px. Contiene:
+    - botón hamburguesa que abre el drawer de navegación,
+    - brand clickable al home,
+    - switcher de tema,
+    - avatar/menú si hay sesión.
+*@
+
+@userId   = @{ request.session.get("userId") }
+@userName = @{ request.session.get("userName").getOrElse("Invitado") }
+@initials = @{
+  val parts = userName.split("\\s+").filter(_.nonEmpty)
+  (if (parts.length >= 2) parts(0).take(1) + parts(1).take(1) else userName.take(2)).toUpperCase
+}
+
+<header class="ed-mobile-topbar" aria-label="Barra de navegación móvil">
+  <button type="button"
+          class="ed-mobile-topbar__menu"
+          data-action="open-drawer"
+          aria-controls="ed-sidebar"
+          aria-expanded="false"
+          aria-label="Abrir menú">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="3" y1="6"  x2="21" y2="6"></line>
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <a href="@routes.HomeController.index()" class="ed-mobile-topbar__brand">
+    <span class="ed-mobile-topbar__eyebrow">Edición Digital</span>
+    <span class="ed-mobile-topbar__title">Manifiesto Reactivo</span>
+  </a>
+
+  <div class="ed-mobile-topbar__actions">
+    @partials.themeToggle(compact = true)
+    @if(userId.isDefined) {
+      <a href="@routes.UserPublicationController.dashboard()"
+         class="ed-mobile-topbar__menu"
+         aria-label="Mi espacio · @userName">
+        <span style="font-family: monospace; font-size: 0.65rem; font-weight: 700;">@initials</span>
+      </a>
+    }
+  </div>
+</header>

@@ -1,0 +1,153 @@
+// ============================================
+// Forms — Editorial Reactiva
+// ============================================
+
+.ed-field {
+  margin-bottom: 1.1rem;
+
+  label {
+    display: block;
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ed-text-faint);
+    margin-bottom: 0.4rem;
+  }
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    background: var(--ed-bg3);
+    border: 1px solid var(--ed-border-strong);
+    color: var(--ed-text);
+    font-family: $font-body;
+    font-size: 0.85rem;
+    padding: 0.65rem 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+    border-radius: 0;
+
+    &:focus { border-color: var(--ed-accent); }
+    &::placeholder { color: var(--ed-text-faint); }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: $font-body;
+    line-height: 1.6;
+  }
+
+  select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ed-text-faint) 50%),
+                      linear-gradient(135deg, var(--ed-text-faint) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 2rem;
+  }
+
+  &--error input,
+  &--error textarea,
+  &--error select,
+  &--invalid input,
+  &--invalid textarea,
+  &--invalid select { border-color: $color-danger; }
+
+  // Issue #18-D: validación inline → estados visuales sutiles.
+  &--invalid input,
+  &--invalid textarea,
+  &--invalid select { border-left-width: 3px; }
+
+  &--valid input,
+  &--valid textarea,
+  &--valid select {
+    border-left: 3px solid var(--color-success);
+  }
+
+  &__error {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    color: $color-danger;
+    margin-top: 0.3rem;
+  }
+
+  &__hint {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    color: var(--ed-text-faint);
+    margin-top: 0.3rem;
+  }
+}
+
+.ed-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    align-items: center;
+  }
+}
+
+// Search bar editorial (publicaciones)
+.ed-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--ed-border-strong);
+  padding: 0.5rem 0.9rem;
+
+  input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--ed-text);
+    font-family: $font-mono;
+    font-size: 0.75rem;
+    width: 200px;
+
+    &::placeholder { color: var(--ed-text-faint); }
+  }
+
+  .ed-search-icon {
+    color: var(--ed-text-faint);
+    font-size: 0.9rem;
+    font-family: $font-mono;
+  }
+
+  .ed-search-clear {
+    color: var(--ed-text-faint);
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+
+    &:hover { color: var(--ed-text); }
+  }
+}
+
+// Checkbox / radio
+.ed-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  color: var(--ed-text-dim);
+  cursor: pointer;
+
+  input { accent-color: var(--ed-accent); }
+}

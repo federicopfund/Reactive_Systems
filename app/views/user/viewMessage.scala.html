@@ -1,0 +1,49 @@
+@(username: String, msgWithUsers: models.PrivateMessageWithUsers)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Mensaje · " + msgWithUsers.message.subject) {
+  <section class="ed-dashboard">
+    <a href="@routes.UserPublicationController.inbox("received")" class="ed-back-link">← Volver a la bandeja</a>
+
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+    <article class="ed-msg-detail">
+      <header class="ed-msg-detail__head">
+        <h1>@msgWithUsers.message.subject</h1>
+        <div class="ed-msg-detail__meta">
+          <strong>@msgWithUsers.senderFullName</strong>
+          <span class="ed-msg-uname">@@@msgWithUsers.senderUsername</span>
+          → <strong>@msgWithUsers.receiverFullName</strong>
+          <span class="ed-msg-uname">@@@msgWithUsers.receiverUsername</span>
+        </div>
+        <div class="ed-msg-detail__date">@msgWithUsers.message.createdAt.toString.take(16).replace("T", " ")</div>
+        @msgWithUsers.publicationTitle.map { pt =>
+          <div class="ed-msg-detail__pub">Sobre la publicación: <em>@pt</em></div>
+        }
+      </header>
+
+      <div class="ed-msg-detail__body">@Html(msgWithUsers.message.content.replace("\n", "<br/>"))</div>
+    </article>
+
+    @if(msgWithUsers.message.receiverId == request.session.get("userId").map(_.toLong).getOrElse(0L)) {
+      <details class="ed-msg-compose" open>
+        <summary class="ed-msg-compose__summary">Responder a @msgWithUsers.senderFullName</summary>
+        <form method="POST" action="@routes.UserPublicationController.sendDirectMessage()" class="ed-msg-compose__body">
+          @helper.CSRF.formField
+          <input type="hidden" name="receiverUsername" value="@msgWithUsers.senderUsername">
+          <div class="ed-msg-compose__row">
+            <label for="reply-subject">Asunto</label>
+            <input id="reply-subject" type="text" name="subject" value="Re: @msgWithUsers.message.subject" required>
+          </div>
+          <div class="ed-msg-compose__row">
+            <label for="reply-content">Tu respuesta</label>
+            <textarea id="reply-content" name="content" rows="6" required></textarea>
+          </div>
+          <div class="ed-msg-compose__actions">
+            <button type="submit" class="ed-btn-primary">Enviar respuesta</button>
+          </div>
+        </form>
+      </details>
+    }
+  </section>
+}

@@ -1,0 +1,43 @@
+@(username: String, user: models.User)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Editar perfil") {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@username</div>
+      <h1 class="ed-dash-title">Editar perfil</h1>
+      <p class="ed-dash-sub">Actualiza tu bio, ubicación y enlaces.</p>
+    </header>
+
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+
+    <form method="POST" action="@routes.UserPublicationController.updateProfile()" class="ed-form">
+      @helper.CSRF.formField
+
+      <div class="ed-field">
+        <label for="bio">Bio</label>
+        <textarea id="bio" name="bio" rows="4" maxlength="500">@user.bio</textarea>
+      </div>
+
+      <div class="ed-field-row">
+        <div class="ed-field">
+          <label for="location">Ubicación</label>
+          <input type="text" id="location" name="location" value="@user.location">
+        </div>
+        <div class="ed-field">
+          <label for="website">Sitio web</label>
+          <input type="url" id="website" name="website" value="@user.website" placeholder="https://…">
+        </div>
+      </div>
+
+      <div class="ed-field">
+        <label for="avatarUrl">URL de avatar</label>
+        <input type="url" id="avatarUrl" name="avatarUrl" value="@user.avatarUrl" placeholder="https://…">
+      </div>
+
+      <div class="ed-form-actions">
+        <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-btn-ghost">Cancelar</a>
+        <button type="submit" class="ed-btn-primary">Guardar perfil</button>
+      </div>
+    </form>
+  </section>
+}

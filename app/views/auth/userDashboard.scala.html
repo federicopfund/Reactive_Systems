@@ -1,0 +1,91 @@
+@(user: models.User, bookmarkedPublications: List[models.Publication], userPublications: List[models.Publication] = Nil)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Mi espacio · " + user.username) {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">Tu espacio editorial</div>
+      <h1 class="ed-dash-title">Hola, @user.fullName</h1>
+      <p class="ed-dash-sub">Aquí están tus publicaciones, marcadores y la actividad reciente de tu cuenta.</p>
+    </header>
+
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+    <div class="ed-dash-stats">
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@userPublications.size</div>
+        <div class="ed-dash-stat__label">Publicaciones</div>
+      </div>
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@userPublications.count(_.status == "approved")</div>
+        <div class="ed-dash-stat__label">Aprobadas</div>
+      </div>
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@userPublications.count(_.status == "pending")</div>
+        <div class="ed-dash-stat__label">En revisión</div>
+      </div>
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@bookmarkedPublications.size</div>
+        <div class="ed-dash-stat__label">Marcadas</div>
+      </div>
+    </div>
+
+    <div class="ed-dash-actions">
+      <a href="@routes.UserPublicationController.newPublicationForm()" class="ed-btn-primary">Nueva publicación</a>
+      <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ver todas mis piezas</a>
+      <a href="@routes.AuthController.userProfile()" class="ed-btn-ghost">Editar perfil</a>
+    </div>
+
+    <section class="ed-dash-section">
+      <h2 class="ed-dash-section__title">Mis publicaciones</h2>
+      @if(userPublications.isEmpty) {
+        @partials.emptyState(
+          variant = "empty",
+          icon = "feather",
+          title = "Aún no has publicado nada",
+          body = "Tu primer artículo puede ser una nota corta, un caso de estudio o un patrón observado. Lo importante es empezar.",
+          ctaLabel = Some("Propuesta nueva"),
+          ctaHref = Some(routes.UserPublicationController.newPublicationForm().url)
+        )
+      } else {
+        <div class="ed-submission-list">
+          @userPublications.take(8).map { p =>
+            <div class="ed-submission">
+              <div class="ed-submission__main">
+                <div class="ed-submission__title">@p.title</div>
+                <div class="ed-submission__meta">@p.category · @p.createdAt.toString.take(10)</div>
+              </div>
+              <span class="ed-sub-badge ed-sub-badge--@p.status">@p.status</span>
+              <a href="@routes.UserPublicationController.editPublicationForm(p.id.get)" class="ed-link-btn">Editar</a>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="ed-dash-section">
+      <h2 class="ed-dash-section__title">Marcadores</h2>
+      @if(bookmarkedPublications.isEmpty) {
+        @partials.emptyState(
+          variant = "empty",
+          icon = "bookmark",
+          title = "Sin marcadores aún",
+          body = "Cuando guardes una publicación aparecerá aquí para que la retomes cuando quieras.",
+          ctaLabel = Some("Explorar publicaciones"),
+          ctaHref = Some(routes.HomeController.publicaciones().url)
+        )
+      } else {
+        <div class="ed-submission-list">
+          @bookmarkedPublications.take(6).map { p =>
+            <div class="ed-submission">
+              <div class="ed-submission__main">
+                <a href="@routes.HomeController.publicacion(p.slug)" class="ed-submission__title">@p.title</a>
+                <div class="ed-submission__meta">@p.category</div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  </section>
+}

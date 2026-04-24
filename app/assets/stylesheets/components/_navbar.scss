@@ -1,0 +1,411 @@
+// ============================================
+// Navbar — Sidebar editorial (la nav vertical es la nueva navbar)
+// Issue #17-A: variantes rail (desktop colapsado) y drawer (mobile).
+// ============================================
+
+.ed-sidebar {
+  width: $sidebar-width;
+  flex-shrink: 0;
+  border-right: 1px solid var(--ed-border);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 0;
+  background: var(--ed-bg);
+  z-index: 10;
+  transition: width $duration-base $ease-out, left $duration-base $ease-out;
+}
+
+// ── Variantes responsivas: rail (desktop ≥ lg) + drawer (mobile) ──
+@include respond-to(xl) {
+  .ed-sidebar:not(.ed-sidebar--rail) { width: 240px; }
+}
+
+.ed-sidebar--rail {
+  width: 64px;
+  overflow-x: hidden;
+
+  // Oculta todos los bloques con texto largo del rail
+  .ed-brand-label,
+  .ed-brand-name,
+  .ed-nav-section-label,
+  .ed-user-info,
+  .ed-user-name,
+  .ed-user-role,
+  .ed-auth-cta,
+  .ed-sidebar-footer,
+  .ed-theme-toggle { display: none !important; }
+
+  // Truco: los items contienen text-nodes sueltos ("Portada", "Artículos"…),
+  // por eso anulamos su font-size aquí y restauramos tamaños en hijos puntuales.
+  .ed-nav-item {
+    font-size: 0;
+    line-height: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    justify-content: center;
+    padding: 0.6rem 0;
+    gap: 0;
+    position: relative;
+    .ed-nav-dot { width: 8px; height: 8px; flex-shrink: 0; }
+
+    // Tooltip flotante en modo rail (Issue #18 follow-up).
+    // Se materializa con data-tip="…" en cada <a>.
+    &[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-4px);
+      padding: 0.4rem 0.65rem;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      color: var(--color-bg-primary);
+      background: var(--color-text-primary);
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 140ms ease-out, transform 140ms ease-out, visibility 0s linear 140ms;
+      z-index: 1200;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    }
+    &[data-tip]::before {
+      content: "";
+      position: absolute;
+      left: calc(100% + 4px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-4px);
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-right: 6px solid var(--color-text-primary);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 140ms ease-out, transform 140ms ease-out, visibility 0s linear 140ms;
+      z-index: 1200;
+    }
+    &[data-tip]:hover::after,
+    &[data-tip]:focus-visible::after,
+    &[data-tip]:hover::before,
+    &[data-tip]:focus-visible::before {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-50%) translateX(0);
+      transition-delay: 0s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ed-nav-item[data-tip]::after,
+    .ed-nav-item[data-tip]::before { transition: none; }
+  }
+
+  .ed-sidebar-brand { padding: 0 0 1rem; text-align: center; border-bottom: 1px solid var(--color-border-subtle); }
+  .ed-nav-section { padding: 0 0.5rem; }
+  .ed-sidebar-auth { padding: 0.5rem; text-align: center; }
+
+  // Botón "expandir": invertimos el chevron cuando está colapsado.
+  .ed-sidebar__rail-toggle svg { transform: rotate(180deg); }
+}
+
+// ── Drawer mobile (controlado por sidebar.js + .is-open) ──
+@media (max-width: $bp-md) {
+  .ed-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    height: 100vh;
+    width: 280px;
+    z-index: 100;
+    overflow-y: auto;
+    box-shadow: $shadow-lg;
+
+    &.is-open { left: 0; }
+  }
+}
+
+.ed-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+
+  &.is-visible { display: block; }
+}
+
+.ed-no-scroll { overflow: hidden; }
+
+// ── Botón de toggle del rail (oculto en mobile) ──
+// Reubicado debajo del brand mediante `order` (sidebar es flex column).
+.ed-sidebar__rail-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  order: 2; // brand=auto(1), toggle=2, nav=3, etc.
+  margin: 0 auto $space-4;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-md;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+
+  @include focus-ring(2px);
+  &:hover { color: var(--color-text-primary); background: var(--color-surface-sunken); }
+  svg { width: 14px; height: 14px; }
+
+  @media (min-width: $bp-md) { display: inline-flex; }
+}
+
+.ed-sidebar-brand {
+  padding: 0 1.5rem 2rem;
+  border-bottom: 1px solid var(--ed-border);
+  margin-bottom: 1.5rem;
+
+  a { display: block; }
+}
+
+.ed-brand-label {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.ed-brand-name {
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  line-height: 1.2;
+}
+
+.ed-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.ed-nav-section {
+  padding: 0 1rem;
+  margin-bottom: 2rem;
+}
+
+.ed-nav-section-label {
+  font-family: $font-mono;
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  padding: 0 0.5rem;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+// ── Mi espacio — sección primaria (énfasis visual) ──
+.ed-nav-section--primary {
+  position: relative;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  .ed-nav-section-label {
+    color: var(--ed-accent, var(--ed-text));
+    font-weight: 600;
+  }
+
+  // Filete vertical sutil de acento al lado izquierdo
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0.4rem;
+    top: 1.6rem;
+    bottom: 0.2rem;
+    width: 2px;
+    background: var(--ed-accent, var(--ed-border));
+    opacity: 0.55;
+    border-radius: 2px;
+  }
+
+  .ed-nav-item {
+    font-weight: 500;
+  }
+}
+
+// ── Sección colapsable (Explorar como dropdown) ──
+.ed-nav-section--collapsible {
+  // Reset del marker nativo de <details>
+  > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.4rem;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+
+    &::-webkit-details-marker { display: none; }
+
+    &:hover { background: var(--ed-border); color: var(--ed-text); }
+    &:focus-visible {
+      outline: 2px solid var(--ed-accent, currentColor);
+      outline-offset: 2px;
+    }
+  }
+
+  .ed-nav-chevron {
+    width: 10px;
+    height: 10px;
+    transition: transform 0.2s ease;
+    color: var(--ed-text-faint);
+    flex-shrink: 0;
+  }
+
+  &[open] > summary .ed-nav-chevron {
+    transform: rotate(180deg);
+  }
+
+  .ed-nav-section__items {
+    animation: edNavSlideDown 0.18s ease-out;
+  }
+}
+
+@keyframes edNavSlideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// En modo rail (sidebar colapsada) ocultamos el chevron y los items;
+// el resto del comportamiento ya lo cubre la regla genérica de arriba.
+.ed-sidebar--rail .ed-nav-section--collapsible {
+  > summary { justify-content: center; }
+  .ed-nav-chevron { display: none; }
+}
+
+.ed-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 3px;
+  font-family: $font-body;
+  font-size: 0.82rem;
+  color: var(--ed-text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--ed-text);
+    background: var(--ed-border);
+  }
+
+  &.active,
+  &.is-active,
+  &[aria-current="page"] {
+    color: var(--ed-text);
+    background: var(--color-accent-soft);
+
+    .ed-nav-dot { background: var(--color-accent); }
+  }
+
+  @include focus-ring(2px);
+}
+
+.ed-nav-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ed-text-faint);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+// Sidebar auth block (footer)
+.ed-sidebar-auth {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--ed-border);
+  margin-top: auto;
+}
+
+.ed-user-block {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ed-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ed-accent);
+  color: var(--ed-bg);
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.ed-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ed-user-name {
+  font-family: $font-display;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ed-user-role {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+}
+
+.ed-user-logout {
+  background: none;
+  border: none;
+  color: var(--ed-text-faint);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.2rem;
+  transition: color 0.15s;
+  flex-shrink: 0;
+  text-decoration: none;
+
+  &:hover { color: var(--ed-text); }
+}
+
+.ed-auth-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}

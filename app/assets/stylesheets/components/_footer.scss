@@ -1,0 +1,41 @@
+// ============================================
+// Footer — Sidebar footer / footer textual
+// ============================================
+
+.ed-sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--ed-border);
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  color: var(--ed-text-faint);
+  letter-spacing: 0.1em;
+
+  span { color: var(--ed-accent); }
+}
+
+// Footer dentro de páginas content (legal, error, etc.)
+.ed-page-footer {
+  padding: 2rem $content-padding-x;
+  border-top: 1px solid var(--ed-border);
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--ed-text-faint);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  a {
+    color: var(--ed-text-dim);
+    transition: color 0.15s;
+
+    &:hover { color: var(--ed-accent); }
+  }
+
+  &__links {
+    display: flex;
+    gap: 1.5rem;
+  }
+}

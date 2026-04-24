@@ -1,54 +1,78 @@
-@(title: String)(content: Html)
+@(title: String, fullBleed: Boolean = true)(content: Html)(implicit request: RequestHeader)
+
+@*
+  Layout principal — Editorial Reactiva.
+  Estructura: shell con sidebar lateral + main content.
+
+  Args:
+    - title: título de la pestaña del navegador.
+    - fullBleed: si true (default), el content se renderiza directo dentro de .ed-main.
+                 Si false, envuelve el content en un .ed-container centrado.
+
+  Issue #16: theming dual (crema/noche/auto), skip link, escaneo de prefers-color-scheme.
+*@
+
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="auto">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@title - Reactive Manifesto</title>
-    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Aplicar tema inmediatamente para evitar flash -->
-    <script>
-        (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>@title — Manifiesto Reactivo</title>
+  <meta name="description" content="Manifiesto Reactivo — edición digital sobre sistemas Responsivos, Resilientes, Elásticos y Orientados a Mensajes.">
+  <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="@title — Manifiesto Reactivo">
+  <meta property="og:description" content="Edición digital sobre programación reactiva.">
+  <meta property="og:site_name" content="Manifiesto Reactivo">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@@0,400;0,500;0,700;0,900;1,400;1,700&family=Lora:ital,wght@@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@@400;500&display=swap" rel="stylesheet">
+
+  @* Issue #18-G: preload del bundle principal + print stylesheet aparte. *@
+  <link rel="preload" as="style" href="@routes.Assets.versioned("stylesheets/main.css")">
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/print.css")" media="print">
+
+  @* Bootstrap inline anti-FOUC: aplica el tema antes del primer paint.
+     Soporta tres modos: 'crema' | 'noche' | 'auto'. *@
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ed-theme');
+        if (t !== 'crema' && t !== 'noche' && t !== 'auto') t = 'auto';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'auto');
+      }
+    })();
+  </script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="navbar-brand">
-                <h1>⚡ Reactive Manifesto</h1>
-            </div>
-            <div class="navbar-menu">
-                <a href="@routes.HomeController.index()" class="nav-link">Inicio</a>
-                <a href="@routes.HomeController.publicaciones()" class="nav-link">Publicaciones</a>
-                <a href="@routes.HomeController.portafolio()" class="nav-link">Portafolio</a>
-                <a href="@routes.HomeController.index()#contact" class="nav-link">Contacto</a>
-                <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
-                    <span class="theme-icon" id="theme-icon">🌙</span>
-                </button>
-            </div>
-        </div>
-    </nav>
+  @* Issue #16-E: enlace de salto al contenido principal (visible al recibir foco). *@
+  <a href="#ed-main" class="ed-skip-link">Saltar al contenido principal</a>
 
-    <main>
+  <div class="ed-shell">
+    @partials.sidebar()
+    <main id="ed-main" class="ed-main" tabindex="-1">
+      @partials.mobileTopbar()
+      @if(fullBleed) {
         @content
+      } else {
+        <div class="ed-container">@content</div>
+      }
     </main>
+  </div>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 Reactive Manifesto. Construido con Play Framework y Akka.</p>
-            <p class="footer-subtitle">Responsive • Resilient • Elastic • Message-Driven</p>
-        </div>
-    </footer>
-
-    <script src="@routes.Assets.versioned("javascripts/main.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/theme.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/sidebar.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/searchFilters.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/toast.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/formValidation.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/animations.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/prefetch.js")"></script>
 </body>
 </html>

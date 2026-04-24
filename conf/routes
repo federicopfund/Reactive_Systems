@@ -5,19 +5,207 @@
 # Home page
 GET     /                           controllers.HomeController.index()
 
+# Health (Issue #15 — guardian-backed)
+GET     /health                     controllers.HealthController.health()
+GET     /health/detail              controllers.HealthController.healthDetail()
+
 # Publicaciones page
 GET     /publicaciones              controllers.HomeController.publicaciones()
+GET     /publicaciones/buscar       controllers.HomeController.searchPublicaciones(q: String ?= "", category: Option[String] ?= None)
 GET     /publicaciones/:slug        controllers.HomeController.publicacion(slug: String)
 
 # Portafolio page
 GET     /portafolio                 controllers.HomeController.portafolio()
+GET     /portafolio/:slug           controllers.HomeController.collectionDetail(slug: String)
+GET     /portafolio/:colSlug/pieza/:pieceSlug  controllers.HomeController.openFromCollection(colSlug: String, pieceSlug: String)
+
+# Legal pages
+GET     /privacidad                 controllers.HomeController.politicaPrivacidad()
+GET     /terminos                   controllers.HomeController.terminosDeUso()
 
 # Contact form
 POST    /contact                    controllers.HomeController.submitContact()
 
-# Admin endpoints (opcional - proteger en producción)
-GET     /api/contacts               controllers.HomeController.listContacts(page: Int ?= 0)
-GET     /api/contacts/stats         controllers.HomeController.contactStats()
+# Newsletter
+POST    /newsletter/subscribe       controllers.HomeController.subscribeNewsletter()
+
+# Authentication Routes (Users & Admins)
+GET     /login                      controllers.AuthController.loginPage()
+POST    /login                      controllers.AuthController.login()
+GET     /register                   controllers.AuthController.registerPage()
+POST    /register                   controllers.AuthController.register()
+GET     /logout                     controllers.AuthController.logout()
+
+# User Dashboard Routes
+GET     /dashboard                  controllers.AuthController.userDashboard()
+GET     /profile                    controllers.AuthController.userProfile()
+
+# Email Verification Routes
+GET     /verify-email/:userId       controllers.AuthController.verifyEmailPage(userId: Long)
+POST    /verify-email               controllers.AuthController.verifyEmailCode()
+GET     /resend-code/:userId        controllers.AuthController.resendVerificationCode(userId: Long)
+
+# Admin Panel Routes (Legacy - mantener por compatibilidad)
+GET     /admin/login                controllers.AdminController.loginPage()
+POST    /admin/login                controllers.AdminController.login()
+GET     /admin/logout               controllers.AdminController.logout()
+GET     /admin                      controllers.AdminController.dashboard(page: Int ?= 0, search: Option[String] ?= None)
+GET     /admin/dashboard            controllers.AdminController.dashboard(page: Int ?= 0, search: Option[String] ?= None)
+GET     /admin/statistics           controllers.AdminController.statisticsPage()
+GET     /admin/stats/advanced       controllers.AdminController.advancedStats()
+GET     /admin/stats/messaging      controllers.AdminController.messagingStats()
+
+# Admin CRUD Operations
+GET     /admin/contacts/new         controllers.AdminController.createContactPage()
+POST    /admin/contacts/new         controllers.AdminController.createContact()
+GET     /admin/contacts/:id         controllers.AdminController.viewContact(id: Long)
+GET     /admin/contacts/:id/edit    controllers.AdminController.editContactPage(id: Long)
+POST    /admin/contacts/:id/edit    controllers.AdminController.updateContact(id: Long)
+POST    /admin/contacts/:id/delete  controllers.AdminController.deleteContact(id: Long)
+POST    /admin/contacts/:id/status/:status  controllers.AdminController.updateStatus(id: Long, status: String)
+
+# ============================================
+# USER PUBLICATIONS ROUTES
+# ============================================
+
+# User Dashboard
+GET     /user/dashboard             controllers.UserPublicationController.dashboard()
+
+# Create Publications
+GET     /user/publications/new      controllers.UserPublicationController.newPublicationForm()
+POST    /user/publications/new      controllers.UserPublicationController.createPublication()
+
+# Edit Publications
+GET     /user/publications/:id/edit controllers.UserPublicationController.editPublicationForm(id: Long)
+POST    /user/publications/:id/edit controllers.UserPublicationController.updatePublication(id: Long)
+
+# View Publication (Preview)
+GET     /user/publications/:id      controllers.UserPublicationController.viewPublication(id: Long)
+
+# Hilo de trazabilidad editorial (vista del autor con commit hashes)
+GET     /user/publications/:id/history  controllers.UserPublicationController.publicationHistory(id: Long)
+
+# Publish Actions
+POST    /user/publications/:id/submit   controllers.UserPublicationController.submitForReview(id: Long)
+POST    /user/publications/:id/delete   controllers.UserPublicationController.deletePublication(id: Long)
+
+# Notifications
+GET     /user/notifications             controllers.UserPublicationController.notifications()
+GET     /api/user/notifications/unread   controllers.UserPublicationController.unreadCount()
+
+# Bookmarks
+GET     /user/bookmarks                 controllers.UserPublicationController.bookmarks()
+
+# Newsletter (usuario logueado)
+POST    /user/newsletter/subscribe      controllers.UserPublicationController.subscribeNewsletter()
+POST    /user/newsletter/unsubscribe    controllers.UserPublicationController.unsubscribeNewsletter()
+
+# Profile
+GET     /user/profile/edit              controllers.UserPublicationController.editProfileForm()
+POST    /user/profile/edit              controllers.UserPublicationController.updateProfile()
+GET     /profile/:username              controllers.UserPublicationController.publicProfile(username: String)
+
+# Reactions / Comments / Bookmarks
+POST    /publications/:id/react         controllers.UserPublicationController.toggleReaction(id: Long)
+POST    /publications/:id/comment       controllers.UserPublicationController.addComment(id: Long)
+POST    /comments/:id/delete            controllers.UserPublicationController.deleteComment(id: Long)
+POST    /publications/:id/bookmark      controllers.UserPublicationController.toggleBookmark(id: Long)
+
+# Private Messaging (Reactive / Message-Driven)
+GET     /user/messages                  controllers.UserPublicationController.inbox(tab: String ?= "received")
+GET     /user/messages/:id              controllers.UserPublicationController.viewMessage(id: Long)
+POST    /publications/:id/message       controllers.UserPublicationController.sendMessage(id: Long)
+POST    /user/messages/send             controllers.UserPublicationController.sendDirectMessage()
+GET     /api/user/messages/unread       controllers.UserPublicationController.unreadMessagesCount()
+GET     /api/user/publications          controllers.UserPublicationController.listPublicationsJson()
+
+# ============================================
+# ADMIN PUBLICATION MANAGEMENT
+# ============================================
+
+# Review Publications
+GET     /admin/publications/pending controllers.AdminController.pendingPublications()
+GET     /admin/publications         controllers.AdminController.allPublications(status: Option[String] ?= None)
+GET     /admin/publications/:id     controllers.AdminController.reviewPublicationDetail(id: Long)
+
+# Approve/Reject
+POST    /admin/publications/:id/approve controllers.AdminController.approvePublication(id: Long)
+POST    /admin/publications/:id/reject  controllers.AdminController.rejectPublication(id: Long)
+POST    /admin/publications/:id/transition controllers.AdminController.transitionStage(id: Long)
+POST    /admin/publications/:id/delete  controllers.AdminController.deletePublication(id: Long)
+POST    /admin/publications/:id/notes   controllers.AdminController.saveAdminNotes(id: Long)
+
+# Feedback estructurado
+POST    /admin/publications/:id/feedback        controllers.AdminController.addFeedback(id: Long)
+POST    /admin/feedback/:feedbackId/send         controllers.AdminController.sendFeedbackToUser(feedbackId: Long)
+POST    /admin/feedback/:feedbackId/delete       controllers.AdminController.deleteFeedback(feedbackId: Long)
+
+# Newsletter subscribers management
+GET     /admin/newsletter           controllers.AdminController.newsletterSubscribers()
+
+# ============================================
+# ADMIN MANAGEMENT (Super Admin Only)
+# ============================================
+GET     /admin/admins               controllers.AdminController.adminManagement()
+POST    /admin/admins/:id/approve   controllers.AdminController.approveAdmin(id: Long)
+POST    /admin/admins/:id/reject    controllers.AdminController.rejectAdmin(id: Long)
+POST    /admin/admins/:id/revoke    controllers.AdminController.revokeAdmin(id: Long)
+POST    /admin/admins/:id/role      controllers.AdminController.changeAdminRole(id: Long)
+
+# API
+GET     /api/admin/publications     controllers.AdminController.listAllPublicationsJson()
+
+# ============================================
+# COMMUNITY EVENTS — Issue #19 (Calendario Editorial)
+# ============================================
+
+# Public agenda
+GET     /eventos                    controllers.EventController.index()
+GET     /eventos/mes/:ym            controllers.EventController.month(ym: String)
+GET     /eventos/timeline           controllers.EventController.timeline()
+GET     /eventos/pasados            controllers.EventController.past(page: Int ?= 0)
+GET     /eventos/calendar.ics       controllers.EventController.calendarIcs()
+GET     /api/eventos/upcoming       controllers.EventController.upcomingJson(limit: Int ?= 5)
+GET     /api/eventos/calendario     controllers.EventController.calendarJson(from: Option[String] ?= None, to: Option[String] ?= None)
+GET     /eventos/:slug              controllers.EventController.detail(slug: String)
+GET     /eventos/:slug/ics          controllers.EventController.singleIcs(slug: String)
+POST    /eventos/:slug/rsvp         controllers.EventController.rsvp(slug: String)
+POST    /eventos/:slug/recordatorio controllers.EventController.toggleReminder(slug: String)
+
+# Admin
+GET     /admin/events                       controllers.AdminEventController.list(status: Option[String] ?= None, page: Int ?= 0)
+GET     /admin/events/new                   controllers.AdminEventController.newForm()
+POST    /admin/events/new                   controllers.AdminEventController.create()
+GET     /admin/events/:id                   controllers.AdminEventController.view(id: Long)
+GET     /admin/events/:id/edit              controllers.AdminEventController.editForm(id: Long)
+POST    /admin/events/:id/edit              controllers.AdminEventController.update(id: Long)
+POST    /admin/events/:id/status            controllers.AdminEventController.changeStatus(id: Long)
+POST    /admin/events/:id/delete            controllers.AdminEventController.delete(id: Long)
+GET     /admin/events/:id/attendees         controllers.AdminEventController.attendees(id: Long)
+GET     /admin/events/:id/attendees.csv     controllers.AdminEventController.attendeesCsv(id: Long)
+
+# ============================================
+# COLECCIONES EDITORIALES — Issue #20
+# ============================================
+GET     /admin/collections                          controllers.AdminCollectionController.list(status: Option[String] ?= None)
+GET     /admin/collections/new                      controllers.AdminCollectionController.newForm()
+POST    /admin/collections/new                      controllers.AdminCollectionController.create()
+GET     /admin/collections/:id                      controllers.AdminCollectionController.view(id: Long)
+GET     /admin/collections/:id/edit                 controllers.AdminCollectionController.editForm(id: Long)
+POST    /admin/collections/:id/edit                 controllers.AdminCollectionController.update(id: Long)
+POST    /admin/collections/:id/transition           controllers.AdminCollectionController.transition(id: Long)
+GET     /admin/collections/:id/pickable             controllers.AdminCollectionController.pickableItems(id: Long, q: String ?= "")
+POST    /admin/collections/:id/items                controllers.AdminCollectionController.addItem(id: Long)
+POST    /admin/collections/:id/items/:itemRowId/delete  controllers.AdminCollectionController.removeItem(id: Long, itemRowId: Long)
+POST    /admin/collections/:id/items/reorder        controllers.AdminCollectionController.reorderItems(id: Long)
+
+# Observabilidad — Issue #21
+GET     /admin/agents                               controllers.AdminAgentsController.dashboard()
+GET     /admin/agents/health.json                   controllers.AdminAgentsController.healthJson()
+GET     /admin/agents/settings                      controllers.AdminAgentSettingsController.view()
+POST    /admin/agents/settings                      controllers.AdminAgentSettingsController.save()
+POST    /admin/agents/settings/reset/:key           controllers.AdminAgentSettingsController.resetOne(key: String)
+GET     /admin/agents/settings/runtime.json         controllers.AdminAgentSettingsController.runtimeJson()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

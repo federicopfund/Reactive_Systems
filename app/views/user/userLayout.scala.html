@@ -1,0 +1,9 @@
+@(title: String, username: String)(content: Html)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@*
+  Layout fino para páginas del usuario. La sidebar editorial ya muestra
+  la identidad del usuario, así que aquí solo delegamos al main.
+*@
+@main(title) {
+  @content
+}

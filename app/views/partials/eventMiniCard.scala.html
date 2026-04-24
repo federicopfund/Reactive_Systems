@@ -1,0 +1,20 @@
+@(e: models.CommunityEvent)
+
+@*
+  Mini-tarjeta lateral — usada en sidebar de proximos / portada.
+*@
+
+<a class="ed-event-mini ed-event-mini--accent-@e.accentToken" href="@routes.EventController.detail(e.slug)">
+  <div class="ed-event-mini__date">
+    <span class="ed-event-mini__day">@e.localStart.getDayOfMonth</span>
+    <span class="ed-event-mini__month">@{
+      val m = e.localStart.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es"))
+      m.toUpperCase
+    }</span>
+  </div>
+  <div class="ed-event-mini__body">
+    <div class="ed-event-mini__type">@models.EventEnums.EventType.label(e.eventType)</div>
+    <div class="ed-event-mini__title">@e.title</div>
+    <div class="ed-event-mini__time">@e.timeRangeLabel</div>
+  </div>
+</a>

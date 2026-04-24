@@ -1,0 +1,61 @@
+// ============================================
+// Publication form — Crear / editar publicación
+// ============================================
+
+.ed-pub-form-page {
+  padding: 3rem 3.5rem;
+  max-width: 920px;
+}
+
+.ed-pub-form-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--ed-border);
+
+  &__eyebrow {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    margin-bottom: 0.5rem;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--ed-text);
+    line-height: 1;
+  }
+}
+
+.ed-pub-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  &__group {
+    border: 1px solid var(--ed-border);
+    background: var(--ed-bg2);
+    padding: 1.5rem;
+  }
+
+  &__group-title {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ed-text-faint);
+    margin-bottom: 1rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ed-border);
+    flex-wrap: wrap;
+  }
+}

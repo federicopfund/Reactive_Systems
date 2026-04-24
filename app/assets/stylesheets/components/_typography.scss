@@ -1,0 +1,51 @@
+// ============================================
+// Typography — Editorial Reactiva
+// ============================================
+
+.ed-display {
+  font-family: $font-display;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ed-text);
+}
+
+.ed-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+
+  &--accent { color: var(--ed-accent); }
+}
+
+.ed-mono {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--ed-text-dim);
+}
+
+.ed-italic {
+  font-style: italic;
+}
+
+.ed-text-dim   { color: var(--ed-text-dim); }
+.ed-text-faint { color: var(--ed-text-faint); }
+.ed-text-accent { color: var(--ed-accent); }
+
+.ed-h1 { @include display-title(clamp(1.8rem, 3vw, 2.8rem)); }
+.ed-h2 { @include display-title(1.4rem); }
+.ed-h3 { font-family: $font-display; font-size: 1.05rem; font-weight: 700; color: var(--ed-text); }
+
+.ed-prose {
+  font-family: $font-body;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: var(--ed-text-dim);
+
+  p { margin-bottom: 1rem; }
+  strong { color: var(--ed-text); }
+  em { font-style: italic; }
+}

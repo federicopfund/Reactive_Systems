@@ -1,0 +1,146 @@
+@(
+  publication: models.Publication,
+  username: String,
+  stages: Seq[models.EditorialStage],
+  timeline: Seq[models.PublicationStageHistoryWithStage],
+  currentStageCode: Option[String],
+  notifications: List[models.UserNotification],
+  feedback: List[models.PublicationFeedbackWithAdmin]
+)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@*
+ * Hilo de trazabilidad para el autor.
+ *
+ * Muestra el ciclo de vida editorial completo de una pieza:
+ *   1. Pipeline visual (sin notas internas)
+ *   2. Hilo cronológico que entrelaza:
+ *        - Transiciones de etapa (con commit hash)
+ *        - Notificaciones del proceso
+ *        - Feedback público enviado por admins
+ *
+ * Ordenado por timestamp ascendente: el evento más antiguo arriba,
+ * el más reciente abajo, leyéndose como una conversación.
+ *@
+
+@import java.time.Instant
+
+@formatTs(ts: Instant) = @{
+  ts.toString.take(16).replace("T", " ")
+}
+
+@main("Hilo de trazabilidad · " + publication.title) {
+  <section class="ed-dashboard">
+
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@username · Trazabilidad editorial</div>
+      <h1 class="ed-dash-title">@publication.title</h1>
+      <p class="ed-dash-sub">
+        Aquí ves cada paso por el que pasa tu pieza: quién la mueve, cuándo,
+        por qué, y qué notificaciones se dispararon. Cada transición tiene
+        un <em>commit hash</em> que puedes citar al equipo si necesitas
+        referenciar un punto exacto del proceso.
+      </p>
+      <div class="ed-dash-actions">
+        <a href="@routes.UserPublicationController.dashboard()" class="ed-link-btn">← Dashboard</a>
+        <a href="@routes.UserPublicationController.viewPublication(publication.id.getOrElse(0L))" class="ed-link-btn">Ver pieza</a>
+        <a href="@routes.UserPublicationController.editPublicationForm(publication.id.getOrElse(0L))" class="ed-link-btn">Editar</a>
+      </div>
+    </header>
+
+    @* Pipeline visual reusando el widget admin con notas internas ocultas *@
+    @admin._publicationPipeline(publication, stages, timeline, currentStageCode, "user", showInternalNotes = false)
+
+    <section class="ed-thread" aria-label="Hilo de trazabilidad">
+      <header class="ed-thread__head">
+        <h2 class="ed-thread__title">Hilo del proceso</h2>
+        <p class="ed-thread__hint">
+          @timeline.size etapa@if(timeline.size != 1){s} ·
+          @notifications.size notificación@if(notifications.size != 1){es} ·
+          @feedback.size feedback@if(feedback.size != 1){s}
+        </p>
+      </header>
+
+      @if(timeline.isEmpty && notifications.isEmpty && feedback.isEmpty) {
+        <p class="ed-dash-empty">Aún no hay actividad registrada para esta pieza.</p>
+      } else {
+
+        <ol class="ed-thread__list">
+
+          @* ── Transiciones de etapa ────────────────────────────────── *@
+          @timeline.map { entry =>
+            <li class="ed-thread__entry ed-thread__entry--stage">
+              <div class="ed-thread__entry-head">
+                <span class="ed-thread__badge ed-thread__badge--stage">
+                  Etapa: @entry.stageLabel
+                </span>
+                <code class="ed-thread__commit"
+                      title="Commit hash determinístico de esta transición — cítalo al equipo para referenciar este punto">
+                  @utils.StageCommitHash.shortOf(entry.history)
+                </code>
+                @if(entry.history.isCurrent) {
+                  <span class="ed-thread__pill ed-thread__pill--current">actual</span>
+                }
+              </div>
+              <div class="ed-thread__meta">
+                Entró el @formatTs(entry.history.enteredAt)
+                @entry.enteredByUsername.map { u => · por <strong>@u</strong> }
+                @entry.history.exitedAt.map { out =>
+                  · salió el @formatTs(out)
+                }
+                · responsable: <em>@utils.EditorialStagePolicy.ownerLabelFor(entry.stageCode)</em>
+              </div>
+              @entry.history.reason.map { r =>
+                <blockquote class="ed-thread__reason">@r</blockquote>
+              }
+            </li>
+          }
+
+          @* ── Feedback público enviado por admins ──────────────────── *@
+          @feedback.map { fb =>
+            <li class="ed-thread__entry ed-thread__entry--feedback">
+              <div class="ed-thread__entry-head">
+                <span class="ed-thread__badge ed-thread__badge--feedback">
+                  Feedback de @fb.adminUsername
+                </span>
+                <span class="ed-thread__pill ed-thread__pill--type">@fb.feedback.feedbackType</span>
+              </div>
+              <div class="ed-thread__meta">@formatTs(fb.feedback.createdAt)</div>
+              <p class="ed-thread__msg">@fb.feedback.message</p>
+            </li>
+          }
+
+          @* ── Notificaciones del proceso ───────────────────────────── *@
+          @notifications.map { n =>
+            <li class="ed-thread__entry ed-thread__entry--notif @if(!n.isRead){is-unread}">
+              <div class="ed-thread__entry-head">
+                <span class="ed-thread__badge ed-thread__badge--notif">
+                  @models.NotificationType.icon(n.notificationType) Notificación
+                </span>
+                <span class="ed-thread__pill ed-thread__pill--type">@n.notificationType</span>
+              </div>
+              <div class="ed-thread__meta">@formatTs(n.createdAt)</div>
+              <div class="ed-thread__msg">
+                <strong>@n.title</strong><br>
+                @n.message
+              </div>
+            </li>
+          }
+
+        </ol>
+      }
+    </section>
+
+    <footer class="ed-thread__foot">
+      <details class="ed-thread__legend">
+        <summary>¿Qué es el commit hash?</summary>
+        <p>
+          Es un identificador corto y único derivado de cada transición de
+          etapa. Si necesitas hablar con el equipo editorial sobre un momento
+          específico de tu pieza, copia el hash y compártelo: nos permite ir
+          al punto exacto sin ambigüedad.
+        </p>
+      </details>
+    </footer>
+
+  </section>
+}

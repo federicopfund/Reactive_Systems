@@ -1,0 +1,111 @@
+@(pendingAdmins: Seq[models.User], approvedAdmins: Seq[models.User], username: String, role: String)(implicit request: RequestHeader)
+
+@admin.adminLayout("Gestión de administradores", "admins") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Super Admin · @username</div>
+      <h1 class="ed-admin-title">Gestión de administradores</h1>
+      <p class="ed-dash-sub">Aprobar, rechazar y revocar permisos de administración.</p>
+    </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+    </div>
+  </header>
+
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  <section class="ed-admin-card">
+    <header class="ed-admin-card__head">
+      <h2>Solicitudes pendientes (@pendingAdmins.size)</h2>
+    </header>
+    @if(pendingAdmins.isEmpty) {
+      <p class="ed-dash-empty">No hay solicitudes pendientes.</p>
+    } else {
+      <table class="ed-admin-table">
+        <thead><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Solicitado</th><th>Asignar rol y aprobar</th><th>Rechazar</th></tr></thead>
+        <tbody>
+          @pendingAdmins.map { u =>
+            <tr>
+              <td>@@@u.username <span class="ed-user-role-badge ed-user-role-badge--pending">pendiente</span></td>
+              <td>@u.fullName</td>
+              <td>@u.email</td>
+              <td>@u.adminRequestedAt.map(_.toString.take(10)).getOrElse("—")</td>
+              <td>
+                @u.id.map { uid =>
+                  <form method="POST" action="@routes.AdminController.approveAdmin(uid)" class="ed-inline-form ed-approve-form">
+                    @helper.CSRF.formField
+                    <select name="role" class="ed-inline-select" aria-label="Rol a asignar">
+                      @utils.RolePolicy.assignableRoles.map { rd =>
+                        <option value="@rd.key" title="@rd.description" @if(rd.key == "editor_jefe"){selected}>@rd.label (@rd.caps.size permisos)</option>
+                      }
+                    </select>
+                    <button class="ed-link-btn ed-link-btn--success" type="submit">Aprobar</button>
+                  </form>
+                }
+              </td>
+              <td>
+                @u.id.map { uid =>
+                  <form method="POST" action="@routes.AdminController.rejectAdmin(uid)" class="ed-inline-form" onsubmit="return confirm('¿Rechazar esta solicitud? El usuario será notificado.');">
+                    @helper.CSRF.formField
+                    <button class="ed-link-btn ed-link-btn--danger">Rechazar</button>
+                  </form>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <section class="ed-admin-card">
+    <header class="ed-admin-card__head">
+      <h2>Administradores aprobados (@approvedAdmins.size)</h2>
+    </header>
+    @if(approvedAdmins.isEmpty) {
+      <p class="ed-dash-empty">Sin administradores aprobados.</p>
+    } else {
+      <table class="ed-admin-table">
+        <thead><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Desde</th><th>Último login</th><th>Acciones</th></tr></thead>
+        <tbody>
+          @approvedAdmins.map { u =>
+            <tr>
+              <td>@@@u.username</td>
+              <td>@u.fullName</td>
+              <td>@u.email</td>
+              <td>
+                <span class="ed-user-role-badge ed-user-role-badge--@u.role" title="@utils.RolePolicy.descriptionFor(u.role)">@utils.RolePolicy.labelFor(u.role)</span>
+                <div class="ed-dash-sub" style="padding:0;font-size:11px;">@utils.RolePolicy.capsOf(u.role).size permisos</div>
+              </td>
+              <td>@u.createdAt.toString.take(10)</td>
+              <td>@u.lastLogin.map(_.toString.take(10)).getOrElse("—")</td>
+              <td>
+                @if(u.role != "super_admin") {
+                  @u.id.map { uid =>
+                    <form method="POST" action="@routes.AdminController.changeAdminRole(uid)" class="ed-inline-form ed-approve-form" style="margin-bottom:6px;">
+                      @helper.CSRF.formField
+                      <select name="role" class="ed-inline-select" aria-label="Cambiar rol">
+                        @utils.RolePolicy.assignableRoles.map { rd =>
+                          <option value="@rd.key" title="@rd.description" @if(rd.key == u.role){selected}>@rd.label</option>
+                        }
+                      </select>
+                      <button class="ed-link-btn" type="submit">Cambiar</button>
+                    </form>
+                    <form method="POST" action="@routes.AdminController.revokeAdmin(uid)" class="ed-inline-form" onsubmit="return confirm('¿Revocar permisos? El usuario volverá a rol estándar.');">
+                      @helper.CSRF.formField
+                      <button class="ed-link-btn ed-link-btn--danger">Revocar</button>
+                    </form>
+                  }
+                } else {
+                  <span class="ed-dash-sub" style="padding:0;">protegido</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+}

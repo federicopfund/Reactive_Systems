@@ -1,148 +1,150 @@
-@()(implicit request: RequestHeader, messages: Messages)
+@(dynamicPublications: List[models.PublicationWithAuthor],
+  editorialArticles: Seq[models.EditorialArticle],
+  categories: Seq[models.PublicationCategory],
+  searchQuery: String = "",
+  searchCategory: Option[String] = None)(implicit request: RequestHeader, messages: Messages)
+
+@*
+  Listado de publicaciones — Editorial Reactiva.
+  Mezcla piezas editoriales (DB, equipo) y publicaciones de usuarios (DB, workflow).
+  Categorías y filtros vienen del catálogo `publication_categories`.
+*@
+
+@currentCategoryActive(c: models.PublicationCategory) = @{ searchCategory.contains(c.name) }
+@allActive = @{ searchCategory.isEmpty || searchCategory.exists(_.trim.isEmpty) }
+@totalCount = @{ dynamicPublications.size + editorialArticles.size }
 
 @main("Publicaciones") {
-    <!-- Hero Section -->
-    <section class="hero hero-secondary">
-        <div class="container">
-            <div class="hero-content">
-                <h2 class="hero-title">Publicaciones</h2>
-                <p class="hero-subtitle">Artículos, tutoriales y recursos sobre programación reactiva</p>
+
+  @request.flash.get("success").map { msg => <div class="ed-section"><div class="ed-flash ed-flash--success">@msg</div></div> }
+  @request.flash.get("error").map   { msg => <div class="ed-section"><div class="ed-flash ed-flash--error">@msg</div></div> }
+
+  <div class="ed-pub-toolbar">
+    <header class="ed-pub-header">
+      <div>
+        <div class="ed-pub-count">@totalCount publicaciones · Edición Nº 01</div>
+        <h1 class="ed-pub-title">Artículos <em>de la edición</em></h1>
+      </div>
+      <form action="@routes.HomeController.searchPublicaciones()" method="GET" class="ed-search-wrap">
+        <span class="ed-search-icon">⌕</span>
+        <input type="text" name="q" value="@searchQuery" placeholder="Buscar por título, contenido o tags…" autocomplete="off">
+        @if(searchCategory.isDefined && searchCategory.exists(_.nonEmpty)) {
+          <input type="hidden" name="category" value="@searchCategory.get">
+        }
+        @if(searchQuery.nonEmpty) {
+          <a href="@routes.HomeController.publicaciones()" class="ed-search-clear" title="Limpiar">×</a>
+        }
+      </form>
+    </header>
+
+    <nav class="ed-cat-row" aria-label="Filtro por categoría">
+      <a href="@routes.HomeController.publicaciones()"
+         class="ed-cat-pill @if(allActive){active}"
+         @if(allActive){aria-current="page"}>Todas</a>
+      @categories.map { c =>
+        <a href="@routes.HomeController.searchPublicaciones(searchQuery, Some(c.name))"
+           class="ed-cat-pill @if(currentCategoryActive(c)){active}"
+           @if(currentCategoryActive(c)){aria-current="page"}>@c.name</a>
+      }
+    </nav>
+  </div>
+
+  @if(totalCount == 0) {
+    @if(searchQuery.nonEmpty || searchCategory.isDefined) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "search",
+        title = "Sin resultados",
+        body = "No encontramos publicaciones con esos filtros. Prueba con otros términos o explora todas las publicaciones.",
+        ctaLabel = Some("Ver todas"),
+        ctaHref = Some(routes.HomeController.publicaciones().url)
+      )
+    } else {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "feather",
+        title = "Aún no hay piezas en esta edición",
+        body = "Sé de los primeros en proponer un artículo para la edición Nº 01 del Manifiesto Reactivo.",
+        ctaLabel = Some("Proponer publicación"),
+        ctaHref = Some(routes.UserPublicationController.dashboard().url),
+        secondaryLabel = Some("Suscribirme"),
+        secondaryHref = Some("/#contact")
+      )
+    }
+  } else {
+    <div class="ed-articles-grid">
+
+      @* Piezas editoriales (DB) *@
+      @editorialArticles.zipWithIndex.map { case (a, idx) =>
+        <a class="ed-article-card @if(idx == 0 && dynamicPublications.isEmpty){ed-article-card--featured}" href="@routes.HomeController.publicacion(a.slug)">
+          <div class="ed-article-meta">
+            <span class="ed-article-cat">@a.categoryLabel</span>
+            <span class="ed-article-date">@a.publishedLabel</span>
+          </div>
+          <h2 class="ed-article-title">@a.title</h2>
+          <p class="ed-article-excerpt">@a.excerpt.getOrElse("")</p>
+          @if(a.tags.nonEmpty) {
+            <div class="ed-article-tags">
+              @a.tags.take(3).map { tag =>
+                <span class="ed-article-tag">@tag</span>
+              }
             </div>
-        </div>
-    </section>
+          }
+          <span class="ed-article-link">Leer pieza editorial</span>
+        </a>
+      }
 
-    <!-- Publications Grid -->
-    <section class="publications-section">
-        <div class="container">
-            <div class="publications-grid">
-                <!-- Publication 1 -->
-                <article class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Tutorial</span>
-                        <span class="publication-date">15 Dic 2025</span>
-                    </div>
-                    <h3 class="publication-title">Introducción a Akka Actors</h3>
-                    <p class="publication-excerpt">
-                        Aprende los fundamentos de los actores en Akka y cómo implementar 
-                        sistemas concurrentes y resilientes usando el modelo de actores.
-                    </p>
-                    <div class="publication-tags">
-                        <span class="tag">Akka</span>
-                        <span class="tag">Scala</span>
-                        <span class="tag">Concurrencia</span>
-                    </div>
-                    <a href="@routes.HomeController.publicacion("akka-actors")" class="publication-link">Leer más →</a>
-                </article>
-
-                <!-- Publication 2 -->
-                <article class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Artículo</span>
-                        <span class="publication-date">8 Dic 2025</span>
-                    </div>
-                    <h3 class="publication-title">Patrones de Resiliencia</h3>
-                    <p class="publication-excerpt">
-                        Explora patrones avanzados para construir sistemas resilientes: 
-                        circuit breakers, bulkheads, y estrategias de recuperación.
-                    </p>
-                    <div class="publication-tags">
-                        <span class="tag">Patrones</span>
-                        <span class="tag">Resiliencia</span>
-                        <span class="tag">Arquitectura</span>
-                    </div>
-                    <a href="@routes.HomeController.publicacion("patrones-resiliencia")" class="publication-link">Leer más →</a>
-                </article>
-
-                <!-- Publication 3 -->
-                <article class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Guía</span>
-                        <span class="publication-date">1 Dic 2025</span>
-                    </div>
-                    <h3 class="publication-title">Streams Reactivos con Akka Streams</h3>
-                    <p class="publication-excerpt">
-                        Una guía completa para trabajar con flujos de datos reactivos, 
-                        backpressure y procesamiento asíncrono eficiente.
-                    </p>
-                    <div class="publication-tags">
-                        <span class="tag">Akka Streams</span>
-                        <span class="tag">Reactive Streams</span>
-                        <span class="tag">Backpressure</span>
-                    </div>
-                    <a href="@routes.HomeController.publicacion("akka-streams")" class="publication-link">Leer más →</a>
-                </article>
-
-                <!-- Publication 4 -->
-                <article class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Tutorial</span>
-                        <span class="publication-date">25 Nov 2025</span>
-                    </div>
-                    <h3 class="publication-title">Play Framework y Programación Asíncrona</h3>
-                    <p class="publication-excerpt">
-                        Descubre cómo Play Framework aprovecha la programación asíncrona 
-                        para construir aplicaciones web de alto rendimiento.
-                    </p>
-                    <div class="publication-tags">
-                        <span class="tag">Play Framework</span>
-                        <span class="tag">Async</span>
-                        <span class="tag">Web</span>
-                    </div>
-                    <a href="@routes.HomeController.publicacion("play-async")" class="publication-link">Leer más →</a>
-                </article>
-
-                <!-- Publication 5 -->
-                <article class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Caso de Estudio</span>
-                        <span class="publication-date">18 Nov 2025</span>
-                    </div>
-                    <h3 class="publication-title">Escalabilidad con Message Passing</h3>
-                    <p class="publication-excerpt">
-                        Cómo implementar sistemas distribuidos escalables utilizando 
-                        patrones de mensajería y comunicación asíncrona.
-                    </p>
-                    <div class="publication-tags">
-                        <span class="tag">Mensajería</span>
-                        <span class="tag">Distribución</span>
-                        <span class="tag">Escalabilidad</span>
-                    </div>
-                    <a href="@routes.HomeController.publicacion("message-passing")" class="publication-link">Leer más →</a>
-                </article>
-
-                <!-- Publication 6 -->
-                <article class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Recurso</span>
-                        <span class="publication-date">10 Nov 2025</span>
-                    </div>
-                    <h3 class="publication-title">Testing de Sistemas Reactivos</h3>
-                    <p class="publication-excerpt">
-                        Estrategias y herramientas para testear aplicaciones reactivas: 
-                        TestKit, Property-based testing, y más.
-                    </p>
-                    <div class="publication-tags">
-                        <span class="tag">Testing</span>
-                        <span class="tag">Akka TestKit</span>
-                        <span class="tag">QA</span>
-                    </div>
-                    <a href="@routes.HomeController.publicacion("testing-reactivo")" class="publication-link">Leer más →</a>
-                </article>
+      @* Publicaciones de usuarios (workflow) *@
+      @dynamicPublications.zipWithIndex.map { case (pwa, i) =>
+        @if(i == 0 && editorialArticles.isEmpty) {
+          <a class="ed-article-card ed-article-card--featured" href="@routes.HomeController.publicacion(pwa.publication.slug)">
+            <div class="ed-featured-image">
+              <span class="ed-featured-image-label">PIEZA<br/>DESTACADA</span>
             </div>
-        </div>
-    </section>
-
-    <!-- Newsletter Section -->
-    <section class="newsletter-section">
-        <div class="container">
-            <div class="newsletter-content">
-                <h2 class="section-title">Suscríbete a Nuestro Newsletter</h2>
-                <p class="section-subtitle">Recibe las últimas publicaciones y recursos directamente en tu correo</p>
-                <form class="newsletter-form">
-                    <input type="email" placeholder="Tu email" class="newsletter-input" required>
-                    <button type="submit" class="btn btn-primary">Suscribirse</button>
-                </form>
+            <div class="ed-featured-content">
+              <div class="ed-article-meta">
+                <span class="ed-article-cat">@pwa.publication.category</span>
+                <span class="ed-article-date">@pwa.publication.publishedAt.map(_.toString.take(10)).getOrElse(pwa.publication.createdAt.toString.take(10))</span>
+              </div>
+              <h2 class="ed-article-title">@pwa.publication.title</h2>
+              <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(220))</p>
+              @pwa.publication.tags.map { t =>
+                <div class="ed-article-tags">
+                  @t.split(",").map(_.trim).filter(_.nonEmpty).take(4).map { tag =>
+                    <span class="ed-article-tag">@tag</span>
+                  }
+                </div>
+              }
+              <span class="ed-article-link">Leer pieza</span>
             </div>
-        </div>
-    </section>
+          </a>
+        } else {
+          <a class="ed-article-card" href="@routes.HomeController.publicacion(pwa.publication.slug)">
+            <div class="ed-article-meta">
+              <span class="ed-article-cat">@pwa.publication.category</span>
+              <span class="ed-article-date">@pwa.publication.publishedAt.map(_.toString.take(10)).getOrElse(pwa.publication.createdAt.toString.take(10))</span>
+            </div>
+            <h2 class="ed-article-title">@pwa.publication.title</h2>
+            <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(160))</p>
+            @pwa.publication.tags.map { t =>
+              <div class="ed-article-tags">
+                @t.split(",").map(_.trim).filter(_.nonEmpty).take(3).map { tag =>
+                  <span class="ed-article-tag">@tag</span>
+                }
+              </div>
+            }
+            <span class="ed-article-link">Leer</span>
+          </a>
+        }
+      }
+    </div>
+  }
+
+  <footer class="ed-page-footer">
+    <div>© 2025 Manifiesto Reactivo</div>
+    <div class="ed-page-footer__links">
+      <a href="@routes.HomeController.politicaPrivacidad()">Privacidad</a>
+      <a href="@routes.HomeController.terminosDeUso()">Términos</a>
+    </div>
+  </footer>
 }

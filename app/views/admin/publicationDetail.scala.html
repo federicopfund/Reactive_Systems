@@ -1,0 +1,149 @@
+@(
+  publication: models.Publication,
+  feedbacks: List[models.PublicationFeedbackWithAdmin],
+  stages: Seq[models.EditorialStage],
+  timeline: Seq[models.PublicationStageHistoryWithStage],
+  currentStageCode: Option[String],
+  nextStages: Seq[models.EditorialStage],
+  role: String
+)(implicit request: RequestHeader)
+
+@admin.adminLayout("Revisión: " + publication.title, "review") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Revisión editorial</div>
+      <h1 class="ed-admin-title">@publication.title</h1>
+      <div class="ed-revision-row__meta">
+        @publication.category · estado: <strong><span class="ed-status-pill ed-status-pill--@publication.status">@publication.status</span></strong> · creada @publication.createdAt.toString.take(10)
+      </div>
+    </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.pendingPublications()" class="ed-link-btn">← Cola</a>
+      <a href="@routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo</a>
+    </div>
+  </header>
+
+  @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+  @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+  @admin._publicationPipeline(publication, stages, timeline, currentStageCode, role, showInternalNotes = true)
+
+  <div class="ed-rev-detail">
+
+    <article class="ed-rev-detail__main">
+      @publication.excerpt.map { e => <p class="ed-article-lede" style="font-style:italic;color:#a09880;">@e</p> }
+      <div class="ed-article-content ed-legacy-prose">@Html(utils.Markdown.render(publication.content))</div>
+      @publication.tags.map { t =>
+        <div class="ed-article-tags" style="margin-top:1.5rem;">
+          @t.split(",").map(_.trim).filter(_.nonEmpty).map { tag => <span class="ed-article-tag">@tag</span> }
+        </div>
+      }
+    </article>
+
+    <aside class="ed-rev-detail__aside">
+      @publication.id.map { pid =>
+
+        @* --- Transición editorial gobernada por EditorialStagePolicy --- *@
+        @if(nextStages.nonEmpty) {
+          <div class="ed-aside-action ed-aside-action--transition">
+            <h3 class="ed-aside-action__title">Mover etapa</h3>
+            @nextStages.map { next =>
+              <form method="POST" action="@routes.AdminController.transitionStage(pid)" class="ed-transition-form">
+                @helper.CSRF.formField
+                <input type="hidden" name="toStage" value="@next.code">
+                <input type="text" name="reason" placeholder="Motivo (opcional, visible al autor)" maxlength="200">
+                <input type="text" name="internalNotes" placeholder="Notas internas (privadas)" maxlength="300">
+                <button class="ed-aside-action-btn ed-aside-action-btn--transition" type="submit">→ @next.label</button>
+              </form>
+            }
+          </div>
+        } else {
+          @currentStageCode.map { code =>
+            <div class="ed-aside-readonly">
+              <strong>Solo lectura.</strong> Esta pieza espera acción de
+              <em>@utils.EditorialStagePolicy.ownerLabelFor(code)</em>.
+              Tu rol (<em>@utils.RolePolicy.labelFor(role)</em>) no puede mover la etapa actual.
+            </div>
+          }
+        }
+
+        @* --- Acciones rápidas (legacy compat) --- *@
+        <form method="POST" action="@routes.AdminController.approvePublication(pid)" class="ed-aside-action">
+          @helper.CSRF.formField
+          <button class="ed-aside-action-btn ed-aside-action-btn--approve">Aprobar publicación</button>
+        </form>
+
+        <form method="POST" action="@routes.AdminController.rejectPublication(pid)" class="ed-aside-action">
+          @helper.CSRF.formField
+          <textarea name="rejectionReason" rows="3" placeholder="Motivo del rechazo (opcional)"></textarea>
+          <button class="ed-aside-action-btn ed-aside-action-btn--reject">Rechazar</button>
+        </form>
+
+        @* --- Notas internas (saveAdminNotes) --- *@
+        <form method="POST" action="@routes.AdminController.saveAdminNotes(pid)" class="ed-aside-action">
+          @helper.CSRF.formField
+          <h3 style="font-family:var(--font-mono,monospace);font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:#5a5448;margin-bottom:0.5rem;">Notas internas</h3>
+          <textarea name="adminNotes" rows="4" placeholder="Notas privadas del equipo editorial…">@publication.adminNotes.getOrElse("")</textarea>
+          <button class="ed-aside-action-btn ed-aside-action-btn--neutral">Guardar notas</button>
+        </form>
+
+        @* --- Feedback estructurado al autor --- *@
+        <form method="POST" action="@routes.AdminController.addFeedback(pid)" class="ed-aside-action">
+          @helper.CSRF.formField
+          <h3 style="font-family:var(--font-mono,monospace);font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:#d4ff00;margin-bottom:0.5rem;">Enviar feedback al autor</h3>
+          <select name="feedbackType" required style="width:100%;background:#141420;border:1px solid rgba(242,237,214,0.15);color:#f2edd6;padding:0.5rem;margin-bottom:0.5rem;">
+            <option value="content_quality">Calidad de Contenido</option>
+            <option value="structure">Estructura y Formato</option>
+            <option value="relevance">Relevancia Temática</option>
+            <option value="writing_style">Redacción y Estilo</option>
+            <option value="general" selected>Sugerencia General</option>
+          </select>
+          <textarea name="feedbackMessage" rows="5" required placeholder="Mensaje al autor…"></textarea>
+          <label style="display:flex;align-items:center;gap:0.4rem;font-family:var(--font-mono,monospace);font-size:0.65rem;color:#a09880;margin-bottom:0.6rem;">
+            <input type="checkbox" name="sendToUser" value="true" checked> Enviar al autor ahora
+          </label>
+          <button class="ed-aside-action-btn ed-aside-action-btn--feedback">Crear feedback</button>
+        </form>
+
+        @* --- Eliminar definitivamente (deletePublication) --- *@
+        <form method="POST" action="@routes.AdminController.deletePublication(pid)" class="ed-aside-action" onsubmit="return confirm('¿Eliminar definitivamente esta publicación?');">
+          @helper.CSRF.formField
+          <button class="ed-aside-action-btn ed-aside-action-btn--delete">Eliminar publicación</button>
+        </form>
+      }
+
+      @* --- Historial de feedback --- *@
+      @if(feedbacks.nonEmpty) {
+        <section class="ed-aside-card">
+          <h3>Feedback</h3>
+          @feedbacks.map { fb =>
+            <div class="ed-feedback-item">
+              <div class="ed-feedback-meta">
+                @models.FeedbackType.label(fb.feedback.feedbackType) · @@@fb.adminUsername ·
+                @if(fb.feedback.sentToUser){ <span style="color:#6b8f71;">enviado</span> } else { <span style="color:#f59e0b;">borrador</span> }
+              </div>
+              <p>@fb.feedback.message</p>
+              <div style="display:flex;gap:0.4rem;">
+                @fb.feedback.id.map { fid =>
+                  @if(!fb.feedback.sentToUser) {
+                    <form method="POST" action="@routes.AdminController.sendFeedbackToUser(fid)" class="ed-inline-form">
+                      @helper.CSRF.formField
+                      <input type="hidden" name="publicationId" value="@publication.id.getOrElse(0L)">
+                      <button class="ed-link-btn ed-link-btn--accent">Enviar al autor</button>
+                    </form>
+                  }
+                  <form method="POST" action="@routes.AdminController.deleteFeedback(fid)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este feedback?');">
+                    @helper.CSRF.formField
+                    <input type="hidden" name="publicationId" value="@publication.id.getOrElse(0L)">
+                    <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>
+                  </form>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      }
+    </aside>
+  </div>
+}

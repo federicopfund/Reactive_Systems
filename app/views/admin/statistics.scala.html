@@ -1,0 +1,109 @@
+@(username: String)(implicit request: RequestHeader)
+
+@admin.adminLayout("Estadísticas avanzadas", "stats") {
+
+  <header class="ed-admin-head">
+    <div>
+      <div class="ed-admin-eyebrow">Sesión @username</div>
+      <h1 class="ed-admin-title">Estadísticas avanzadas</h1>
+      <p class="ed-dash-sub">Datos hidratados desde <code>/admin/stats/advanced</code> y <code>/admin/stats/messaging</code>.</p>
+    </div>
+    <div class="ed-admin-actions">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+      <button id="refreshStats" class="ed-link-btn ed-link-btn--accent">Refrescar</button>
+    </div>
+  </header>
+
+  <h2 class="ed-admin-section-title">Comunidad</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Usuarios totales</div><div class="ed-kpi__num" data-stat="users.total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Nuevos 7d</div><div class="ed-kpi__num" data-stat="users.newLast7Days">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Nuevos 30d</div><div class="ed-kpi__num" data-stat="users.newLast30Days">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Activos 7d</div><div class="ed-kpi__num" data-stat="users.activeLast7Days">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Tasa de activación</div><div class="ed-kpi__num"><span data-stat="users.activationRate">…</span>%</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Crecimiento semanal</div><div class="ed-kpi__num"><span data-stat="users.weeklyGrowthPercent">…</span>%</div></div>
+  </section>
+
+  <h2 class="ed-admin-section-title">Bandeja de contacto</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Contactos totales</div><div class="ed-kpi__num" data-stat="contacts.total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Pendientes</div><div class="ed-kpi__num" data-stat="contacts.pending">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Procesados</div><div class="ed-kpi__num" data-stat="contacts.processed">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Archivados</div><div class="ed-kpi__num" data-stat="contacts.archived">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Eficiencia</div><div class="ed-kpi__num"><span data-stat="performance.efficiency">…</span>%</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Backlog</div><div class="ed-kpi__num" data-stat="performance.pendingBacklog">…</div></div>
+  </section>
+
+  <h2 class="ed-admin-section-title">Administradores</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Aprobados</div><div class="ed-kpi__num" data-stat="admins.total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Pendientes</div><div class="ed-kpi__num" data-stat="admins.pending">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Activos 7d</div><div class="ed-kpi__num" data-stat="admins.recentActivity">…</div></div>
+  </section>
+
+  <h2 class="ed-admin-section-title">Mensajería privada</h2>
+  <section class="ed-kpi-grid">
+    <div class="ed-kpi"><div class="ed-kpi__label">Mensajes</div><div class="ed-kpi__num" data-msg="total">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Sin leer</div><div class="ed-kpi__num" data-msg="unread">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Leídos</div><div class="ed-kpi__num" data-msg="read">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Sobre publicación</div><div class="ed-kpi__num" data-msg="withPublication">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Directos</div><div class="ed-kpi__num" data-msg="direct">…</div></div>
+    <div class="ed-kpi"><div class="ed-kpi__label">Tasa lectura</div><div class="ed-kpi__num"><span data-msg="readRate">…</span>%</div></div>
+  </section>
+
+  <div class="ed-admin-grid">
+    <section class="ed-admin-card">
+      <h2>Top remitentes</h2>
+      <ul class="ed-mini-bars" id="topSenders"><li class="ed-dash-empty">Cargando…</li></ul>
+    </section>
+    <section class="ed-admin-card">
+      <h2>Top receptores</h2>
+      <ul class="ed-mini-bars" id="topReceivers"><li class="ed-dash-empty">Cargando…</li></ul>
+    </section>
+    <section class="ed-admin-card">
+      <h2>Publicaciones más mensajeadas</h2>
+      <ul class="ed-mini-bars" id="topPublications"><li class="ed-dash-empty">Cargando…</li></ul>
+    </section>
+  </div>
+
+  <script>
+  (function() {
+    function setText(sel, val) {
+      document.querySelectorAll(sel).forEach(function(el){ el.textContent = (val == null ? "—" : val); });
+    }
+    function getPath(obj, path) {
+      return path.split('.').reduce(function(o,k){ return (o == null) ? null : o[k]; }, obj);
+    }
+    function fillStats(json) {
+      document.querySelectorAll('[data-stat]').forEach(function(el){
+        var v = getPath(json, el.getAttribute('data-stat'));
+        el.textContent = (v == null ? "0" : v);
+      });
+    }
+    function fillMsg(json) {
+      document.querySelectorAll('[data-msg]').forEach(function(el){
+        var v = json[el.getAttribute('data-msg')];
+        el.textContent = (v == null ? "0" : v);
+      });
+      function renderList(elId, items, labelKey) {
+        var ul = document.getElementById(elId);
+        if (!ul) return;
+        if (!items || !items.length) { ul.innerHTML = '<li class="ed-dash-empty">Sin datos</li>'; return; }
+        ul.innerHTML = items.map(function(it){
+          var label = labelKey === 'username' ? '@@' + it.username : it.title;
+          return '<li><span>' + label + '</span><strong>' + it.count + '</strong></li>';
+        }).join('');
+      }
+      renderList('topSenders',    json.topSenders,    'username');
+      renderList('topReceivers',  json.topReceivers,  'username');
+      renderList('topPublications', json.topPublications, 'title');
+    }
+    function load() {
+      fetch('@routes.AdminController.advancedStats()',  {credentials:'same-origin'}).then(function(r){return r.json();}).then(fillStats).catch(function(){});
+      fetch('@routes.AdminController.messagingStats()', {credentials:'same-origin'}).then(function(r){return r.json();}).then(fillMsg).catch(function(){});
+    }
+    load();
+    document.getElementById('refreshStats').addEventListener('click', function(e){ e.preventDefault(); load(); });
+  })();
+  </script>
+}

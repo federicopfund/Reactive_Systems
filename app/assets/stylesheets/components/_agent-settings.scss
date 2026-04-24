@@ -1,0 +1,262 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Backoffice — Configuración de agentes (Issue #21)
+// Namespace: .ed-agent-settings__*
+// ─────────────────────────────────────────────────────────────────────────────
+
+.ed-agent-settings__form { margin-bottom: 2.5rem; }
+
+.ed-agent-settings__group {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.ed-agent-settings__group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: rgba(0, 0, 0, 0.025);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ed-agent-settings__group-title {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2d2418;
+}
+
+.ed-agent-settings__group-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ed-agent-settings__rows { display: flex; flex-direction: column; }
+
+.ed-agent-settings__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.25rem;
+  align-items: start;
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+  &:last-child { border-bottom: none; }
+  &.is-override { background: rgba(214, 138, 30, 0.04); border-left: 3px solid #d68a1e; }
+}
+
+.ed-agent-settings__row-info { min-width: 0; }
+
+.ed-agent-settings__row-key {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.04);
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+  }
+}
+
+.ed-agent-settings__badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  font-weight: 600;
+}
+.ed-agent-settings__badge--live     { background: rgba(47,156,90,.12);  color: #1f6e3f; }
+.ed-agent-settings__badge--warn     { background: rgba(214,138,30,.14); color: #8a5a14; }
+.ed-agent-settings__badge--override { background: rgba(122,31,31,.12);  color: #7a1f1f; }
+
+.ed-agent-settings__row-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d2418;
+  margin-bottom: 0.15rem;
+}
+
+.ed-agent-settings__row-desc {
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.65);
+  line-height: 1.45;
+  margin-bottom: 0.35rem;
+}
+
+.ed-agent-settings__row-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: rgba(0, 0, 0, 0.5);
+
+  code {
+    background: rgba(0, 0, 0, 0.04);
+    padding: 0.05rem 0.3rem;
+    border-radius: 2px;
+  }
+}
+
+.ed-agent-settings__row-control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  min-width: 180px;
+}
+
+.ed-agent-settings__input {
+  width: 180px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9rem;
+  background: #fff;
+  text-align: right;
+
+  &:focus { outline: none; border-color: #b65c3a; box-shadow: 0 0 0 2px rgba(182,92,58,.15); }
+  &:disabled { background: rgba(0, 0, 0, 0.04); color: rgba(0, 0, 0, 0.5); }
+}
+
+// ── Switch boolean ──
+.ed-agent-settings__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  user-select: none;
+
+  input { position: absolute; opacity: 0; pointer-events: none; }
+
+  &-track {
+    width: 38px;
+    height: 22px;
+    border-radius: 11px;
+    background: #cfcfcf;
+    position: relative;
+    transition: background 0.2s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+      transition: transform 0.2s ease;
+    }
+  }
+
+  input:checked + &-track {
+    background: #2f9c5a;
+    &::after { transform: translateX(16px); }
+  }
+
+  input:disabled + &-track { opacity: 0.5; cursor: not-allowed; }
+
+  &-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: rgba(0, 0, 0, 0.7);
+    letter-spacing: 0.04em;
+  }
+}
+
+.ed-agent-settings__reset {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 3px;
+  padding: 0.25rem 0.55rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover { background: rgba(122,31,31,.06); color: #7a1f1f; border-color: rgba(122,31,31,.3); }
+}
+
+.ed-agent-settings__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0 0.5rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.025);
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+
+.ed-agent-settings__hint {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.55);
+  font-style: italic;
+}
+
+// ── Tabla de auditoría ──
+.ed-agent-settings__audit { margin-top: 2rem; }
+.ed-agent-settings__audit-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  margin: 0 0 0.75rem;
+}
+
+.ed-agent-settings__audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.82rem;
+
+  th, td {
+    padding: 0.5rem 0.7rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.025);
+  }
+
+  td code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 0.05rem 0.35rem;
+    border-radius: 2px;
+  }
+
+  tr:last-child td { border-bottom: none; }
+}
+
+@media (max-width: 720px) {
+  .ed-agent-settings__row { grid-template-columns: 1fr; }
+  .ed-agent-settings__row-control { align-items: flex-start; min-width: 0; }
+  .ed-agent-settings__input { width: 100%; text-align: left; }
+}

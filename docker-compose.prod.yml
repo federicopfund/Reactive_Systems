@@ -1,0 +1,108 @@
+version: '3.9'
+
+services:
+  # ==================== PostgreSQL Database ====================
+  postgres:
+    image: postgres:16-alpine
+    container_name: reactive_manifesto_db
+    
+    # Configuración de Base de Datos
+    environment:
+      POSTGRES_DB: reactive_manifesto
+      POSTGRES_USER: reactive_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-reactive_password}  # Usar variable de entorno
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    
+    # Puerto (internamente, no exponer en prod)
+    ports:
+      - "5432:5432"  # Cambiar a algo random en prod o eliminar
+    
+    # ⭐ PERSISTENCIA: Los datos sobreviven a docker stop/start
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Volumen con nombre
+      - ./sql:/docker-entrypoint-initdb.d       # Scripts de inicialización
+    
+    # ⭐ REINICIO automático
+    restart: unless-stopped
+    
+    # Healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reactive_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Network
+    networks:
+      - app_network
+
+  # ==================== Play Framework Application ====================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    container_name: reactive_manifesto_app
+    
+    # Puerto
+    ports:
+      - "9000:9000"
+    
+    # Variables de entorno
+    environment:
+      # Base de Datos (apunta al servicio postgres)
+      SLICK_DBS_DEFAULT_DB_URL: "jdbc:postgresql://postgres:5432/reactive_manifesto"
+      SLICK_DBS_DEFAULT_DB_USER: "reactive_user"
+      SLICK_DBS_DEFAULT_DB_PASSWORD: "${DB_PASSWORD:-reactive_password}"
+      
+      # Play Framework
+      PLAY_HTTP_PORT: 9000
+      PLAY_CRYPTO_SECRET: "${PLAY_SECRET:-changeme_in_production_use_strong_secret_key_32chars}"
+      
+      # Modo
+      PLAY_ENV: "prod"
+    
+    # ⭐ Solo inicia app después de que DB esté lista
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    # Reinicio automático
+    restart: unless-stopped
+    
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Network
+    networks:
+      - app_network
+
+# ==================== Volúmenes (PERSISTENCIA) ====================
+volumes:
+  # ⭐ Volumen nombrado para PostgreSQL
+  # Los datos persisten EN ESTE DIRECTORIO:
+  # Linux: /var/lib/docker/volumes/reactive-manifesto_postgres_data/_data
+  # Windows (WSL2): \\wsl$\docker-desktop-data\version-pack-wsl\data\docker\volumes\reactive-manifesto_postgres_data\_data
+  # Mac: ~/Library/Containers/com.docker.docker/Data/vms/0/data/docker/volumes/reactive-manifesto_postgres_data/_data
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${POSTGRES_DATA_PATH:-.//postgres_data}"  # Carpeta local
+
+# ==================== Networks ====================
+networks:
+  app_network:
+    driver: bridge

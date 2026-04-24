@@ -1,0 +1,67 @@
+@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@isEdit = @{ publication.isDefined }
+@formAction = @{ publication.flatMap(_.id) match {
+  case Some(id) => routes.UserPublicationController.updatePublication(id)
+  case None     => routes.UserPublicationController.createPublication()
+}}
+
+@main(if(isEdit) "Editar publicación" else "Nueva publicación") {
+  <section class="ed-pub-form-page">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@if(isEdit){Editar}else{Nueva pieza}</div>
+      <h1 class="ed-dash-title">@if(isEdit){@publication.map(_.title)}else{Cuenta tu pieza}</h1>
+      <p class="ed-dash-sub">Recuerda: las piezas pasan por revisión editorial antes de publicarse.</p>
+    </header>
+
+    @flash.get("error").map { m => <div class="ed-flash ed-flash--error">@m</div> }
+    @form.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
+
+    <form method="POST" action="@formAction" class="ed-pub-form ed-form">
+      @helper.CSRF.formField
+
+      <div class="ed-field">
+        <label for="title">Título</label>
+        <input type="text" id="title" name="title" value="@form("title").value.getOrElse("")" required maxlength="200">
+        @form("title").error.map { e => <div class="ed-field-error">@e.message</div> }
+      </div>
+
+      <div class="ed-field-row">
+        <div class="ed-field">
+          <label for="category">Categoría</label>
+          <select id="category" name="category" required>
+            @for(c <- List("Tutorial","Artículo","Guía","Caso de Estudio","Recurso")) {
+              <option value="@c" @if(form("category").value.contains(c)){selected}>@c</option>
+            }
+          </select>
+          @form("category").error.map { e => <div class="ed-field-error">@e.message</div> }
+        </div>
+        <div class="ed-field">
+          <label for="tags">Tags <span class="ed-field-hint">(separados por coma)</span></label>
+          <input type="text" id="tags" name="tags" value="@form("tags").value.getOrElse("")" placeholder="akka, actores, resiliencia">
+        </div>
+      </div>
+
+      <div class="ed-field">
+        <label for="excerpt">Resumen <span class="ed-field-hint">(opcional, ~200 caracteres)</span></label>
+        <textarea id="excerpt" name="excerpt" rows="3" maxlength="280">@form("excerpt").value.getOrElse("")</textarea>
+      </div>
+
+      <div class="ed-field">
+        <label for="coverImage">URL de imagen de portada <span class="ed-field-hint">(opcional)</span></label>
+        <input type="url" id="coverImage" name="coverImage" value="@form("coverImage").value.getOrElse("")" placeholder="https://…">
+      </div>
+
+      <div class="ed-field">
+        <label for="content">Contenido <span class="ed-field-hint">(soporta markdown ligero)</span></label>
+        <textarea id="content" name="content" class="ed-editor-textarea" rows="22" required>@form("content").value.getOrElse("")</textarea>
+        @form("content").error.map { e => <div class="ed-field-error">@e.message</div> }
+      </div>
+
+      <div class="ed-form-actions">
+        <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Cancelar</a>
+        <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios}else{Enviar a revisión}</button>
+      </div>
+    </form>
+  </section>
+}

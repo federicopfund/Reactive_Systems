@@ -1,0 +1,149 @@
+@(username: String, role: String, pollingSec: Int)(implicit request: RequestHeader)
+
+@admin.adminLayout("Agentes y Guardians", "agents") {
+
+  <header class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">Agentes &amp; Guardians</h1>
+      <p class="ed-bo__page-lead">
+        Estado en vivo de los actores supervisados por los 3 guardians del <code>ActorSystem</code>.
+        Polling cada <strong>@pollingSec s</strong>.
+      </p>
+    </div>
+    <div class="ed-agents__global">
+      <span id="ed-agents-global-dot" class="ed-agents__dot ed-agents__dot--unknown" aria-hidden="true"></span>
+      <span id="ed-agents-global-text" class="ed-agents__global-text">Conectando…</span>
+      <button type="button" class="ed-bo__chip" id="ed-agents-refresh">Actualizar ahora</button>
+    </div>
+  </header>
+
+  <section class="ed-agents__meta">
+    <div><span class="ed-agents__meta-label">Última actualización</span><span id="ed-agents-ts" class="ed-agents__meta-val">—</span></div>
+    <div><span class="ed-agents__meta-label">Capas activas</span><span id="ed-agents-layers" class="ed-agents__meta-val">3</span></div>
+    <div><span class="ed-agents__meta-label">Hijos totales</span><span id="ed-agents-total" class="ed-agents__meta-val">—</span></div>
+    <div><span class="ed-agents__meta-label">Hijos saludables</span><span id="ed-agents-ok" class="ed-agents__meta-val">—</span></div>
+  </section>
+
+  <section id="ed-agents-grid" class="ed-agents__grid" aria-live="polite">
+    <div class="ed-agents__placeholder">Cargando snapshot…</div>
+  </section>
+
+  <details class="ed-agents__legend">
+    <summary>Leyenda &amp; métricas observadas</summary>
+    <ul>
+      <li><span class="ed-agents__dot ed-agents__dot--healthy"></span> <strong>Healthy</strong> — actor respondiendo y sin reinicios recientes.</li>
+      <li><span class="ed-agents__dot ed-agents__dot--degraded"></span> <strong>Degraded</strong> — fue reiniciado por el supervisor (backoff exponencial).</li>
+      <li><span class="ed-agents__dot ed-agents__dot--dead"></span> <strong>Dead</strong> — superó el límite de reinicios; el guardian aplica fast-fail / circuit breaker.</li>
+      <li><strong>Reinicios</strong> — contador de restarts acumulados desde el último <code>resetBackoffAfter</code>.</li>
+      <li><strong>Última señal</strong> — timestamp del último ping del guardian (tick 30 s).</li>
+      <li><strong>Latencia ping</strong> — RTT del mailbox en ms (<code>-1</code> si todavía no se midió).</li>
+    </ul>
+  </details>
+
+  <script>
+    (function () {
+      var endpoint = "@routes.AdminAgentsController.healthJson()";
+      var grid     = document.getElementById('ed-agents-grid');
+      var dot      = document.getElementById('ed-agents-global-dot');
+      var text     = document.getElementById('ed-agents-global-text');
+      var tsEl     = document.getElementById('ed-agents-ts');
+      var totalEl  = document.getElementById('ed-agents-total');
+      var okEl     = document.getElementById('ed-agents-ok');
+      var layersEl = document.getElementById('ed-agents-layers');
+      var btn      = document.getElementById('ed-agents-refresh');
+
+      var statusMeta = {
+        'healthy':  { label: 'Saludable',  cls: 'healthy'  },
+        'degraded': { label: 'Degradado',  cls: 'degraded' },
+        'dead':     { label: 'Caído',      cls: 'dead'     }
+      };
+
+      function fmtTime(iso) {
+        try { return new Date(iso).toLocaleTimeString('es-AR', { hour12: false }); }
+        catch (e) { return iso || '—'; }
+      }
+      function relative(iso) {
+        try {
+          var diff = (Date.now() - new Date(iso).getTime()) / 1000;
+          if (diff < 5)   return 'ahora';
+          if (diff < 60)  return Math.floor(diff) + 's';
+          if (diff < 3600) return Math.floor(diff/60) + 'm';
+          return Math.floor(diff/3600) + 'h';
+        } catch (e) { return '—'; }
+      }
+      function escape(s) {
+        if (s == null) return '';
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+        });
+      }
+
+      function render(payload) {
+        var ok = payload.ok === true;
+        dot.className = 'ed-agents__dot ed-agents__dot--' + (ok ? 'healthy' : 'dead');
+        text.textContent = ok ? 'Sistema saludable' : 'Sistema con incidencias';
+        tsEl.textContent = fmtTime(payload.timestamp);
+        layersEl.textContent = payload.layers.length;
+
+        var total = 0, healthy = 0;
+        var html = '';
+
+        payload.layers.forEach(function (layer) {
+          var layerOk = layer.healthy;
+          html += '<article class="ed-agents__card ed-agents__card--' + (layerOk ? 'ok' : 'down') + '">';
+          html += '  <header class="ed-agents__card-head">';
+          html += '    <span class="ed-agents__card-eyebrow">Capa</span>';
+          html += '    <h2 class="ed-agents__card-title">' + escape(layer.layer) + '</h2>';
+          html += '    <span class="ed-agents__card-badge ed-agents__card-badge--' + (layerOk ? 'ok' : 'down') + '">' + (layerOk ? 'OK' : 'ALERTA') + '</span>';
+          html += '  </header>';
+          html += '  <ul class="ed-agents__children">';
+
+          layer.children.forEach(function (c) {
+            total++;
+            if (c.status === 'healthy') healthy++;
+            var meta = statusMeta[c.status] || { label: c.status, cls: 'degraded' };
+            html += '<li class="ed-agents__child ed-agents__child--' + meta.cls + '">';
+            html += '  <div class="ed-agents__child-row">';
+            html += '    <span class="ed-agents__dot ed-agents__dot--' + meta.cls + '"></span>';
+            html += '    <span class="ed-agents__child-name">' + escape(c.name) + '</span>';
+            html += '    <span class="ed-agents__child-status">' + escape(meta.label) + '</span>';
+            html += '  </div>';
+            html += '  <dl class="ed-agents__child-stats">';
+            html += '    <div><dt>Reinicios</dt><dd>' + c.restarts + '</dd></div>';
+            html += '    <div><dt>Latencia</dt><dd>' + (c.lastPingMs >= 0 ? c.lastPingMs + ' ms' : '—') + '</dd></div>';
+            html += '    <div><dt>Última señal</dt><dd>' + relative(c.updatedAt) + '</dd></div>';
+            html += '  </dl>';
+            if (c.lastError) {
+              html += '<p class="ed-agents__child-error">' + escape(c.lastError) + '</p>';
+            }
+            html += '</li>';
+          });
+
+          html += '  </ul>';
+          html += '</article>';
+        });
+
+        grid.innerHTML = html;
+        totalEl.textContent = total;
+        okEl.textContent = healthy + ' / ' + total;
+      }
+
+      function fail(msg) {
+        dot.className = 'ed-agents__dot ed-agents__dot--dead';
+        text.textContent = 'Sin respuesta';
+        grid.innerHTML = '<div class="ed-agents__placeholder ed-agents__placeholder--err">' + escape(msg) + '</div>';
+      }
+
+      function tick() {
+        fetch(endpoint, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+          .then(function (r) { if (!r.ok && r.status !== 503) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(render)
+          .catch(function (e) { fail(e.message || 'Error de red'); });
+      }
+
+      btn.addEventListener('click', tick);
+      tick();
+      setInterval(tick, @{pollingSec * 1000});
+    })();
+  </script>
+}

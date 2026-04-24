@@ -1,0 +1,100 @@
+@(subscribers: List[models.NewsletterSubscriber])(implicit request: RequestHeader)
+
+@admin.adminLayout("Newsletter", "newsletter") {
+
+  @defining(subscribers.count(_.isActive)) { activeCount =>
+  @defining(subscribers.count(!_.isActive)) { inactiveCount =>
+
+    <header class="ed-admin-head">
+      <div>
+        <div class="ed-admin-eyebrow">Newsletter</div>
+        <h1 class="ed-admin-title">Suscriptores</h1>
+        <p class="ed-dash-sub">
+          <strong>@activeCount</strong> activos · @inactiveCount dados de baja · @subscribers.size totales
+        </p>
+      </div>
+      <div class="ed-admin-actions">
+        <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+      </div>
+    </header>
+
+    <div class="ed-nl-stats">
+      <div class="ed-nl-stat ed-nl-stat--primary">
+        <span class="ed-nl-stat__num">@activeCount</span>
+        <span class="ed-nl-stat__label">Activos</span>
+      </div>
+      <div class="ed-nl-stat">
+        <span class="ed-nl-stat__num">@inactiveCount</span>
+        <span class="ed-nl-stat__label">Bajas</span>
+      </div>
+      <div class="ed-nl-stat">
+        <span class="ed-nl-stat__num">@subscribers.size</span>
+        <span class="ed-nl-stat__label">Totales</span>
+      </div>
+    </div>
+
+    <p class="ed-nl-hint">
+      Los suscriptores activos reciben una notificación in-app automáticamente
+      cada vez que una publicación se mueve a la etapa <code>published</code>.
+    </p>
+
+    @if(subscribers.isEmpty) {
+      <div class="ed-msg-empty">
+        <span class="ed-msg-empty__icon" aria-hidden="true">📰</span>
+        <div class="ed-msg-empty__title">Aún no hay suscriptores</div>
+        <div class="ed-msg-empty__sub">
+          Cuando un visitante o usuario se suscriba aparecerá aquí.
+        </div>
+      </div>
+    } else {
+      <div class="ed-nl-toolbar">
+        <input type="search" id="nl-filter" placeholder="Filtrar por email…" class="ed-nl-filter" aria-label="Filtrar suscriptores">
+      </div>
+
+      <table class="ed-admin-table ed-nl-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Estado</th>
+            <th>Suscrito</th>
+            <th>Baja</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody id="nl-tbody">
+          @subscribers.map { s =>
+            <tr data-email="@s.email">
+              <td class="ed-nl-email">@s.email</td>
+              <td>
+                @if(s.isActive){
+                  <span class="ed-status-pill ed-status-pill--active">activo</span>
+                } else {
+                  <span class="ed-status-pill ed-status-pill--inactive">baja</span>
+                }
+              </td>
+              <td>@s.subscribedAt.toString.take(10)</td>
+              <td>@s.unsubscribedAt.map(_.toString.take(10)).getOrElse("—")</td>
+              <td class="ed-nl-ip">@s.ipAddress.getOrElse("—")</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <script>
+        (function(){
+          var input = document.getElementById('nl-filter');
+          var body  = document.getElementById('nl-tbody');
+          if (!input || !body) return;
+          input.addEventListener('input', function(){
+            var q = input.value.trim().toLowerCase();
+            Array.prototype.forEach.call(body.children, function(tr){
+              var email = (tr.getAttribute('data-email') || '').toLowerCase();
+              tr.style.display = (q === '' || email.indexOf(q) !== -1) ? '' : 'none';
+            });
+          });
+        })();
+      </script>
+    }
+
+  }}
+}

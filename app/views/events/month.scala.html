@@ -1,0 +1,12 @@
+@(yearMonth: java.time.YearMonth,
+  monthEvents: Seq[models.CommunityEvent],
+  upcoming: Seq[models.CommunityEvent],
+  prev: java.time.YearMonth,
+  next: java.time.YearMonth,
+  userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
+
+@*
+  Vista mes — alias semantico de events/index para la ruta /eventos/mes/:ym.
+*@
+
+@views.html.events.index(yearMonth, monthEvents, upcoming, prev, next, userInfo)

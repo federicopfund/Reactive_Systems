@@ -1,0 +1,12 @@
+@()(implicit request: RequestHeader)
+
+@main("500 — Error interno") {
+  <section class="ed-error-page">
+    <div class="ed-error-card">
+      <div class="ed-error-code">500</div>
+      <h1 class="ed-error-title">Error en la imprenta</h1>
+      <p class="ed-error-desc">Algo salió mal del lado del servidor. Ya estamos revisando.</p>
+      <a href="@routes.HomeController.index()" class="ed-btn-primary">Volver a la portada</a>
+    </div>
+  </section>
+}

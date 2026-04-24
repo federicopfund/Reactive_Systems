@@ -1,0 +1,28 @@
+@(history: Seq[models.CollectionStatusEntry])(implicit request: RequestHeader)
+
+@import models.CollectionStatus
+
+<div class="ed-bo__timeline">
+  @if(history.isEmpty) {
+    <p class="ed-bo__muted">Sin transiciones registradas.</p>
+  } else {
+    @for(entry <- history) {
+      <div class="ed-bo__timeline-item">
+        <div class="ed-bo__timeline-dot ed-bo__timeline-dot--@CollectionStatus.tone(entry.toStatus)"></div>
+        <div class="ed-bo__timeline-body">
+          <div class="ed-bo__timeline-head">
+            <strong>
+              @entry.fromStatus.map(s => s"${CollectionStatus.label(s)} → ").getOrElse("⟶ ")
+              @CollectionStatus.label(entry.toStatus)
+            </strong>
+            <span class="ed-bo__timeline-meta">@entry.createdAt.toString.take(19).replace("T", " ")</span>
+          </div>
+          <div class="ed-bo__timeline-meta">
+            por @entry.actorRole.getOrElse("—") · actor #@entry.actorId.map(_.toString).getOrElse("—")
+          </div>
+          @entry.comment.map { c => <p class="ed-bo__timeline-comment">@c</p> }
+        </div>
+      </div>
+    }
+  }
+</div>

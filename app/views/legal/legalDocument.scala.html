@@ -1,0 +1,20 @@
+@(doc: models.LegalDocument)(implicit request: RequestHeader, messages: Messages)
+
+@*
+  Vista genérica de documento legal. El cuerpo (body_html) se renderiza
+  tal cual desde la DB. Reemplaza privacidad.scala.html y terminos.scala.html.
+*@
+
+@main(doc.title) {
+  <article class="ed-legal-page">
+    <header class="ed-legal-header">
+      <div class="ed-legal-eyebrow">@doc.eyebrow</div>
+      <h1 class="ed-legal-title">@doc.title</h1>
+      <p class="ed-legal-meta">Última actualización: @doc.lastUpdatedAt.toString.take(10)</p>
+    </header>
+
+    <div class="ed-legal-content">
+      @Html(doc.bodyHtml)
+    </div>
+  </article>
+}

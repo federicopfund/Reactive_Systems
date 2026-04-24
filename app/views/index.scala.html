@@ -1,204 +1,359 @@
-@import controllers.ContactFormData
+@(contactForm: Form[controllers.ContactFormData], communityPublications: List[models.PublicationWithAuthor] = Nil, pillars: Seq[models.ManifestoPillar] = Nil)(implicit request: RequestHeader, messages: Messages)
 
-@(contactForm: Form[ContactFormData])(implicit request: RequestHeader, messages: Messages)
+@*
+  Portada — Editorial Reactiva.
+  Estructura:
+    1. Hero editorial
+    2. Pullquote
+    3. Concept strip (3 roles)
+    4. Pilares (4 columnas)
+    5. Proceso (5 etapas)
+    6. Recents (publicaciones recientes desde DB)
+    7. Guest conversion (si no autenticado) / CTA (si autenticado)
+    8. Contacto (anchor #contact)
+*@
 
-@main("Inicio") {
-    <!-- Flash Messages -->
-    @request.flash.get("success").map { message =>
-        <div class="alert alert-success">
-            <span class="alert-icon">✓</span>
-            <span class="alert-message">@message</span>
+@isAuthenticated = @{ request.session.get("userId").isDefined }
+
+@main("Portada") {
+
+  @* Flash messages globales *@
+  @request.flash.get("success").map { msg => <div class="ed-section"><div class="ed-flash ed-flash--success">@msg</div></div> }
+  @request.flash.get("error").map   { msg => <div class="ed-section"><div class="ed-flash ed-flash--error">@msg</div></div> }
+
+  @* ── HERO ── *@
+  <section class="ed-hero">
+    <div class="ed-hero-main">
+      <div>
+        <div class="ed-hero-issue">
+          <span class="ed-hero-issue-dot"></span>
+          Edición Nº 01 · Año Cero · 2025
         </div>
-    }
-    @request.flash.get("error").map { message =>
-        <div class="alert alert-error">
-            <span class="alert-icon">✗</span>
-            <span class="alert-message">@message</span>
-        </div>
-    }
+        <h1 class="ed-hero-title">
+          Sistemas que <em>responden,</em><br/>
+          <span class="ed-hero-rule"></span>
+          resisten y escalan.
+        </h1>
+      </div>
+      <div class="ed-hero-bottom">
+        <p class="ed-hero-subtitle">
+          Una edición digital sobre el Manifiesto Reactivo:
+          arquitecturas que conviven con el fallo, la carga y el cambio.
+        </p>
+        <a href="@routes.HomeController.publicaciones()" class="ed-btn-primary">
+          Leer la edición
+        </a>
+      </div>
+    </div>
+    <aside class="ed-hero-aside">
+      <div class="ed-aside-stat">
+        <div class="ed-aside-stat-num">@{"%02d".format(pillars.size)} <span>·</span></div>
+        <div class="ed-aside-stat-label">Pilares
+del manifiesto</div>
+      </div>
+      <div class="ed-aside-stat">
+        <div class="ed-aside-stat-num">05</div>
+        <div class="ed-aside-stat-label">Etapas
+del proceso editorial</div>
+      </div>
+      <div class="ed-aside-stat">
+        <div class="ed-aside-stat-num">@{communityPublications.size.formatted("%02d")}</div>
+        <div class="ed-aside-stat-label">Publicaciones
+de la comunidad</div>
+      </div>
+    </aside>
+  </section>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h2 class="hero-title">Bienvenido al Manifiesto Reactivo</h2>
-                <p class="hero-subtitle">Construyendo sistemas que son Responsivos, Resilientes, Elásticos y Orientados a Mensajes</p>
-                <div class="hero-cta">
-                    <a href="#principles" class="btn btn-primary">🚀 Explorar Principios</a>
-                    <a href="#contact" class="btn btn-secondary">✉️ Contáctanos</a>
-                </div>
+  @* ── PULLQUOTE ── *@
+  <section class="ed-pullquote">
+    <div class="ed-pullquote-mark">"</div>
+    <div>
+      <p class="ed-pullquote-text">
+        Los sistemas reactivos son más flexibles, débilmente acoplados y escalables.
+        Esto los hace más fáciles de desarrollar y susceptibles al cambio.
+      </p>
+      <div class="ed-pullquote-source">— The Reactive Manifesto, 2014</div>
+    </div>
+  </section>
+
+  @* ── CONCEPT STRIP (3 roles) ── *@
+  <section class="ed-concept-strip">
+    <div class="ed-concept-col">
+      <div class="ed-concept-role"><span class="ed-concept-role-dot"></span>Lector</div>
+      <h3 class="ed-concept-role-title">Sigue la edición</h3>
+      <p class="ed-concept-role-desc">
+        Accede a artículos curados sobre sistemas reactivos, patrones de resiliencia
+        y arquitecturas modernas.
+      </p>
+      <ul class="ed-concept-perks">
+        <li>Lectura sin barreras</li>
+        <li>Boletines temáticos</li>
+        <li>Colecciones por tema</li>
+      </ul>
+    </div>
+    <div class="ed-concept-divider"></div>
+    <div class="ed-concept-col">
+      <div class="ed-concept-role"><span class="ed-concept-role-dot"></span>Autor</div>
+      <h3 class="ed-concept-role-title">Publica tu pieza</h3>
+      <p class="ed-concept-role-desc">
+        Propone ensayos, tutoriales o casos de estudio. Pasa por el proceso editorial
+        y construye trayectoria.
+      </p>
+      <ul class="ed-concept-perks">
+        <li>Edición y feedback</li>
+        <li>Difusión en colecciones</li>
+        <li>Perfil público</li>
+      </ul>
+    </div>
+    <div class="ed-concept-divider"></div>
+    <div class="ed-concept-col">
+      <div class="ed-concept-role"><span class="ed-concept-role-dot"></span>Editor</div>
+      <h3 class="ed-concept-role-title">Cura la colección</h3>
+      <p class="ed-concept-role-desc">
+        Evalúa propuestas, edita estilo y aprueba la versión final que llega
+        a la pieza publicada.
+      </p>
+      <ul class="ed-concept-perks">
+        <li>Panel de revisiones</li>
+        <li>Feedback estructurado</li>
+        <li>Métricas editoriales</li>
+      </ul>
+    </div>
+  </section>
+
+  @* ── PILARES (DB-driven desde manifesto_pillars) ── *@
+  <section class="ed-pillars-section">
+    <div class="ed-section-label">I — Los Cuatro Pilares</div>
+    <div class="ed-pillars-grid">
+      @pillars.map { p =>
+        <div class="ed-pillar">
+          <div class="ed-pillar-num">@p.romanNumeral</div>
+          <div class="ed-pillar-name">@p.name</div>
+          <p class="ed-pillar-desc">@p.description</p>
+          @if(p.tags.nonEmpty) {
+            <div class="ed-pillar-tags">
+              @for(tag <- p.tags) {
+                <span class="ed-pillar-tag">@tag</span>
+              }
             </div>
+          }
         </div>
-    </section>
+      }
+    </div>
+  </section>
 
-    <!-- Principles Section -->
-    <section id="principles" class="principles">
-        <div class="container">
-            <h2 class="section-title">Los 4 Pilares del Manifiesto Reactivo</h2>
-            <div class="principles-grid">
-                <div class="principle-card" data-principle="responsive">
-                    <div class="principle-icon">📱</div>
-                    <h3>Responsivo</h3>
-                    <p>Los sistemas responden de manera oportuna. La capacidad de respuesta es la piedra angular de la usabilidad y la utilidad.</p>
-                    <div class="principle-popup">
-                        <h4>Responsive - Capacidad de Respuesta</h4>
-                        <ul>
-                            <li><strong>Tiempo de respuesta consistente:</strong> El sistema responde en un tiempo predecible</li>
-                            <li><strong>Detecta problemas rápidamente:</strong> Identificación temprana de fallos</li>
-                            <li><strong>Maneja errores efectivamente:</strong> Recuperación sin impacto en el usuario</li>
-                            <li><strong>User Experience:</strong> Proporciona feedback confiable al usuario final</li>
-                        </ul>
-                        <div class="popup-arrow"></div>
-                    </div>
-                </div>
-                <div class="principle-card" data-principle="resilient">
-                    <div class="principle-icon">🛡️</div>
-                    <h3>Resiliente</h3>
-                    <p>El sistema permanece responsivo ante fallos. La resiliencia se logra mediante replicación, contención, aislamiento y delegación.</p>
-                    <div class="principle-popup">
-                        <h4>Resilient - Resiliencia ante Fallos</h4>
-                        <ul>
-                            <li><strong>Replicación:</strong> Múltiples instancias para alta disponibilidad</li>
-                            <li><strong>Aislamiento:</strong> Los fallos están contenidos y no se propagan</li>
-                            <li><strong>Delegación:</strong> Recuperación gestionada por componentes externos</li>
-                            <li><strong>Supervisión:</strong> Componentes monitoreados y recuperados automáticamente</li>
-                        </ul>
-                        <div class="popup-arrow"></div>
-                    </div>
-                </div>
-                <div class="principle-card" data-principle="elastic">
-                    <div class="principle-icon">📈</div>
-                    <h3>Elástico</h3>
-                    <p>El sistema permanece responsivo bajo cargas de trabajo variables. Los sistemas reactivos pueden adaptarse a cambios en la demanda.</p>
-                    <div class="principle-popup">
-                        <h4>Elastic - Elasticidad y Escalabilidad</h4>
-                        <ul>
-                            <li><strong>Escalado dinámico:</strong> Ajusta recursos según la demanda</li>
-                            <li><strong>Sin cuellos de botella:</strong> Arquitectura sin puntos centrales de contención</li>
-                            <li><strong>Sharding:</strong> Distribución de carga entre múltiples nodos</li>
-                            <li><strong>Cost-effective:</strong> Paga solo por los recursos que necesitas</li>
-                        </ul>
-                        <div class="popup-arrow"></div>
-                    </div>
-                </div>
-                <div class="principle-card" data-principle="message-driven">
-                    <div class="principle-icon">💬</div>
-                    <h3>Orientado a Mensajes</h3>
-                    <p>Los sistemas reactivos se basan en el paso asíncrono de mensajes para establecer límites entre componentes.</p>
-                    <div class="principle-popup">
-                        <h4>Message-Driven - Comunicación Asíncrona</h4>
-                        <ul>
-                            <li><strong>Asincronía:</strong> No bloquea mientras espera respuestas</li>
-                            <li><strong>Loose coupling:</strong> Componentes independientes y desacoplados</li>
-                            <li><strong>Location transparency:</strong> La ubicación física no importa</li>
-                            <li><strong>Backpressure:</strong> Control de flujo para prevenir sobrecarga</li>
-                        </ul>
-                        <div class="popup-arrow"></div>
-                    </div>
-                </div>
+  @* ── PROCESO EDITORIAL ── *@
+  <section class="ed-process">
+    <div class="ed-process-header">
+      <div class="ed-section-label" style="margin-bottom:0;">II — Del manuscrito a la edición</div>
+    </div>
+    <div class="ed-process-stages">
+      <div class="ed-process-stage">
+        <div class="ed-stage-num">01</div>
+        <div class="ed-stage-name">Propuesta</div>
+        <p class="ed-stage-desc">El autor envía un resumen y propósito de la pieza al equipo de adquisición.</p>
+      </div>
+      <div class="ed-process-stage">
+        <div class="ed-stage-num">02</div>
+        <div class="ed-stage-name">Adquisición</div>
+        <p class="ed-stage-desc">El editor evalúa pertinencia, originalidad y encaje con la colección.</p>
+      </div>
+      <div class="ed-process-stage">
+        <div class="ed-stage-num">03</div>
+        <div class="ed-stage-name">Edición</div>
+        <p class="ed-stage-desc">Edición de estilo y revisión técnica con feedback anclado al texto.</p>
+      </div>
+      <div class="ed-process-stage">
+        <div class="ed-stage-num">04</div>
+        <div class="ed-stage-name">Aprobación</div>
+        <p class="ed-stage-desc">La dirección aprueba la versión final y asigna número y sección.</p>
+      </div>
+      <div class="ed-process-stage">
+        <div class="ed-stage-num">05</div>
+        <div class="ed-stage-name">Publicación</div>
+        <p class="ed-stage-desc">La pieza se cura dentro de una colección; el autor construye trayectoria.</p>
+      </div>
+    </div>
+  </section>
+
+  @* ── PROXIMOS EVENTOS (Issue #19) ── *@
+  <section class="ed-section ed-upcoming-events">
+    <div class="ed-section-header">
+      <div class="ed-section-label">II.5 — Agenda editorial</div>
+      <a href="@routes.EventController.index()" class="ed-recent-link">Ver agenda completa →</a>
+    </div>
+    <div class="ed-events-mini-list ed-events-mini-list--grid" data-upcoming-events>
+      <p class="ed-muted" data-upcoming-loading>Cargando proximos eventos...</p>
+    </div>
+  </section>
+  <script>
+    (function () {
+      const root = document.querySelector('[data-upcoming-events]');
+      if (!root) return;
+      const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+      fetch('/api/eventos/upcoming?limit=6', { headers: { 'Accept': 'application/json' } })
+        .then(r => r.ok ? r.json() : { events: [] })
+        .then(data => {
+          const events = (data && data.events) || [];
+          if (events.length === 0) {
+            root.innerHTML = '<p class="ed-muted">No hay eventos en agenda. <a href="/eventos">Ver cronograma</a>.</p>';
+            return;
+          }
+          root.innerHTML = events.map(e => {
+            const d = new Date(e.startsAt);
+            const day = d.getDate();
+            const month = d.toLocaleString('es', { month: 'short' }).toUpperCase();
+            const weekday = d.toLocaleString('es', { weekday: 'short' }).toUpperCase();
+            const time = d.toLocaleString('es', { hour: '2-digit', minute: '2-digit' });
+            const accent = escapeHtml(e.accent || 'accent');
+            const url = escapeHtml(e.url || '#');
+            const type = escapeHtml(e.type || '');
+            const title = escapeHtml(e.title || '');
+            const modality = escapeHtml(e.modality || '');
+            return `<a class="ed-event-mini ed-event-mini--accent-${accent}" href="${url}" aria-label="${title} — ${day} ${month} ${time}">
+              <div class="ed-event-mini__date" aria-hidden="true">
+                <span class="ed-event-mini__weekday">${weekday}</span>
+                <span class="ed-event-mini__day">${day}</span>
+                <span class="ed-event-mini__month">${month}</span>
+              </div>
+              <div class="ed-event-mini__body">
+                <div class="ed-event-mini__type">${type}${modality ? ` · ${modality}` : ''}</div>
+                <div class="ed-event-mini__title">${title}</div>
+                <div class="ed-event-mini__time"><span class="ed-event-mini__time-icon" aria-hidden="true">◷</span> ${time}</div>
+              </div>
+              <span class="ed-event-mini__cta" aria-hidden="true">→</span>
+            </a>`;
+          }).join('');
+        })
+        .catch(() => { root.innerHTML = '<p class="ed-muted">No pudimos cargar la agenda.</p>'; });
+    })();
+  </script>
+
+  @* ── RECIENTES ── *@
+  @if(communityPublications.nonEmpty) {
+    <section class="ed-recents">
+      <div class="ed-recents-header">
+        <div class="ed-section-label" style="margin-bottom:0;">III — Recién publicado</div>
+        <a href="@routes.HomeController.publicaciones()" class="ed-recent-link">Ver todo</a>
+      </div>
+      <div class="ed-recents-grid">
+        @communityPublications.take(3).map { pwa =>
+          <a class="ed-recent-card" href="@routes.HomeController.publicacion(pwa.publication.slug)">
+            <div class="ed-recent-eyebrow">@pwa.publication.category</div>
+            <div class="ed-recent-title">@pwa.publication.title</div>
+            <p class="ed-recent-excerpt">
+              @pwa.publication.content.take(140)@if(pwa.publication.content.length > 140){…}
+            </p>
+            <div class="ed-recent-footer">
+              <span>@pwa.authorFullName</span>
+              <span class="ed-recent-link">Leer</span>
             </div>
-        </div>
+          </a>
+        }
+      </div>
     </section>
+  }
 
-    <!-- Benefits Section -->
-    <section class="benefits">
-        <div class="container">
-            <h2 class="section-title">¿Por qué Reactive?</h2>
-            <div class="benefits-content">
-                <div class="benefit-item">
-                    <div class="benefit-number">01</div>
-                    <h3>Mejor Experiencia de Usuario</h3>
-                    <p>Respuestas rápidas y consistentes mejoran la satisfacción del usuario.</p>
-                </div>
-                <div class="benefit-item">
-                    <div class="benefit-number">02</div>
-                    <h3>Escalabilidad Mejorada</h3>
-                    <p>Los sistemas reactivos escalan horizontal y verticalmente según demanda.</p>
-                </div>
-                <div class="benefit-item">
-                    <div class="benefit-number">03</div>
-                    <h3>Mayor Confiabilidad</h3>
-                    <p>La resiliencia incorporada garantiza disponibilidad continua del servicio.</p>
-                </div>
-            </div>
+  @* ── GUEST CONVERSION (no autenticado) / CTA (autenticado) ── *@
+  @if(!isAuthenticated) {
+    <section class="ed-guest" id="guest">
+      <div class="ed-guest-main">
+        <div class="ed-guest-label">Convocatoria abierta</div>
+        <h2 class="ed-guest-headline">
+          Únete a la edición y <em>publica tu pieza.</em>
+        </h2>
+        <p class="ed-guest-body">
+          La comunidad reactiva crece con autores y editores que piensan los sistemas
+          como organismos vivos. Crea tu cuenta gratuita y comienza a participar.
+        </p>
+        <ul class="ed-guest-benefits">
+          <li><strong>Publica</strong> ensayos, tutoriales y casos de estudio</li>
+          <li><strong>Recibe feedback</strong> editorial estructurado</li>
+          <li><strong>Construye trayectoria</strong> con tu perfil público</li>
+        </ul>
+      </div>
+      <aside class="ed-guest-aside">
+        <h3 class="ed-guest-form-title">Crea tu cuenta</h3>
+        <p class="ed-guest-form-sub">Te toma menos de un minuto. Sin tarjetas, sin spam.</p>
+        <form action="@routes.AuthController.registerPage()" method="GET" class="ed-form">
+          <div class="ed-field">
+            <label>Nombre</label>
+            <input type="text" name="fullName" placeholder="Tu nombre">
+          </div>
+          <div class="ed-field">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="tu@@correo.com">
+          </div>
+          <button type="submit" class="ed-btn-primary ed-btn-block">Comenzar</button>
+        </form>
+        <div class="ed-auth-form__footer" style="margin-top:1rem;">
+          ¿Ya tienes cuenta? <a href="@routes.AuthController.loginPage()">Inicia sesión</a>
         </div>
+      </aside>
     </section>
+  } else {
+    <section class="ed-cta">
+      <div>
+        <div class="ed-cta-label">Tu próxima propuesta</div>
+        <h2 class="ed-cta-headline">El proceso editorial está abierto.</h2>
+        <p class="ed-cta-body">
+          Comienza una nueva pieza, recibe feedback editorial y suma tu trabajo
+          a la colección.
+        </p>
+      </div>
+      <div class="ed-cta-actions">
+        <a href="@routes.UserPublicationController.newPublicationForm()" class="ed-btn-primary ed-btn-lg">Nueva propuesta</a>
+        <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-secondary ed-btn-lg">Mi espacio</a>
+      </div>
+    </section>
+  }
 
-    <!-- Contact Section -->
-    <section id="contact" class="contact">
-        <div class="container">
-            <h2 class="section-title">Contáctanos</h2>
-            <p class="section-subtitle">¿Tienes preguntas sobre el Manifiesto Reactivo? Envíanos un mensaje usando nuestro sistema reactivo basado en Akka.</p>
-            
-            <div class="contact-wrapper">
-                <form method="POST" action="@routes.HomeController.submitContact()" class="contact-form">
-                    @helper.CSRF.formField
-                    
-                    <div class="form-group">
-                        <label for="name">Nombre</label>
-                        <input 
-                            type="text" 
-                            id="name" 
-                            name="name" 
-                            value="@contactForm("name").value"
-                            class="form-input @if(contactForm("name").hasErrors) {form-input-error}"
-                            placeholder="Tu nombre completo"
-                            required
-                        >
-                        @contactForm("name").errors.map { error =>
-                            <span class="form-error">@Messages(error.message)</span>
-                        }
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            value="@contactForm("email").value"
-                            class="form-input @if(contactForm("email").hasErrors) {form-input-error}"
-                            placeholder="tu@@email.com"
-                            required
-                        >
-                        @contactForm("email").errors.map { error =>
-                            <span class="form-error">@Messages(error.message)</span>
-                        }
-                    </div>
-
-                    <div class="form-group">
-                        <label for="message">Mensaje</label>
-                        <textarea 
-                            id="message" 
-                            name="message" 
-                            rows="5"
-                            class="form-input @if(contactForm("message").hasErrors) {form-input-error}"
-                            placeholder="Escribe tu mensaje aquí... (mínimo 10 caracteres)"
-                            required
-                        >@contactForm("message").value</textarea>
-                        @contactForm("message").errors.map { error =>
-                            <span class="form-error">@Messages(error.message)</span>
-                        }
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-block">
-                        Enviar Mensaje
-                    </button>
-                </form>
-
-                <div class="contact-info">
-                    <div class="info-card">
-                        <div class="info-icon">🚀</div>
-                        <h4>Tecnología Reactiva</h4>
-                        <p>Este formulario utiliza Akka Typed para procesamiento asíncrono y tolerante a fallos.</p>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-icon">⚡</div>
-                        <h4>Procesamiento Rápido</h4>
-                        <p>Los mensajes se procesan mediante un sistema de actores altamente eficiente.</p>
-                    </div>
-                </div>
-            </div>
+  @* ── CONTACTO ── *@
+  <section class="ed-section" id="contact">
+    <div class="ed-section-label">IV — Hablemos</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2.5rem;">
+      <div>
+        <h2 class="ed-h2" style="margin-bottom: 0.75rem;">Escribe a la redacción</h2>
+        <p class="ed-prose" style="max-width: 48ch;">
+          Propuestas, errores en la edición, colaboraciones o consultas técnicas.
+          Respondemos en un plazo razonable.
+        </p>
+      </div>
+      <form action="@routes.HomeController.submitContact()" method="POST" class="ed-form">
+        @helper.CSRF.formField
+        <div class="ed-form__row">
+          <div class="ed-field @if(contactForm("name").hasErrors){ed-field--error}">
+            <label>Nombre</label>
+            <input type="text" name="name" value="@contactForm("name").value.getOrElse("")" required>
+            @contactForm("name").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
+          </div>
+          <div class="ed-field @if(contactForm("email").hasErrors){ed-field--error}">
+            <label>Email</label>
+            <input type="email" name="email" value="@contactForm("email").value.getOrElse("")" required>
+            @contactForm("email").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
+          </div>
         </div>
-    </section>
+        <div class="ed-field @if(contactForm("message").hasErrors){ed-field--error}">
+          <label>Mensaje</label>
+          <textarea name="message" rows="5" required>@contactForm("message").value.getOrElse("")</textarea>
+          @contactForm("message").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
+        </div>
+        <div class="ed-form__actions">
+          <button type="submit" class="ed-btn-primary">Enviar mensaje</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  @* ── FOOTER ── *@
+  <footer class="ed-page-footer">
+    <div>© 2025 Manifiesto Reactivo · Edición Digital</div>
+    <div class="ed-page-footer__links">
+      <a href="@routes.HomeController.politicaPrivacidad()">Privacidad</a>
+      <a href="@routes.HomeController.terminosDeUso()">Términos</a>
+      <a href="@routes.HomeController.index()#contact">Contacto</a>
+    </div>
+  </footer>
 }

@@ -1,0 +1,72 @@
+@(rows: Seq[models.CollectionWithCount],
+  statusFilter: Option[String])(implicit request: RequestHeader)
+
+@import models.CollectionStatus
+
+@admin.adminLayout("Colecciones", "collections") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">Colecciones editoriales</h1>
+      <p class="ed-bo__page-lead">@rows.size coleccion(es). Curaduria, revisión y publicación.</p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-primary" href="@routes.AdminCollectionController.newForm()">+ Nueva colección</a>
+    </div>
+  </div>
+
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+  @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
+
+  <nav class="ed-bo__filters" aria-label="Filtro por estado">
+    <a class="ed-bo__chip @if(statusFilter.isEmpty){is-active}" href="@routes.AdminCollectionController.list(None)">
+      Todas
+    </a>
+    @for(s <- CollectionStatus.all) {
+      <a class="ed-bo__chip @if(statusFilter.contains(s)){is-active}" href="@routes.AdminCollectionController.list(Some(s))">
+        @CollectionStatus.label(s)
+      </a>
+    }
+  </nav>
+
+  @if(rows.isEmpty) {
+    <div class="ed-bo__empty">
+      <h2>Sin colecciones</h2>
+      <p>Empezá creando una colección editorial. Pasará por borrador, revisión y publicación.</p>
+    </div>
+  } else {
+    <div class="ed-bo__table-wrap">
+      <table class="ed-bo__table ed-bo__table--collections">
+        <thead>
+          <tr>
+            <th>Colección</th>
+            <th>Estado</th>
+            <th>Piezas</th>
+            <th>Acento</th>
+            <th>Actualizada</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        @for(row <- rows) {
+          @defining(row.collection) { c =>
+            <tr>
+              <td>
+                <a class="ed-bo__row-title" href="@routes.AdminCollectionController.view(c.id.get)">@c.name</a>
+                <div class="ed-bo__row-sub">/@c.slug</div>
+              </td>
+              <td><span class="ed-bo__badge ed-bo__badge--@CollectionStatus.tone(c.status)">@CollectionStatus.label(c.status)</span></td>
+              <td>@row.itemCount</td>
+              <td><span class="ed-bo__accent-dot ed-bo__accent-dot--@c.accent" title="@models.CollectionAccent.label(c.accent)"></span></td>
+              <td class="ed-bo__cell-meta">@c.updatedAt.toString.take(10)</td>
+              <td class="ed-bo__cell-actions">
+                <a class="ed-bo__link" href="@routes.AdminCollectionController.view(c.id.get)">Abrir</a>
+              </td>
+            </tr>
+          }
+        }
+        </tbody>
+      </table>
+    </div>
+  }
+}

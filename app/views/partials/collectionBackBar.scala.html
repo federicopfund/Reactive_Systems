@@ -1,0 +1,13 @@
+@()(implicit request: RequestHeader)
+
+@for(slug <- request.session.get("fromCollection")) {
+  @defining(request.session.get("fromCollectionName").getOrElse("la colección")) { name =>
+    <nav class="ed-back-bar" aria-label="Volver a la colección">
+      <a class="ed-back-bar__link" href="@routes.HomeController.collectionDetail(slug)">
+        <span class="ed-back-bar__arrow" aria-hidden="true">&#8592;</span>
+        <span class="ed-back-bar__label">Volver a</span>
+        <span class="ed-back-bar__name">@name</span>
+      </a>
+    </nav>
+  }
+}

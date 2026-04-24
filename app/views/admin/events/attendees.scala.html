@@ -1,0 +1,62 @@
+@(e: models.CommunityEvent,
+  attendees: Seq[models.EventAttendee],
+  usersById: Map[Long, Option[models.User]],
+  countsByStatus: Map[String, Int])(implicit request: RequestHeader)
+
+@import models.EventEnums
+
+@admin.adminLayout(s"Asistentes: ${e.title}", "events") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <div class="ed-bo__breadcrumb">
+        <a href="@routes.AdminEventController.list(None, 0)">Eventos</a> /
+        <a href="@routes.AdminEventController.view(e.id.get)">@e.title</a> /
+        <span>Asistentes</span>
+      </div>
+      <h1 class="ed-bo__page-title">Asistentes — @e.title</h1>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-secondary" href="@routes.AdminEventController.attendeesCsv(e.id.get)">Exportar CSV</a>
+    </div>
+  </div>
+
+  <div class="ed-bo__metric-row">
+    @for(s <- EventEnums.RsvpStatus.all) {
+      <div class="ed-bo__metric">
+        <strong>@countsByStatus.getOrElse(s, 0)</strong>
+        <span>@EventEnums.RsvpStatus.label(s)</span>
+      </div>
+    }
+  </div>
+
+  @if(attendees.isEmpty) {
+    <div class="ed-bo__empty">
+      <h2>Sin RSVPs todavia</h2>
+      <p>Cuando alguien marque RSVP en la pieza publica aparecera aqui.</p>
+    </div>
+  } else {
+    <table class="ed-bo__table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>RSVP</th>
+          <th>Recordatorio</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        @attendees.map { a =>
+          <tr>
+            <td>@usersById.get(a.userId).flatten.map(_.username).getOrElse(s"#${a.userId}")</td>
+            <td>@usersById.get(a.userId).flatten.map(_.email).getOrElse("—")</td>
+            <td><span class="ed-bo__badge ed-bo__badge--@a.rsvpStatus">@EventEnums.RsvpStatus.label(a.rsvpStatus)</span></td>
+            <td>@if(a.reminderOptin){Si} else {No}</td>
+            <td>@a.createdAt.toString.take(16).replace("T", " ")</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}

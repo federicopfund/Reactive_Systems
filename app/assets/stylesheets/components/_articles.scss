@@ -1,0 +1,643 @@
+// ============================================
+// Articles — Detalle de artículo / publicación
+// ============================================
+
+.ed-article-topbar {
+  padding: 1.5rem 3.5rem;
+  border-bottom: 1px solid var(--ed-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ed-breadcrumb {
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  color: var(--ed-text-faint);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  span { color: var(--ed-text-dim); }
+
+  a {
+    color: var(--ed-text-faint);
+    transition: color 0.15s;
+    text-decoration: none;
+
+    &:hover { color: var(--ed-accent); }
+  }
+}
+
+.ed-read-time {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  color: var(--ed-text-faint);
+  letter-spacing: 0.1em;
+}
+
+.ed-article-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+}
+
+.ed-article-body-col {
+  padding: 3rem 3.5rem;
+  border-right: 1px solid var(--ed-border);
+}
+
+.ed-article-aside {
+  padding: 2.5rem 2rem;
+}
+
+.ed-article-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--ed-border);
+}
+
+.ed-article-cat-badge {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+
+  &::before {
+    content: '';
+    width: 2rem;
+    height: 1px;
+    background: var(--ed-accent);
+  }
+}
+
+.ed-article-h1 {
+  font-family: $font-display;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ed-text);
+  margin-bottom: 1.25rem;
+  text-wrap: pretty;
+}
+
+.ed-article-lead {
+  font-family: $font-display;
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--ed-text-dim);
+  text-wrap: pretty;
+}
+
+.ed-article-section {
+  margin-bottom: 2.5rem;
+}
+
+.ed-article-h2 {
+  font-family: $font-display;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin-bottom: 1rem;
+  padding-top: 0.5rem;
+  scroll-margin-top: 80px; // Issue #18-I: anchors editoriales precisos
+}
+
+.ed-article-h3 {
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin: 1.25rem 0 0.5rem;
+  scroll-margin-top: 80px; // Issue #18-I
+}
+
+.ed-article-p {
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: var(--ed-text-dim);
+  margin-bottom: 1rem;
+  text-wrap: pretty;
+
+  strong { color: var(--ed-text); }
+  em { font-style: italic; }
+  a { color: var(--ed-accent); border-bottom: 1px solid currentColor; }
+}
+
+.ed-article-ul,
+.ed-article-ol {
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: var(--ed-text-dim);
+  margin: 0 0 1rem 1.25rem;
+
+  li { margin-bottom: 0.4rem; }
+}
+
+// Pattern box (highlight inside article body)
+.ed-pattern-box {
+  border: 1px solid var(--ed-border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  background: var(--ed-bg2);
+  position: relative;
+}
+
+.ed-pattern-label {
+  position: absolute;
+  top: -0.55rem;
+  left: 1rem;
+  background: var(--ed-bg2);
+  padding: 0 0.5rem;
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+}
+
+.ed-pattern-title {
+  font-family: $font-display;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin-bottom: 0.6rem;
+}
+
+.ed-pattern-list {
+  list-style: none;
+
+  li {
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--ed-text-dim);
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--ed-border);
+    display: flex;
+    gap: 0.75rem;
+
+    &:last-child { border-bottom: none; }
+
+    strong { color: var(--ed-text); }
+  }
+}
+
+// Code blocks
+.ed-code-wrap {
+  background: #05050a;
+  border: 1px solid var(--ed-border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+
+  pre {
+    font-family: $font-mono;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    color: #a8b3c8;
+  }
+
+  code {
+    font-family: $font-mono;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  .code-kw   { color: #d4ff00; }
+  .code-type { color: #88c0d0; }
+  .code-str  { color: #a3be8c; }
+  .code-cm   { color: #4c5a6a; }
+}
+
+code {
+  font-family: $font-mono;
+  font-size: 0.82em;
+  background: var(--ed-bg3);
+  padding: 0.1em 0.35em;
+  color: var(--ed-accent);
+}
+
+// Aside (lateral del artículo)
+.ed-aside-section {
+  margin-bottom: 2.5rem;
+}
+
+.ed-aside-label {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ed-border);
+}
+
+.ed-aside-meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--ed-border);
+  font-size: 0.78rem;
+
+  &:last-child { border-bottom: none; }
+
+  &__key {
+    color: var(--ed-text-faint);
+    font-family: $font-mono;
+    font-size: 0.62rem;
+  }
+
+  &__val { color: var(--ed-text); }
+}
+
+.ed-related-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--ed-border);
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  color: inherit;
+
+  &:hover .ed-related-title { color: var(--ed-accent); }
+}
+
+.ed-related-title {
+  font-family: $font-display;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin-bottom: 0.25rem;
+  transition: color 0.15s;
+  line-height: 1.3;
+}
+
+.ed-related-cat {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  color: var(--ed-text-faint);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+// ============================================
+// Legacy prose — Artículos estáticos (articulos/*.scala.html)
+// Estilos que mapean clases legadas a la estética editorial.
+// Aplican sólo dentro de .ed-legacy-prose para evitar colisiones.
+// ============================================
+
+.ed-legacy-prose {
+  // Tipografía de lectura cómoda
+  font-size: 1.0625rem;           // ~17px base para lectura larga
+  line-height: 1.85;
+  color: var(--ed-text-dim);
+  max-width: 68ch;                // longitud de línea óptima
+  font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  & > * + * { margin-top: 1.25em; } // ritmo vertical uniforme
+
+  .article-body { display: block; }
+
+  .article-section {
+    margin: 0 0 3.5rem;
+    padding-bottom: 2.25rem;
+    border-bottom: 1px solid var(--ed-border);
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+  }
+
+  h2 {
+    font-family: $font-display;
+    font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+    font-weight: 700;
+    color: var(--ed-text);
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    margin: 2.75rem 0 1.25rem;
+    padding-top: 0.5rem;
+
+    &:first-child { margin-top: 0; }
+
+    &::before {
+      content: '';
+      display: block;
+      width: 2.5rem;
+      height: 2px;
+      background: var(--ed-accent);
+      margin-bottom: 1.25rem;
+    }
+  }
+
+  h3 {
+    font-family: $font-display;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ed-text);
+    line-height: 1.35;
+    margin: 2.25rem 0 1rem;
+  }
+
+  p {
+    font-size: 1.0625rem;
+    line-height: 1.85;
+    color: var(--ed-text-dim);
+    margin: 0 0 1.5rem;           // separación clara entre párrafos
+    text-wrap: pretty;
+    hyphens: auto;
+    overflow-wrap: break-word;
+
+    & + p { margin-top: 1.5rem; } // doble seguridad si adjacent-sibling
+
+    strong { color: var(--ed-text); font-weight: 600; }
+    em { font-style: italic; }
+    a {
+      color: var(--ed-accent);
+      border-bottom: 1px solid currentColor;
+      transition: opacity 0.15s;
+      &:hover { opacity: 0.75; }
+    }
+  }
+
+  ul, ol {
+    margin: 0 0 1.75rem 1.5rem;
+    padding: 0;
+    color: var(--ed-text-dim);
+
+    li {
+      font-size: 1.0313rem;
+      line-height: 1.8;
+      margin-bottom: 0.75rem;
+
+      strong { color: var(--ed-text); font-weight: 600; }
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin-left: 0;
+
+    li {
+      position: relative;
+      padding-left: 1.5rem;
+
+      &::before {
+        content: '·';
+        position: absolute;
+        left: 0.35rem;
+        top: -0.1rem;
+        color: var(--ed-accent);
+        font-weight: 700;
+        font-size: 1.2rem;
+        line-height: 1;
+      }
+    }
+  }
+
+  // Tarjeta de patrón / concepto destacado
+  .pattern-card,
+  .info-box,
+  .tip-box,
+  .benefit-box {
+    border: 1px solid var(--ed-border-strong);
+    padding: 1.5rem 1.75rem;
+    margin: 1.5rem 0;
+    background: var(--ed-bg2);
+    position: relative;
+
+    h3 {
+      font-family: $font-display;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--ed-text);
+      margin: 0 0 0.75rem;
+    }
+
+    p:last-child { margin-bottom: 0; }
+    ul { margin-bottom: 0; }
+  }
+
+  // Grid de beneficios / conceptos
+  .benefits-grid,
+  .key-concepts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+
+    .benefit-box,
+    .concept-box {
+      margin: 0;
+    }
+  }
+
+  // Warnings / advertencias
+  .warning-box {
+    border-left: 3px solid $color-warning;
+    background: var(--ed-bg2);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+
+    h3 {
+      color: $color-warning;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  // Bloques de código
+  .code-block {
+    background: #0f0f14;
+    border: 1px solid var(--ed-border-strong);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    border-radius: 2px;
+
+    pre {
+      font-family: $font-mono;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: #d4d4d4;
+      margin: 0;
+      white-space: pre;
+    }
+
+    code {
+      font-family: $font-mono;
+      font-size: inherit;
+      color: inherit;
+      background: transparent;
+      padding: 0;
+    }
+  }
+
+  // Lista de recursos
+  .resource-list {
+    list-style: none;
+    margin-left: 0;
+    padding: 0;
+
+    li {
+      padding: 0.75rem 0;
+      padding-left: 0;
+      border-bottom: 1px solid var(--ed-border);
+
+      &::before { display: none; }
+
+      &:last-child { border-bottom: none; }
+
+      a {
+        color: var(--ed-text);
+        font-family: $font-display;
+        font-weight: 500;
+        border-bottom: none;
+
+        &:hover { color: var(--ed-accent); }
+      }
+    }
+  }
+
+  // Contenedor interno (de articleLayout legado)
+  .container {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  // Chips/tags sueltos
+  .tag {
+    display: inline-block;
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ed-text-dim);
+    background: var(--ed-bg2);
+    padding: 0.3rem 0.6rem;
+    margin: 0.2rem 0.3rem 0.2rem 0;
+    border: 1px solid var(--ed-border);
+  }
+
+  // Navegación inferior del artículo legado
+  .article-navigation {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ed-border);
+
+    .btn {
+      display: inline-block;
+      font-family: $font-mono;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.75rem 1.25rem;
+      border: 1px solid var(--ed-border-strong);
+      color: var(--ed-text);
+      transition: all 0.15s;
+
+      &:hover {
+        border-color: var(--ed-accent);
+        color: var(--ed-accent);
+      }
+    }
+  }
+
+  // Ocultar el article-header legado (el layout nuevo ya lo muestra)
+  .article-header,
+  .article-page > .article-header,
+  .article-page .article-meta,
+  .article-page .article-title,
+  .article-page .article-tags { display: none; }
+
+  // Inline code dentro de párrafos
+  p code,
+  li code {
+    font-family: $font-mono;
+    font-size: 0.82em;
+    background: var(--ed-bg3);
+    padding: 0.1em 0.35em;
+    color: var(--ed-accent);
+    border-radius: 2px;
+  }
+
+  // ============================================
+  // Contenido dinámico (Markdown → HTML via utils.Markdown)
+  // ============================================
+  h1 {
+    font-family: $font-display;
+    font-size: clamp(1.7rem, 2.6vw, 2.1rem);
+    font-weight: 700;
+    color: var(--ed-text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin: 0 0 1.5rem;
+  }
+
+  h4 {
+    font-family: $font-display;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ed-text);
+    margin: 2rem 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  blockquote {
+    margin: 2rem 0;
+    padding: 1rem 0 1rem 1.5rem;
+    border-left: 3px solid var(--ed-accent);
+    background: var(--ed-bg2);
+    color: var(--ed-text);
+    font-style: italic;
+    font-family: $font-display;
+    font-size: 1.1rem;
+    line-height: 1.7;
+
+    p { margin: 0; color: inherit; font-size: inherit; }
+    & + * { margin-top: 2rem; }
+  }
+
+  hr {
+    border: none;
+    height: 1px;
+    background: var(--ed-border);
+    margin: 2.5rem auto;
+    width: 40%;
+  }
+
+  // Bloques de código generados por Markdown (```lang```)
+  pre.ed-md-code {
+    background: #0f0f14;
+    border: 1px solid var(--ed-border-strong);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    border-radius: 2px;
+
+    code {
+      font-family: $font-mono;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: #d4d4d4;
+      background: transparent;
+      padding: 0;
+      white-space: pre;
+      display: block;
+    }
+  }
+}

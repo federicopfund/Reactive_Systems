@@ -1,0 +1,124 @@
+@(publication: models.Publication, username: String, feedbacks: List[models.PublicationFeedbackWithAdmin], reactions: Map[String, Int], userReactions: Set[String], comments: List[models.CommentWithAuthor], isBookmarked: Boolean, userId: Option[Long])(implicit request: RequestHeader, messages: Messages)
+
+@isAuthenticated = @{ userId.isDefined }
+@reactionTypes = @{ List(("like","♥","Me gusta"), ("insight","✦","Aporta"), ("save","☆","Guardar")) }
+
+@main(publication.title) {
+  <article class="ed-article-layout">
+    <div class="ed-article-body-col">
+      <header class="ed-article-head">
+        <div class="ed-article-eyebrow">@publication.category</div>
+        <h1 class="ed-article-h1">@publication.title</h1>
+        <div class="ed-article-meta-row">
+          <span>Por <a href="@routes.UserPublicationController.publicProfile(username)">@@@username</a></span>
+          <span>·</span>
+          <span>@publication.publishedAt.map(_.toString.take(10)).getOrElse(publication.createdAt.toString.take(10))</span>
+          <span>·</span>
+          <span>@publication.viewCount vistas</span>
+        </div>
+      </header>
+
+      @publication.coverImage.map { url =>
+        <figure class="ed-article-cover">
+          <img src="@url" alt="@publication.title" />
+        </figure>
+      }
+
+      @publication.excerpt.map { e => <p class="ed-article-lede">@e</p> }
+
+      <div class="ed-article-content ed-legacy-prose">
+        @Html(utils.Markdown.render(publication.content))
+      </div>
+
+      @publication.tags.map { t =>
+        <div class="ed-article-tags">
+          @t.split(",").map(_.trim).filter(_.nonEmpty).map { tag =>
+            <span class="ed-article-tag">@tag</span>
+          }
+        </div>
+      }
+
+      <section class="ed-article-react">
+        @if(isAuthenticated) {
+          @publication.id.map { pid =>
+            <div class="ed-react-row">
+              @reactionTypes.map { case (key, icon, label) =>
+                <form method="POST" action="@routes.UserPublicationController.toggleReaction(pid)">
+                  @helper.CSRF.formField
+                  <input type="hidden" name="reactionType" value="@key">
+                  <button type="submit" class="ed-react-btn @if(userReactions.contains(key)){is-active}">
+                    <span>@icon</span> <span>@label</span>
+                    <span class="ed-react-count">@reactions.getOrElse(key, 0)</span>
+                  </button>
+                </form>
+              }
+              <form method="POST" action="@routes.UserPublicationController.toggleBookmark(pid)" class="ed-bookmark-form">
+                @helper.CSRF.formField
+                <button type="submit" class="ed-react-btn @if(isBookmarked){is-active}">
+                  <span>@if(isBookmarked){★}else{☆}</span> <span>@if(isBookmarked){Marcado}else{Marcar}</span>
+                </button>
+              </form>
+            </div>
+          }
+        } else {
+          <div class="ed-react-row ed-react-row--guest">
+            <a href="@routes.AuthController.loginPage()" class="ed-link-btn">Inicia sesión para reaccionar y guardar</a>
+          </div>
+        }
+      </section>
+
+      @if(feedbacks.nonEmpty) {
+        <section class="ed-article-feedback">
+          <h3>Notas editoriales</h3>
+          @feedbacks.map { fb =>
+            <div class="ed-feedback-item">
+              <div class="ed-feedback-meta">@models.FeedbackType.icon(fb.feedback.feedbackType) @models.FeedbackType.label(fb.feedback.feedbackType) · @fb.adminUsername</div>
+              <p>@fb.feedback.message</p>
+            </div>
+          }
+        </section>
+      }
+
+      <section class="ed-article-comments">
+        <h3>Conversación (@comments.size)</h3>
+        @if(isAuthenticated) {
+          @publication.id.map { pid =>
+            <form method="POST" action="@routes.UserPublicationController.addComment(pid)" class="ed-comment-form">
+              @helper.CSRF.formField
+              <textarea name="content" placeholder="Aporta a la conversación…" rows="3" required></textarea>
+              <button type="submit" class="ed-btn-primary">Publicar comentario</button>
+            </form>
+          }
+        }
+        @if(comments.isEmpty) {
+          <p class="ed-dash-empty">Aún no hay comentarios.</p>
+        } else {
+          <ul class="ed-comment-list">
+            @comments.map { cw =>
+              <li class="ed-comment">
+                <div class="ed-comment-head"><strong>@@@cw.authorUsername</strong> · <span>@cw.comment.createdAt.toString.take(10)</span></div>
+                <p>@cw.comment.content</p>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <aside class="ed-article-aside">
+      @partials.collectionBackBar()
+      <div class="ed-aside-card">
+        <div class="ed-aside-eyebrow">Autor</div>
+        <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-aside-author">@@@username</a>
+        @if(isAuthenticated && userId.exists(_ != publication.userId)) {
+          <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-link-btn">Ver perfil</a>
+        }
+      </div>
+
+      <div class="ed-aside-card">
+        <div class="ed-aside-eyebrow">Compartir</div>
+        <button class="ed-link-btn" onclick="navigator.clipboard.writeText(window.location.href)">Copiar enlace</button>
+      </div>
+    </aside>
+  </article>
+}

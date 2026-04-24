@@ -1,0 +1,79 @@
+@*
+  emptyState — partial reusable para estados vacíos / éxito / error / loading.
+  Issue #18-A.
+
+  Args:
+    - variant: "empty" | "error" | "success" | "loading"
+    - icon:    "feather" | "envelope" | "bolt" | "check" | "search" | "bookmark"
+    - title:   título editorial
+    - body:    descripción
+    - ctaLabel + ctaHref: CTA primario opcional
+    - secondaryLabel + secondaryHref: CTA secundario opcional
+*@
+@(
+  variant: String = "empty",
+  icon: String = "feather",
+  title: String,
+  body: String,
+  ctaLabel: Option[String] = None,
+  ctaHref: Option[String] = None,
+  secondaryLabel: Option[String] = None,
+  secondaryHref: Option[String] = None
+)
+
+@iconSvg(name: String) = {
+  @name match {
+    case "envelope" => {
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 7l9 7 9-7"/>
+      </svg>
+    }
+    case "bolt" => {
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>
+      </svg>
+    }
+    case "check" => {
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>
+      </svg>
+    }
+    case "search" => {
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/>
+      </svg>
+    }
+    case "bookmark" => {
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 3h12v18l-6-4-6 4z"/>
+      </svg>
+    }
+    case "alert" => {
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor"/>
+      </svg>
+    }
+    case _ => {
+      @* feather (default) *@
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 4c-3 0-7 1.5-9.5 4S6 14 6 17l-2 3"/><path d="M14 9l-4 4"/><path d="M16 13H8"/>
+      </svg>
+    }
+  }
+}
+
+<div class="ed-state ed-state--@variant" role="status" aria-live="polite">
+  <div class="ed-state__icon">@iconSvg(icon)</div>
+  <h2 class="ed-state__title">@title</h2>
+  <p class="ed-state__body">@body</p>
+  @if(ctaLabel.isDefined || secondaryLabel.isDefined) {
+    <div class="ed-state__actions">
+      @ctaLabel.zip(ctaHref).map { case (label, href) =>
+        <a href="@href" class="ed-btn ed-btn-primary">@label</a>
+      }
+      @secondaryLabel.zip(secondaryHref).map { case (label, href) =>
+        <a href="@href" class="ed-btn ed-btn-secondary">@label</a>
+      }
+    </div>
+  }
+</div>

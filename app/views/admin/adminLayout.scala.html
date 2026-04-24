@@ -1,0 +1,239 @@
+@(title: String, section: String = "")(content: Html)(implicit request: RequestHeader)
+
+@*
+  Layout standalone para el backoffice administrativo.
+
+  No reusa main.scala.html porque el admin necesita una chrome propia
+  (sin sidebar editorial público), un look más formal y denso, y control
+  total sobre el header.
+
+  Estructura:
+    +----------------------------------------------------------+
+    | TOPBAR (brand · breadcrumb · user · logout)              |
+    +-----------------+----------------------------------------+
+    | SIDEBAR formal  | BODY                                   |
+    | (secciones)     |                                        |
+    +-----------------+----------------------------------------+
+
+  `section` controla el item activo del sidebar.
+*@
+
+@isActive(s: String) = @{ if (section == s) "is-active" else "" }
+
+@role     = @{ request.session.get("userRole").getOrElse("admin") }
+@username = @{ request.session.get("username").orElse(request.session.get("userName")).getOrElse("admin") }
+@roleLabel = @{
+  role match {
+    case "super_admin" => "Super Admin"
+    case "admin"       => "Admin"
+    case _             => role
+  }
+}
+@initials = @{
+  val parts = username.split("[\\s.]+").filter(_.nonEmpty)
+  (if (parts.length >= 2) parts(0).take(1) + parts(1).take(1) else username.take(2)).toUpperCase
+}
+@sectionLabel = @{
+  section match {
+    case "dashboard"    => "Resumen"
+    case "publications" => "Catálogo de publicaciones"
+    case "review"       => "Cola de revisión"
+    case "contacts"     => "Bandeja de contacto"
+    case "stats"        => "Estadísticas"
+    case "newsletter"   => "Newsletter"
+    case "admins"       => "Administradores"
+    case "events"       => "Agenda editorial"
+    case "collections"  => "Colecciones"
+    case "agents"       => "Agentes y Guardians"
+    case "agent-settings" => "Configuración de agentes"
+    case _              => "Backoffice"
+  }
+}
+
+<!DOCTYPE html>
+<html lang="es" data-theme="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>@title · Backoffice — Manifiesto Reactivo</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@@400;700;900&family=IBM+Plex+Mono:wght@@400;500&family=Inter:wght@@400;500;600&display=swap" rel="stylesheet">
+
+  @* Cache-buster: el timestamp de boot fuerza al navegador a re-pedir el CSS
+     cuando se reinicia la app o se recompila SCSS. *@
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")?v=@System.currentTimeMillis">
+
+  @* Issue #16: bootstrap inline anti-FOUC (claro/oscuro/auto). *@
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ed-theme');
+        if (t !== 'crema' && t !== 'noche' && t !== 'auto') t = 'auto';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'auto');
+      }
+    })();
+  </script>
+</head>
+<body class="ed-admin-body-root">
+
+  @* Issue #16-E: skip link al contenido principal. *@
+  <a href="#ed-bo-main" class="ed-skip-link">Saltar al contenido principal</a>
+
+  <div class="ed-bo">
+
+    @* ============= TOP BAR ============= *@
+    <header class="ed-bo__topbar">
+      <a href="@routes.AdminController.dashboard(0, None)" class="ed-bo__brand">
+        <span class="ed-bo__brand-eyebrow">Manifiesto Reactivo</span>
+        <span class="ed-bo__brand-title">Backoffice</span>
+      </a>
+
+      <nav class="ed-bo__breadcrumb" aria-label="Ubicación">
+        <span class="ed-bo__crumb">Admin</span>
+        <span class="ed-bo__crumb-sep">/</span>
+        <span class="ed-bo__crumb ed-bo__crumb--active">@sectionLabel</span>
+      </nav>
+
+      <div class="ed-bo__topbar-right">
+        <a class="ed-bo__topbar-link" href="@routes.HomeController.index()" target="_blank" rel="noopener">Ver sitio ↗</a>
+        @partials.themeToggle(compact = true)
+        <span class="ed-bo__role ed-bo__role--@role">@roleLabel</span>
+        <div class="ed-bo__user">
+          <span class="ed-bo__user-avatar">@initials</span>
+          <div class="ed-bo__user-info">
+            <span class="ed-bo__user-name">@username</span>
+            <span class="ed-bo__user-meta">conectado</span>
+          </div>
+        </div>
+        <a class="ed-bo__logout" href="@routes.AuthController.logout()" title="Cerrar sesión">Salir</a>
+      </div>
+    </header>
+
+    <div class="ed-bo__layout">
+
+      @* ============= SIDEBAR ============= *@
+      <aside class="ed-bo__sidebar" aria-label="Navegación del backoffice">
+
+        <div class="ed-bo__nav-group">
+          <span class="ed-bo__nav-label">General</span>
+          @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.DashboardView)) {
+            <a class="ed-bo__nav-item @isActive("dashboard")" href="@routes.AdminController.dashboard(0, None)">
+              <span class="ed-bo__nav-dot"></span>Resumen
+            </a>
+          }
+          @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.StatsView)) {
+            <a class="ed-bo__nav-item @isActive("stats")" href="@routes.AdminController.statisticsPage()">
+              <span class="ed-bo__nav-dot"></span>Estadísticas
+            </a>
+          }
+        </div>
+
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Editorial</span>
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview)) {
+              <a class="ed-bo__nav-item @isActive("review")" href="@routes.AdminController.pendingPublications()">
+                <span class="ed-bo__nav-dot"></span>Cola de revisión
+              </a>
+              <a class="ed-bo__nav-item @isActive("publications")" href="@routes.AdminController.allPublications(None)">
+                <span class="ed-bo__nav-dot"></span>Catálogo
+              </a>
+            }
+          </div>
+        }
+
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.EventsView)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Eventos</span>
+            <a class="ed-bo__nav-item @isActive("events")" href="@routes.AdminEventController.list(None, 0)">
+              <span class="ed-bo__nav-dot"></span>Agenda editorial
+            </a>
+          </div>
+        }
+
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.CollectionsCurate)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Curaduría</span>
+            <a class="ed-bo__nav-item @isActive("collections")" href="@routes.AdminCollectionController.list(None)">
+              <span class="ed-bo__nav-dot"></span>Colecciones
+            </a>
+          </div>
+        }
+
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ObservabilityView)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Observabilidad</span>
+            <a class="ed-bo__nav-item @isActive("agents")" href="@routes.AdminAgentsController.dashboard()">
+              <span class="ed-bo__nav-dot"></span>Agentes &amp; Guardians
+            </a>
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ObservabilityManage)) {
+              <a class="ed-bo__nav-item @isActive("agent-settings")" href="@routes.AdminAgentSettingsController.view()">
+                <span class="ed-bo__nav-dot"></span>Configuración de agentes
+              </a>
+            }
+          </div>
+        }
+
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView) || utils.RolePolicy.can(role, utils.Capabilities.Cap.NewsletterView)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Comunidad</span>
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView)) {
+              <a class="ed-bo__nav-item @isActive("contacts")" href="@routes.AdminController.dashboard(0, None)#contacts">
+                <span class="ed-bo__nav-dot"></span>Contactos
+              </a>
+            }
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.NewsletterView)) {
+              <a class="ed-bo__nav-item @isActive("newsletter")" href="@routes.AdminController.newsletterSubscribers()">
+                <span class="ed-bo__nav-dot"></span>Newsletter
+              </a>
+            }
+          </div>
+        }
+
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.GovernanceManageAdmins)) {
+          <div class="ed-bo__nav-group">
+            <span class="ed-bo__nav-label">Gobernanza</span>
+            <a class="ed-bo__nav-item @isActive("admins")" href="@routes.AdminController.adminManagement()">
+              <span class="ed-bo__nav-dot"></span>Administradores
+            </a>
+          </div>
+        }
+
+        @* Mensajería: disponible para todo backoffice. Reusa la bandeja
+           del usuario; cada admin es también un actor del sistema. *@
+        <div class="ed-bo__nav-group">
+          <span class="ed-bo__nav-label">Comunicación</span>
+          <a class="ed-bo__nav-item @isActive("messages")" href="@routes.UserPublicationController.inbox()">
+            <span class="ed-bo__nav-dot"></span>Mensajes
+          </a>
+          <a class="ed-bo__nav-item @isActive("notifications")" href="@routes.UserPublicationController.notifications()">
+            <span class="ed-bo__nav-dot"></span>Notificaciones
+          </a>
+        </div>
+
+        <div class="ed-bo__sidebar-foot">
+          <span>v1.0 · @java.time.Year.now()</span>
+        </div>
+      </aside>
+
+      @* ============= MAIN ============= *@
+      <main id="ed-bo-main" class="ed-bo__main" tabindex="-1">
+        <div class="ed-admin-shell">
+          <div class="ed-admin-body">
+            @content
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="@routes.Assets.versioned("javascripts/theme.js")"></script>
+</body>
+</html>

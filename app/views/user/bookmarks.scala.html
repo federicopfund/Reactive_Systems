@@ -1,0 +1,36 @@
+@(username: String, publications: List[models.Publication])(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Marcadores") {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@username</div>
+      <h1 class="ed-dash-title">Marcadores</h1>
+      <p class="ed-dash-sub">Las piezas que has guardado para volver a leer.</p>
+    </header>
+
+    @if(publications.isEmpty) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "bookmark",
+        title = "Sin marcadores aún",
+        body = "Cuando guardes una publicación aparecerá aquí para que la retomes cuando quieras.",
+        ctaLabel = Some("Explorar publicaciones"),
+        ctaHref = Some(routes.HomeController.publicaciones().url)
+      )
+    } else {
+      <div class="ed-articles-grid">
+        @publications.map { p =>
+          <a class="ed-article-card" href="@routes.HomeController.publicacion(p.slug)">
+            <div class="ed-article-meta">
+              <span class="ed-article-cat">@p.category</span>
+              <span class="ed-article-date">@p.createdAt.toString.take(10)</span>
+            </div>
+            <h2 class="ed-article-title">@p.title</h2>
+            <p class="ed-article-excerpt">@p.excerpt.getOrElse(p.content.take(160))</p>
+            <span class="ed-article-link">Leer</span>
+          </a>
+        }
+      </div>
+    }
+  </section>
+}

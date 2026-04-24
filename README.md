@@ -1,818 +1,596 @@
 # ⚡ Reactive Manifesto
 
-Una aplicación web moderna que demuestra los principios del [Manifiesto Reactivo](https://www.reactivemanifesto.org/) utilizando Play Framework y Akka Typed.
+Plataforma editorial reactiva que aplica los principios del [Reactive Manifesto](https://www.reactivemanifesto.org/) sobre **Play Framework**, **Akka Typed**, **Slick** y **PostgreSQL**.
 
-![Desktop View](https://github.com/user-attachments/assets/a42bfee1-78f3-4c63-88a3-1ddee5982b33)
+Combina un sitio público de publicaciones, un espacio de autor con trazabilidad completa y un backoffice editorial con RBAC, pipeline de revisión, mensajería interna y newsletter.
 
-## 🎯 Descripción
+---
 
-Esta aplicación web presenta los cuatro pilares fundamentales del Manifiesto Reactivo (Responsive, Resilient, Elastic, Message-Driven) a través de un diseño moderno y profesional, con un formulario de contacto que implementa arquitectura reactiva mediante Akka Typed actors.
+## 🛠️ Stack
 
-## ✨ Características
+| Capa | Tecnología |
+|------|-----------|
+| Backend | Play Framework 3.0.1 |
+| Lenguaje | Scala 2.13.12 |
+| Sistema reactivo | Akka Typed 2.8.5 |
+| Distribución | Akka Cluster + DistributedPubSub 2.8.5 (`eventbus-core`) |
+| Serialización inter-nodo | Akka Jackson 2.8.5 |
+| Persistencia | Slick 3 + PostgreSQL (H2 en dev) |
+| Frontend | Twirl + SCSS (sbt-sassify) + Vanilla JS |
+| DI | Guice |
+| Build | SBT 1.9.7 |
+| Email | JavaMail SMTP + Circuit Breaker |
+| Tests | ScalaTestPlus Play 7 + Akka Actor TestKit Typed 2.8.5 |
 
-### Diseño Moderno y Profesional
-- **Interfaz atractiva**: Hero section con gradiente púrpura
-- **Layout basado en tarjetas**: Presentación clara de conceptos
-- **Tipografía profesional**: Uso de la fuente Inter
-- **Animaciones suaves**: Transiciones y efectos hover
+---
 
-### Diseño Responsivo
-- **Mobile-first**: Optimizado desde 375px (móvil) hasta 1200px+ (desktop)
-- **Flexbox/Grid**: Layouts modernos y adaptativos
-- **Touch-friendly**: Elementos interactivos optimizados para móviles
+## 🚀 Inicio rápido
 
-### Arquitectura Reactiva
-- **Message-Driven**: Sistema de actores Akka Typed
-- **Responsive**: Respuestas rápidas y UI fluida
-- **Resilient**: Manejo robusto de errores
-- **Elastic**: Sistema escalable basado en actores
-
-### Funcionalidades Interactivas
-- Navegación con scroll suave
-- Validación de formularios en tiempo real
-- Mensajes de éxito/error auto-desaparecibles
-- Animaciones al hacer scroll
-
-## 🛠️ Stack Tecnológico
-
-- **Backend**: Play Framework 3.0.1
-- **Lenguaje**: Scala 2.13.12
-- **Sistema Reactivo**: Akka Typed 2.8.5
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Build Tool**: SBT 1.9.7
-
-## 📋 Requisitos Previos
-
-- Java 17 o superior
-- SBT 1.9.x
-
-## 🌐 Deployment en Producción
-
-¿Quieres publicar tu aplicación en internet con un dominio personalizado?
-
-👉 **[Ver Guía Completa de Deployment](DEPLOYMENT.md)**
-
-La guía incluye:
-- ✅ Deployment en Render.com (gratis con SSL)
-- ✅ Configuración de dominio personalizado
-- ✅ Setup de base de datos PostgreSQL
-- ✅ Variables de entorno y secrets
-- ✅ Troubleshooting y optimización
-
-## 🚀 Instalación y Ejecución Local
-
-### Comandos Rápidos para Levantar la Aplicación
-
-#### 1️⃣ Liberar puerto 9000 (si está ocupado)
 ```bash
-# Matar proceso en puerto 9000
-fuser -k 9000/tcp 2>/dev/null
-
-# O usando lsof
-lsof -ti:9000 | xargs kill -9 2>/dev/null
-```
-
-#### 2️⃣ Limpiar compilaciones previas
-```bash
-cd /workspaces/Reactive-Manifiesto && sbt clean
-```
-
-#### 3️⃣ Compilar el proyecto
-```bash
-sbt compile
-```
-
-#### 4️⃣ Iniciar el servidor
-```bash
+git clone https://github.com/federicopfund/Reactive-Manifesto.git
+cd Reactive-Manifesto
 sbt run
 ```
 
-**El servidor estará disponible en:** http://localhost:9000
+Disponible en **http://localhost:9000**.
 
-### 🎯 Comando Todo-en-Uno
 ```bash
-# Liberar puerto, limpiar, compilar e iniciar
+# Limpiar puerto + ciclo completo
 fuser -k 9000/tcp 2>/dev/null && sbt clean compile run
 ```
 
-### 🔄 Modo Desarrollo con Auto-reload
 ```bash
-# Recarga automática al detectar cambios
-sbt ~run
+# Compilar y empaquetar assets (SCSS → main.css)
+sbt webStage
 ```
 
-### 🛑 Detener el Servidor
-
-**Desde terminal sbt:**
-- Presiona `Enter` o `Ctrl+D`
-
-**Desde otra terminal:**
 ```bash
-fuser -k 9000/tcp
-```
-
-### 📋 Instalación Completa
-
-#### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/federicopfund/Reactive-Manifiesto.git
-cd Reactive-Manifiesto
-```
-
-#### 2. Ejecutar la aplicación
-
-```bash
-sbt run
-```
-
-La aplicación estará disponible en: `http://localhost:9000`
-
-#### 3. Compilar el proyecto
-
-```bash
-sbt compile
-```
-
-#### 4. Ejecutar tests
-
-```bash
+# Ejecutar la suite de tests (5/5)
 sbt test
+
+# Solo el smoke test de Cluster Pub/Sub
+sbt "testOnly core.EventBusEngineClusterSpec"
+
+# Solo el spec del DomainGuardian
+sbt "testOnly core.guardian.DomainGuardianSpec"
 ```
 
-## 🔧 Comandos Útiles
+---
 
-### Verificar estado del servidor
+## 🧭 Mapa funcional
+
+| Área | Rutas | Vistas | Roles |
+|------|-------|--------|-------|
+| **Público** | `/`, `/publicaciones`, `/portafolio`, `/articles/:slug` | `index`, `publicaciones`, `editorialArticleView` | anónimo |
+| **Autenticación** | `/login`, `/register`, `/verify-email` | `auth/*` | anónimo |
+| **Espacio de autor** | `/user/dashboard`, `/user/publications/*`, `/user/inbox`, `/user/bookmarks`, `/user/notifications` | `user/*` | autenticado |
+| **Backoffice editorial** | `/admin/*` | `admin/*` | `super_admin`, `editor_jefe`, `revisor`, `moderador`, `newsletter`, `analista` |
+| **Errores** | — | `errors/notFound`, `errors/serverError` | global |
+
+---
+
+## 🏗️ Arquitectura de Agentes
+
+**1 `ActorSystem` raíz** (`reactive-manifiesto`) con un `RootGuardian` que supervisa **3 guardians especializados**, los cuales a su vez levantan los **9 agentes** del sistema con _backoff supervision_. La comunicación inter-agente se realiza por el **EventBus distribuido** (Akka Cluster DistributedPubSub) y un **Saga Orchestrator** (`PipelineEngine`).
+
+```
+reactive-manifiesto (ActorSystem)
+└── RootGuardian
+    ├── DomainGuardian      → Contact · Message · Publication · Gamification
+    ├── CrossCutGuardian    → Notification · Moderation · Analytics
+    └── InfraGuardian       → EventBus (Cluster Pub/Sub) · PublicationPipeline
+```
+
+Cada guardian aplica `SupervisorStrategy.restartWithBackoff(minBackoff = 200ms, maxBackoff = 10s, randomFactor = 0.2)` sobre sus hijos.
+
+### Jerarquía de supervisión
+
+Vista centrada en el árbol de actores: **`RootGuardian` → 3 guardians → 9 agentes**. Las flechas sólidas representan relaciones de **supervisión** (padre → hijo, con backoff supervision).
+
+```mermaid
+graph TB
+    AS(["🧬 ActorSystem<br/><b>reactive-manifiesto</b>"])
+    RG{{"🛡️ RootGuardian<br/><i>spawn order: Domain → CrossCut → Infra</i>"}}
+
+    DG{{"🛡️ DomainGuardian"}}
+    CG{{"🛡️ CrossCutGuardian"}}
+    IG{{"🛡️ InfraGuardian"}}
+
+    CE["🔵 ContactEngine<br/><sub>Ask</sub>"]
+    ME["🔵 MessageEngine<br/><sub>Ask</sub>"]
+    PE["🟢 PublicationEngine<br/><sub>Ask</sub>"]
+    GE["🟢 GamificationEngine<br/><sub>Tell</sub>"]
+
+    NE["🟢 NotificationEngine<br/><sub>Tell · ⚡ Circuit Breaker</sub>"]
+    MOE["🟢 ModerationEngine<br/><sub>Ask</sub>"]
+    AE["🟢 AnalyticsEngine<br/><sub>Tell · in-memory</sub>"]
+
+    EB["🟡 EventBusEngine<br/><sub>DistributedPubSubMediator</sub>"]
+    PL["🟡 PipelineEngine<br/><sub>Saga Orchestrator</sub>"]
+
+    AS --> RG
+    RG --> DG
+    RG --> CG
+    RG --> IG
+
+    DG --> CE
+    DG --> ME
+    DG --> PE
+    DG --> GE
+
+    CG --> NE
+    CG --> MOE
+    CG --> AE
+
+    IG --> EB
+    IG --> PL
+
+    PL -. "Ask" .-> MOE
+    PL -. "Ask" .-> PE
+    PL -. "Tell" .-> NE
+    PL -. "Tell" .-> GE
+    PL -. "Tell" .-> AE
+    PL -. "publish" .-> EB
+
+    classDef system fill:#553c9a,stroke:#6b46c1,color:#fff,stroke-width:2px
+    classDef guardian fill:#1a365d,stroke:#2b6cb0,color:#fff,stroke-width:2px
+    classDef domain fill:#1e3a8a,stroke:#3b82f6,color:#fff
+    classDef crosscut fill:#1c4532,stroke:#276749,color:#fff
+    classDef infra fill:#7c2d12,stroke:#c2410c,color:#fff
+
+    class AS system
+    class RG,DG,CG,IG guardian
+    class CE,ME,PE,GE domain
+    class NE,MOE,AE crosscut
+    class EB,PL infra
+```
+
+> Líneas sólidas = supervisión (padre → hijo) · Líneas punteadas = mensajes lógicos del Saga (Ask/Tell/publish).
+
+### Flujo de invocación HTTP → Adapter → Agente
+
+Visión complementaria: cómo entra una request HTTP al sistema reactivo. Los `Reactive*Adapter` resuelven el `ActorRef` del agente correspondiente vía Ask al guardián padre, **manteniendo la jerarquía** anterior.
+
+```mermaid
+graph LR
+    subgraph Clients["🌐 Clientes"]
+        B1["Usuario"]
+        B2["Visitante"]
+        B3["Admin"]
+    end
+
+    subgraph Controllers["Controllers (Play)"]
+        HC["HomeController"]
+        UPC["UserPublicationController"]
+        AC["AdminController"]
+        HE["HealthController"]
+    end
+
+    subgraph Adapters["9 Reactive Adapters"]
+        ADP[["ReactiveContact / Message<br/>Publication / Gamification<br/>Notification / Moderation<br/>Analytics / EventBus / Pipeline"]]
+    end
+
+    subgraph Engines["9 Engines (Akka Typed)<br/><i>supervisados por Domain/CrossCut/Infra Guardian</i>"]
+        ENG[["ContactEngine · MessageEngine<br/>PublicationEngine · GamificationEngine<br/>NotificationEngine ⚡ · ModerationEngine<br/>AnalyticsEngine · EventBusEngine · PipelineEngine"]]
+    end
+
+    subgraph Persistence["Persistencia"]
+        REPOS[("13 repositorios Slick")]
+        DB[("🗄️ PostgreSQL · 22 tablas")]
+    end
+
+    B1 --> UPC
+    B2 --> HC
+    B3 --> AC
+    B1 --> HE
+
+    HC --> ADP
+    UPC --> ADP
+    AC --> ADP
+    HE -. "Ask GetHealth" .-> Engines
+
+    ADP --> ENG
+    ENG --> REPOS
+    REPOS --> DB
+
+    style Controllers fill:#2d3748,stroke:#4a5568,color:#fff
+    style Adapters fill:#2c5282,stroke:#3182ce,color:#fff
+    style Engines fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style Persistence fill:#1c4532,stroke:#276749,color:#fff
+```
+
+### Los 9 agentes (agrupados por guardian)
+
+| # | Agente | Guardian | Patrón | Responsabilidad |
+|---|--------|----------|--------|-----------------|
+| 🔵 | ContactEngine | `DomainGuardian` | Ask | Formularios de contacto |
+| 🔵 | MessageEngine | `DomainGuardian` | Ask | Mensajería privada + notificación al receptor |
+| 🟢 | PublicationEngine | `DomainGuardian` | Ask | Ciclo de vida de publicaciones |
+| 🟢 | GamificationEngine | `DomainGuardian` | Tell | Otorgamiento de badges |
+| 🟢 | NotificationEngine | `CrossCutGuardian` | Tell | Hub multicanal con **Circuit Breaker** SMTP |
+| 🟢 | ModerationEngine | `CrossCutGuardian` | Ask | Auto-moderación + cola manual |
+| 🟢 | AnalyticsEngine | `CrossCutGuardian` | Tell | Métricas en memoria (zero-latency) |
+| 🟡 | EventBusEngine | `InfraGuardian` | **Cluster Pub/Sub** | Bus de domain events vía `DistributedPubSubMediator` |
+| 🟡 | PipelineEngine | `InfraGuardian` | Saga | Orquesta Moderate → Create → Notify → Gamify → Track |
+
+> 🔵 dominio · 🟢 cross-cutting · 🟡 infraestructura
+
+### EventBus distribuido (Akka Cluster)
+
+El `EventBusEngine` delega el routing en `akka.cluster.pubsub.DistributedPubSubMediator`:
+
+- **Routing O(1) por topic** (antes O(n) con `Map.filter`).
+- **Sin SPOF**: la tabla de suscriptores se replica entre los nodos vía gossip.
+- **Cluster-ready**: el mismo binario escala horizontalmente sin tocar a los 9 agentes.
+- **Topics**: derivados del prefijo de `event.eventType` (`publication.submitted` → `publication`) + topic comodín `"*"`.
+- **Configuración aislada**: solo el ActorSystem usa `provider = cluster` (bloque `eventbus-cluster` en `application.conf`); el resto del runtime sigue local.
+- **Serialización**: `sealed trait DomainEvent` anotado con `@JsonTypeInfo` + `@JsonSubTypes`, binding `core.DomainEvent = jackson-json`.
+
+### Endpoint de salud
+
+`GET /health` consulta a los 3 guardians y devuelve un JSON consolidado con el estado de cada hijo:
+
 ```bash
-# Ver procesos sbt activos
-ps aux | grep "[s]bt run"
-
-# Ver qué proceso usa el puerto 9000
-lsof -i:9000
-
-# Probar conectividad
-curl http://localhost:9000/
+curl -s http://localhost:9000/health | jq
 ```
 
-### Limpieza completa
-```bash
-# Eliminar archivos compilados
-sbt clean
-
-# Limpieza profunda (incluye caché)
-rm -rf target/ project/target/ ~/.ivy2/cache
+```json
+{
+  "status": "Healthy",
+  "guardians": {
+    "domain":   { "contact": "Healthy", "message": "Healthy", "publication": "Healthy", "gamification": "Healthy" },
+    "crosscut": { "notification": "Healthy", "moderation": "Healthy", "analytics": "Healthy" },
+    "infra":    { "eventBus": "Healthy", "pipeline": "Healthy" }
+  }
+}
 ```
 
-### Recargar dependencias
-```bash
-sbt
-> reload
-> update
-> compile
+---
+
+## � Documentación formal — Diagrama de Secuencia UML
+
+Especificación normativa de la interacción entre agentes durante el caso de uso crítico **«Crear publicación»**, donde el `PipelineEngine` actúa como **Saga Orchestrator** coordinando los 9 agentes del sistema reactivo.
+
+### Convenciones del diagrama
+
+| Notación | Semántica |
+|----------|-----------|
+| `->>` | Mensaje **síncrono lógico** (`Ask` pattern, con `replyTo` y timeout) |
+| `-->>` | Mensaje **fire-and-forget** (`Tell` pattern, no espera respuesta) |
+| `-)`   | Mensaje **asíncrono paralelo** (efectos colaterales del Saga) |
+| `--)`  | Notificación **externa** (email saliente vía SMTP) |
+| `alt / else` | Bifurcación lógica del Saga (resultado de moderación) |
+| `par / and` | Ejecución **concurrente** de side-effects (no-bloqueante) |
+| `opt` | Rama opcional condicional |
+| `Note over` | Invariante, etapa del Saga o restricción de dominio |
+
+### Caso de uso: `ProcessNewPublication`
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as 👤 Autor
+    participant C as UserPublicationController
+    participant A as ReactivePipelineAdapter
+    participant P as PipelineEngine<br/>«Saga Orchestrator»
+    participant EB as EventBusEngine<br/>«Pub/Sub»
+    participant M as ModerationEngine
+    participant PE as PublicationEngine
+    participant N as NotificationEngine<br/>«⚡ Circuit Breaker»
+    participant G as GamificationEngine
+    participant AN as AnalyticsEngine
+    participant DB as 🗄️ PostgreSQL
+
+    U->>+C: POST /user/publications/create
+    C->>+A: submitPublication(payload)
+    A->>+P: ProcessNewPublication(replyTo)
+    Note over P: Stage 1/4 — RECEIVE<br/>genera correlationId
+
+    par Eventos no-bloqueantes (Tell)
+        P-->>EB: PublishEvent(PublicationSubmittedEvent)
+        EB-->>AN: publication.submitted
+    and Telemetría
+        P-->>AN: TrackEvent("pipeline.started")
+    end
+
+    P->>+M: ModerateContent (Ask, timeout 5s)
+    Note over M: Análisis automático<br/>(reglas + score)
+    M-->>-P: ModerationResult(verdict, score, flags)
+
+    alt verdict == "auto_rejected" — Compensación
+        Note over P: Stage 2/4 — REJECT
+        P-->>EB: ContentModeratedEvent(rejected)
+        P-->>N: SendNotification("moderation_rejected")
+        N->>DB: INSERT user_notifications
+        N--)U: 📧 Email (vía Circuit Breaker)
+        P-->>AN: TrackEvent("pipeline.rejected")
+        P-->>A: PipelineRejected(reason, flags)
+        A-->>C: Future[Rejected]
+        C-->>U: 422 + flash "Contenido rechazado"
+
+    else verdict == "approved"
+        Note over P: Stage 3/4 — CREATE
+        P->>+PE: CreatePublication (Ask, timeout 10s)
+        PE->>DB: INSERT publications + revisions
+        PE->>DB: INSERT publication_stage_history(draft)
+        Note right of DB: trigger trg_close_previous_stage<br/>cierra etapa anterior
+        PE-->>-P: PublicationCreatedOk(publicationId)
+
+        Note over P: Stage 4/4 — SIDE EFFECTS (paralelo, fire-and-forget)
+        par Notificación al autor
+            P-)N: SendNotification("publication_created")
+            N->>DB: INSERT user_notifications
+        and Gamificación
+            P-)G: CheckBadges(triggerType="publication")
+            G->>DB: SELECT/INSERT user_badges
+            opt Nuevo badge desbloqueado
+                G-)N: SendNotification("badge_unlocked")
+            end
+        and Analítica
+            P-)AN: TrackEvent("pipeline.completed", elapsedMs)
+        and Domain Event
+            P-)EB: PublishEvent(PipelineCompletedEvent)
+            EB-)AN: pipeline.completed
+        end
+
+        P-->>-A: PipelineSuccess(publicationId, elapsedMs)
+        A-->>-C: Future[Success]
+        C-->>-U: 303 redirect → /user/publications/:id
+
+    else Falla técnica (timeout / DB error)
+        Note over P: Compensación parcial
+        P-->>AN: TrackEvent("pipeline.error", stage)
+        P-->>A: PipelineError(reason, stage, correlationId)
+        A-->>C: Future.failed
+        C-->>U: 500 errors/serverError
+    end
 ```
 
-### Ejecutar en puerto diferente
-```bash
-# Opción 1
-sbt "run 8080"
+### Trazabilidad de mensajes
 
-# Opción 2
-export PLAY_HTTP_PORT=8080
-sbt run
+| # | Mensaje | Tipo | Origen → Destino | Garantía |
+|---|---------|------|------------------|----------|
+| 3 | `ProcessNewPublication` | Ask | Adapter → Pipeline | At-most-once, timeout 30s |
+| 7 | `ModerateContent` | Ask | Pipeline → Moderation | At-most-once, timeout 5s |
+| 8 | `ModerationResult` | Reply | Moderation → Pipeline | Vía `messageAdapter` (tipado) |
+| — | `PublishEvent(*)` | Tell | Pipeline → EventBus | At-most-once, fan-out Pub/Sub |
+| — | `CreatePublication` | Ask | Pipeline → Publication | At-most-once, timeout 10s |
+| — | `SendNotification` | Tell | Pipeline → Notification | At-most-once + Circuit Breaker |
+| — | `CheckBadges` | Tell | Pipeline → Gamification | At-most-once, fire-and-forget |
+| — | `TrackEvent` | Tell | Pipeline → Analytics | At-most-once, en-memoria |
+
+### Garantías reactivas verificadas en el flujo
+
+| Principio | Evidencia en el diagrama |
+|-----------|--------------------------|
+| **Responsive** | Todo `Ask` lleva timeout explícito; `replyTo` resuelve el `Future` del controller sin bloquear hilos |
+| **Resilient** | Compensación en rama `auto_rejected`; `NotificationEngine` aislado por Circuit Breaker; falla en gamificación/analytics no aborta el Saga |
+| **Elastic** | Bloque `par` ejecuta side-effects concurrentes; cada `correlationId` permite N pipelines simultáneos sin estado compartido |
+| **Message-Driven** | Toda interacción es un `Command`/`Event` tipado; cero llamadas síncronas entre agentes |
+
+### Invariantes del Saga
+
+1. **Atomicidad lógica**: si `verdict == auto_rejected`, **no** se persiste `publications` (compensación preventiva).
+2. **Trazabilidad**: el `correlationId` (8 chars, generado en Stage 1) viaja en *todos* los eventos, notificaciones y métricas asociadas.
+3. **Idempotencia del trigger**: `trg_close_previous_stage` garantiza `exited_at IS NULL` único por publicación incluso bajo concurrencia.
+4. **Ordenamiento causal**: `PublicationCreatedOk` siempre **precede** a los side-effects de Stage 4 (garantizado por el `messageAdapter` y el modelo de actores).
+5. **No back-pressure perdida**: las respuestas `PipelineSuccess | PipelineRejected | PipelineError` son **mutuamente excluyentes** y exhaustivas (`sealed trait PipelineResponse`).
+
+---
+
+## �📰 Pipeline Editorial (9 etapas)
+
+Cada publicación recorre un workflow gobernado por la tabla `editorial_stages` y un **trigger de PostgreSQL** que mantiene la invariante `exited_at IS NULL` por publicación.
+
+```mermaid
+flowchart LR
+    S1[draft] --> S2[submitted]
+    S2 --> S3[in_review]
+    S3 --> S4[changes_requested]
+    S4 --> S2
+    S3 --> S5[approved]
+    S5 --> S6[scheduled]
+    S6 --> S7[published]
+    S3 --> S8[rejected]
+    S7 --> S9[archived]
+
+    style S1 fill:#cbd5e0,stroke:#2d3748
+    style S7 fill:#48bb78,color:#fff
+    style S8 fill:#e53e3e,color:#fff
+    style S9 fill:#a0aec0
 ```
 
-### 🐛 Troubleshooting
+Cada transición:
 
-**Error: Puerto 9000 en uso**
-```bash
-fuser -k 9000/tcp
+1. **Genera un commit hash determinista** (`StageCommitHash`, SHA-1 estilo git) que viaja en el historial.
+2. **Inserta** en `publication_stage_history` y **cierra** la etapa anterior vía trigger.
+3. **Notifica al autor** (in-app + email si está habilitado).
+4. **Si llega a `published`**, dispara un **broadcast de newsletter** a `newsletter_subscribers` activos.
+5. **Emite un domain event** al EventBus para analítica y badges.
+
+### Trazabilidad para autores
+
+Los autores ven el **hilo completo** de su publicación en `/user/publications/:id/history` con:
+
+- Línea de tiempo de etapas con timestamps y commit hash
+- Feedback editorial (sin notas internas)
+- Notificaciones recibidas
+- Reuso del widget `_publicationPipeline` (con `showInternalNotes = false`)
+
+---
+
+## 🔐 RBAC del Backoffice
+
+6 roles con matriz de capacidades. Cada controlador admin valida `Capability` antes de ejecutar.
+
+| Rol | Pipeline | Publicar | Newsletter | Contactos | Admins | Stats |
+|-----|---------|----------|------------|-----------|--------|-------|
+| `super_admin` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `editor_jefe` | ✅ | ✅ | ✅ | ✅ | — | ✅ |
+| `revisor` | ✅ (hasta `approved`) | — | — | — | — | ✅ |
+| `moderador` | ✅ (rechazar/cambios) | — | — | ✅ | — | — |
+| `newsletter` | — | — | ✅ | ✅ | — | ✅ |
+| `analista` | lectura | — | — | — | — | ✅ |
+
+La sidebar (`adminLayout` → `sidebar.scala.html`) se renderiza dinámicamente según `Capability`.
+
+---
+
+## ✉️ Mensajería + 📰 Newsletter
+
+- **Mensajería privada** entre usuarios y entre usuarios ↔ admins. Vistas con composer y estado vacío amigable. Tema dual cream/admin-dark.
+- **Newsletter** con suscripción/baja desde el dashboard del usuario; broadcast automático cuando una publicación llega a `published`. Panel admin con KPIs, filtro por email e IP de registro.
+
+### Sistema de estilos (BEM)
+
+| Namespace | Alcance |
+|-----------|---------|
+| `ed-*` | Front editorial (cream) |
+| `ed-bo-*` | Backoffice (admin-dark + acento `#d4ff00`) |
+| `ed-msg-*` | Mensajería |
+| `ed-nl-*`, `ed-newsletter-card` | Newsletter |
+| `ed-thread-*` | Hilo de trazabilidad |
+| `ed-cat-*` | Filtros tipo "section nav" |
+
+SCSS modular en `app/assets/stylesheets/components/*.scss`, compilado a `target/web/public/main/main.css`.
+
+---
+
+## 🗄️ Base de Datos
+
+22 tablas gestionadas con evolutions (`conf/evolutions/default`):
+
+```
+users · admins · admin_capabilities
+publications · publication_categories · publication_revisions
+publication_feedback · publication_comments · publication_reactions
+editorial_stages · publication_stage_history · editorial_articles
+manifesto_pillars
+collections · collection_items
+user_bookmarks · user_badges · user_notifications
+private_messages · newsletter_subscribers · contacts
+email_verification_codes · legal_documents
 ```
 
-**Error: Compilación falla**
-```bash
-sbt clean
-rm -rf target/
-sbt update
-sbt compile
+> Trigger destacado: `trg_close_previous_stage` mantiene una sola etapa abierta por publicación.
+
+---
+
+## 🧬 Comunicación inter-agente
+
+```mermaid
+graph LR
+    subgraph Saga["Saga Orchestrator"]
+        S1[1. Moderate] --> S2[2. Create]
+        S2 --> S3[3. Notify]
+        S2 --> S4[4. Gamify]
+        S2 --> S5[5. Track]
+    end
+
+    subgraph PubSub["EventBus (Akka Cluster DistributedPubSub)"]
+        EB["DistributedPubSubMediator"]
+        PUB1[publication.submitted] --> EB
+        PUB2[content.moderated] --> EB
+        PUB3[pipeline.completed] --> EB
+    end
+
+    subgraph CB["Circuit Breaker (Email)"]
+        CLOSED -->|"5 fallos"| OPEN
+        OPEN -->|"60s"| HALFOPEN
+        HALFOPEN -->|"ok"| CLOSED
+        HALFOPEN -->|"fail"| OPEN
+    end
+
+    style Saga fill:#276749,color:#fff
+    style PubSub fill:#2b6cb0,color:#fff
+    style CB fill:#9b2c2c,color:#fff
 ```
 
-**Error: Dependencias no resueltas**
-```bash
-sbt clean
-rm -rf ~/.ivy2/cache/
-sbt update
-```
+---
 
-## 📁 Estructura del Proyecto
+## ✅ Principios Reactivos
+
+| Principio | Implementación |
+|-----------|---------------|
+| **Responsive** | Non-blocking I/O end-to-end. Timeouts 5–30s en Ask. Fast-fail tipado. `/health` consolidado |
+| **Resilient** | Backoff supervision en los 3 guardians. Circuit Breaker SMTP. `pipeToSelf(Failure)`. Compensación en Saga. Cluster Pub/Sub elimina el SPOF del bus |
+| **Elastic** | Actor model sin locks. Controllers stateless. Pipeline concurrente. EventBus distribuido vía `DistributedPubSubMediator` (escala añadiendo nodos) |
+| **Message-Driven** | `sealed trait *Command`. EventBus Pub/Sub cluster-wide. Domain events con `correlationId` y `@JsonTypeInfo` para serialización inter-nodo |
+
+---
+
+## 📁 Estructura del proyecto
 
 ```
 Reactive-Manifiesto/
 ├── app/
-│   ├── controllers/          # Controladores HTTP
-│   │   └── HomeController.scala
-│   ├── core/                 # Lógica de negocio y actores
-│   │   └── ContactEngine.scala
-│   ├── services/             # Servicios y adaptadores
-│   │   └── ReactiveContactAdapter.scala
-│   ├── views/                # Templates Twirl
-│   │   ├── main.scala.html
-│   │   └── index.scala.html
-│   └── Module.scala          # Configuración de inyección de dependencias
+│   ├── Module.scala                 # Guice DI: 1 ActorSystem (RootGuardian) + 9 Adapters
+│   ├── controllers/                 # HomeController, AuthController, UserPublicationController, AdminController, HealthController, SetupController
+│   ├── core/
+│   │   ├── *Engine.scala            # 9 Engines (Akka Typed) + DomainEvents
+│   │   └── guardian/                # RootGuardian + DomainGuardian + CrossCutGuardian + InfraGuardian + HealthModel
+│   ├── services/                    # 9 ReactiveAdapters + EmailService + EmailVerificationService
+│   ├── models/                      # case classes + Slick mappings
+│   ├── repositories/                # 13 repos async (Slick)
+│   ├── utils/                       # StageCommitHash, helpers
+│   ├── views/                       # 38 plantillas Twirl (3 layouts + 2 partials + 33 vistas)
+│   └── assets/stylesheets/          # SCSS modular (BEM)
 ├── conf/
-│   ├── application.conf      # Configuración de la aplicación
-│   ├── routes                # Definición de rutas HTTP
-│   ├── messages              # Mensajes i18n (español)
-│   ├── messages.en           # Mensajes i18n (inglés)
-│   └── logback.xml           # Configuración de logging
-├── public/
-│   ├── stylesheets/
-│   │   └── main.css          # Estilos CSS principales
-│   └── javascripts/
-│       └── main.js           # JavaScript para interactividad
-├── project/
-│   ├── build.properties      # Versión de SBT
-│   └── plugins.sbt           # Plugins de SBT
-└── build.sbt                 # Definición del proyecto
+│   ├── application.conf             # incluye bloque `eventbus-cluster`
+│   ├── routes                       # incluye GET /health
+│   ├── messages, messages.en
+│   └── evolutions/default/          # Migraciones SQL
+├── test/
+│   └── core/
+│       ├── EventBusEngineClusterSpec.scala   # Issue #14 — DistributedPubSub
+│       └── guardian/DomainGuardianSpec.scala # Issue #15 — guardians
+├── public/                          # Imágenes, JS, CSS estático
+├── sql/                             # Scripts admin (alta de admins, triggers)
+├── deploy/                          # Scripts Docker / instalación / email
+├── resource/                        # Documentación funcional (.md)
+└── build.sbt
 ```
-
-## 🎨 Características del Diseño
-
-### Secciones Principales
-
-1. **Hero Section**
-   - Título impactante con degradado
-   - Subtítulo descriptivo
-   - Botones CTA para navegación
-
-2. **Los 4 Pilares del Manifiesto Reactivo**
-   - 📱 Responsivo: Respuestas oportunas
-   - 🛡️ Resiliente: Tolerante a fallos
-   - 📈 Elástico: Escalabilidad automática
-   - 💬 Orientado a Mensajes: Comunicación asíncrona
-
-3. **¿Por qué Reactive?**
-   - Mejor experiencia de usuario
-   - Escalabilidad mejorada
-   - Mayor confiabilidad
-
-4. **Formulario de Contacto**
-   - Validación en tiempo real
-   - Procesamiento asíncrono con Akka
-   - Feedback inmediato al usuario
-
-## 🏗️ Arquitectura de la Aplicación
-
-### Visión General
-
-La aplicación implementa una **arquitectura reactiva en capas** que combina Play Framework para la capa web, Akka Typed para la lógica de negocio concurrente, y Slick para el acceso reactivo a datos. Todos los componentes siguen los principios del Manifiesto Reactivo: **Responsive, Resilient, Elastic y Message-Driven**.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     PRESENTATION LAYER                       │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │  Browser    │  │  Templates   │  │   Static Assets  │   │
-│  │  (HTML/CSS/ │→ │  (Twirl)     │  │   (CSS/JS)       │   │
-│  │   JS)       │  └──────────────┘  └──────────────────┘   │
-│  └─────────────┘                                             │
-└────────────────────────────┬────────────────────────────────┘
-                             │ HTTP/WebSocket
-┌────────────────────────────▼────────────────────────────────┐
-│                    WEB/CONTROLLER LAYER                      │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │         HomeController (Play Framework)              │   │
-│  │  • Manejo de requests HTTP                           │   │
-│  │  • Validación de formularios                         │   │
-│  │  • Renderizado de vistas                             │   │
-│  │  • API endpoints (/api/contacts, /api/contacts/stats)│  │
-│  └────────────┬─────────────────────────────────────────┘   │
-└───────────────┼─────────────────────────────────────────────┘
-                │
-┌───────────────▼─────────────────────────────────────────────┐
-│                   SERVICE/ADAPTER LAYER                      │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │       ReactiveContactAdapter (Service)               │   │
-│  │  • Abstracción del sistema de actores                │   │
-│  │  • Conversión de Futures a respuestas HTTP           │   │
-│  │  • Patrón Ask para comunicación con actores          │   │
-│  └────────────┬─────────────────────────────────────────┘   │
-└───────────────┼─────────────────────────────────────────────┘
-                │ Message Passing
-┌───────────────▼─────────────────────────────────────────────┐
-│                    BUSINESS LOGIC LAYER                      │
-│           (Actor System - Akka Typed)                        │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │           ContactEngine (Typed Actor)                │   │
-│  │  • Procesamiento asíncrono de contactos              │   │
-│  │  • Manejo de mensajes: SubmitContact                 │   │
-│  │  • Integración con capa de persistencia              │   │
-│  │  • Manejo de errores y reintentos                    │   │
-│  │  • pipeToSelf para operaciones async                 │   │
-│  └────────────┬─────────────────────────────────────────┘   │
-└───────────────┼─────────────────────────────────────────────┘
-                │ Database Operations
-┌───────────────▼─────────────────────────────────────────────┐
-│                  DATA ACCESS LAYER                           │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │        ContactRepository (Slick ORM)                 │   │
-│  │  • CRUD operations: save, findById, list, delete     │   │
-│  │  • Queries reactivas con Future[T]                   │   │
-│  │  • Connection pooling optimizado                     │   │
-│  │  • Patrón Repository completo                        │   │
-│  └────────────┬─────────────────────────────────────────┘   │
-│  ┌────────────▼─────────────────────────────────────────┐   │
-│  │         ContactsTable (Slick Table Mapping)          │   │
-│  │  • Mapeo ORM de ContactRecord a tabla SQL            │   │
-│  │  • Definición de columnas e índices                  │   │
-│  └────────────┬─────────────────────────────────────────┘   │
-└───────────────┼─────────────────────────────────────────────┘
-                │ JDBC/SQL
-┌───────────────▼─────────────────────────────────────────────┐
-│                   PERSISTENCE LAYER                          │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │     H2 Database (Development) / PostgreSQL (Prod)    │   │
-│  │  • Tabla: contacts (id, name, email, message, ...)   │   │
-│  │  • Índices: email, created_at, status                │   │
-│  │  • Evolutions para migraciones                       │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 📦 Componentes Clave
-
-#### 1. **Presentation Layer (Frontend)**
-
-**Responsabilidades:**
-- Renderizado de vistas con Twirl templates
-- Interacción del usuario (formularios, navegación)
-- Dark mode y animaciones CSS
-- Validación del lado del cliente
-
-**Tecnologías:**
-- HTML5 con templates Twirl (Scala)
-- CSS3 con variables para theming
-- Vanilla JavaScript para interactividad
-- Responsive design (mobile-first)
-
-**Archivos principales:**
-```
-app/views/
-├── main.scala.html          # Layout principal
-├── index.scala.html         # Página de inicio
-├── publicaciones.scala.html # Lista de artículos
-├── portafolio.scala.html    # Proyectos
-└── articulos/               # Artículos individuales
-    ├── articleLayout.scala.html
-    ├── akkaActors.scala.html
-    └── ...
-```
-
-#### 2. **Web/Controller Layer**
-
-**Responsabilidades:**
-- Manejo de peticiones HTTP
-- Validación de datos de entrada
-- Enrutamiento de requests
-- Serialización/deserialización JSON
-- Manejo de sesiones y CSRF
-
-**Componente principal: `HomeController`**
-```scala
-class HomeController @Inject()(
-  cc: ControllerComponents,
-  contactAdapter: ReactiveContactAdapter,
-  repository: ContactRepository
-)(implicit ec: ExecutionContext) extends AbstractController(cc)
-```
-
-**Endpoints:**
-- `GET /` - Página principal
-- `POST /contact` - Enviar formulario de contacto
-- `GET /publicaciones` - Lista de artículos
-- `GET /portafolio` - Proyectos
-- `GET /articulos/:name` - Artículo específico
-- `GET /api/contacts` - API para listar contactos (admin)
-- `GET /api/contacts/stats` - Estadísticas de contactos
-
-#### 3. **Service/Adapter Layer**
-
-**Responsabilidades:**
-- Abstracción del sistema de actores
-- Conversión entre el modelo de actores y HTTP
-- Patrón Ask para comunicación request-response
-- Manejo de timeouts
-
-**Componente principal: `ReactiveContactAdapter`**
-```scala
-@Singleton
-class ReactiveContactAdapter @Inject()(
-  system: ActorSystem[ContactCommand]
-)(implicit ec: ExecutionContext) {
-  
-  def submitContact(contact: Contact): Future[ContactResponse] = {
-    implicit val timeout: Timeout = 5.seconds
-    system.ask[ContactResponse](replyTo => 
-      SubmitContact(contact, replyTo)
-    )
-  }
-}
-```
-
-**Patrón utilizado:** Ask Pattern (request-response sobre actores)
-
-#### 4. **Business Logic Layer (Actor System)**
-
-**Responsabilidades:**
-- Procesamiento asíncrono de mensajes
-- Lógica de negocio
-- Manejo de concurrencia sin locks
-- Integración con capa de datos
-- Supervisión y recuperación ante fallos
-
-**Componente principal: `ContactEngine`**
-```scala
-object ContactEngine {
-  sealed trait ContactCommand
-  case class SubmitContact(contact: Contact, replyTo: ActorRef[ContactResponse]) 
-    extends ContactCommand
-  private case class ContactSaved(savedContact: ContactRecord, 
-                                  replyTo: ActorRef[ContactResponse]) 
-    extends ContactCommand
-  private case class ContactSaveFailed(exception: Throwable, 
-                                       replyTo: ActorRef[ContactResponse]) 
-    extends ContactCommand
-
-  def apply(repository: ContactRepository)
-           (implicit ec: ExecutionContext): Behavior[ContactCommand]
-}
-```
-
-**Flujo de procesamiento:**
-1. Recibe mensaje `SubmitContact`
-2. Crea `ContactRecord` para la DB
-3. Llama a `repository.save()` de forma asíncrona
-4. Usa `context.pipeToSelf` para convertir Future en mensaje
-5. Maneja `ContactSaved` o `ContactSaveFailed`
-6. Responde al remitente con `ContactSubmitted` o `ContactError`
-
-**Patrón utilizado:** Actor Model + Event-driven + Non-blocking I/O
-
-#### 5. **Data Access Layer**
-
-**Responsabilidades:**
-- Abstracción de acceso a datos
-- Queries reactivas con Futures
-- Connection pooling
-- Transacciones (si son necesarias)
-- Mapeo objeto-relacional
-
-**Componente principal: `ContactRepository`**
-```scala
-@Singleton
-class ContactRepository @Inject()(
-  dbConfigProvider: DatabaseConfigProvider
-)(implicit ec: ExecutionContext) {
-  
-  private val db = dbConfigProvider.get[JdbcProfile].db
-  private val contacts = TableQuery[ContactsTable]
-  
-  // Operaciones CRUD
-  def save(contact: ContactRecord): Future[ContactRecord]
-  def findById(id: Long): Future[Option[ContactRecord]]
-  def list(page: Int, pageSize: Int): Future[Seq[ContactRecord]]
-  def findByEmail(email: String): Future[Seq[ContactRecord]]
-  def updateStatus(id: Long, status: String): Future[Int]
-  def count(): Future[Int]
-  def delete(id: Long): Future[Int]
-}
-```
-
-**Modelo de dominio: `ContactRecord`**
-```scala
-case class ContactRecord(
-  id: Option[Long] = None,
-  name: String,
-  email: String,
-  message: String,
-  createdAt: Instant = Instant.now(),
-  status: String = "pending"
-)
-```
-
-**Patrón utilizado:** Repository Pattern + Active Record (Slick)
-
-#### 6. **Persistence Layer**
-
-**Responsabilidades:**
-- Almacenamiento físico de datos
-- Gestión de transacciones ACID
-- Índices para optimización de queries
-- Migraciones de schema
-
-**Base de datos:**
-- **Desarrollo:** H2 in-memory (modo PostgreSQL)
-- **Producción:** PostgreSQL (recomendado)
-
-**Schema (tabla contacts):**
-```sql
-CREATE TABLE contacts (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending'
-);
-
-CREATE INDEX idx_contacts_email ON contacts(email);
-CREATE INDEX idx_contacts_created_at ON contacts(created_at);
-CREATE INDEX idx_contacts_status ON contacts(status);
-```
-
-### 🔄 Flujo de Datos: Ejemplo de Envío de Contacto
-
-```
-1. Usuario completa formulario
-         │
-         ▼
-2. JavaScript valida datos
-         │
-         ▼
-3. POST /contact → HomeController.submitContact()
-         │
-         ├─ Validación con Play Forms
-         │
-         ▼
-4. contactAdapter.submitContact(Contact) → ReactiveContactAdapter
-         │
-         ├─ Pattern: Ask (timeout: 5s)
-         │
-         ▼
-5. ActorSystem ! SubmitContact(contact, replyTo) → ContactEngine
-         │
-         ├─ Crea ContactRecord
-         │
-         ▼
-6. repository.save(contactRecord) → ContactRepository
-         │
-         ├─ Future[ContactRecord]
-         │
-         ▼
-7. context.pipeToSelf(...) → ContactEngine
-         │
-         ├─ Success → ContactSaved(savedContact, replyTo)
-         ├─ Failure → ContactSaveFailed(exception, replyTo)
-         │
-         ▼
-8. replyTo ! ContactSubmitted(id) OR ContactError(msg)
-         │
-         ▼
-9. Future.map → HomeController
-         │
-         ├─ Success: Redirect con flash message
-         ├─ Error: BadRequest con errores
-         │
-         ▼
-10. Usuario ve confirmación o error
-```
-
-### 🎯 Patrones de Diseño Utilizados
-
-#### 1. **Actor Model (Akka Typed)**
-- **Propósito:** Concurrencia sin locks, procesamiento asíncrono
-- **Ubicación:** `ContactEngine`
-- **Beneficios:** Thread-safe, escalable, resiliente
-
-#### 2. **Repository Pattern**
-- **Propósito:** Abstracción del acceso a datos
-- **Ubicación:** `ContactRepository`
-- **Beneficios:** Testeable, mantenible, desacoplado
-
-#### 3. **Dependency Injection (Guice)**
-- **Propósito:** Inversión de control, desacoplamiento
-- **Ubicación:** `Module.scala`, constructores con `@Inject`
-- **Beneficios:** Testeable, flexible, mantenible
-
-#### 4. **MVC (Model-View-Controller)**
-- **Propósito:** Separación de responsabilidades
-- **Ubicación:** Toda la aplicación
-- **Beneficios:** Organización clara, mantenible
-
-#### 5. **Service Layer / Adapter Pattern**
-- **Propósito:** Abstracción de la lógica de negocio
-- **Ubicación:** `ReactiveContactAdapter`
-- **Beneficios:** Desacoplamiento entre web y actores
-
-#### 6. **Command Pattern**
-- **Propósito:** Encapsulación de operaciones como objetos
-- **Ubicación:** `ContactCommand` (SubmitContact, etc.)
-- **Beneficios:** Extensible, type-safe, auditable
-
-#### 7. **Future/Promise Pattern**
-- **Propósito:** Programación asíncrona no bloqueante
-- **Ubicación:** Toda la aplicación (controladores, repositorio, actores)
-- **Beneficios:** Non-blocking I/O, alto throughput
-
-#### 8. **Template Method (Twirl)**
-- **Propósito:** Reutilización de estructura HTML
-- **Ubicación:** `main.scala.html`, `articleLayout.scala.html`
-- **Beneficios:** DRY, consistencia visual
-
-### ⚙️ Configuración y Dependency Injection
-
-**Archivo: `app/Module.scala`**
-```scala
-class Module extends AbstractModule {
-  override def configure(): Unit = {
-    bind(classOf[ActorSystem[ContactCommand]])
-      .toProvider(classOf[ActorSystemProvider])
-      .asEagerSingleton()
-  }
-}
-
-class ActorSystemProvider @Inject()(
-  repository: ContactRepository
-)(implicit ec: ExecutionContext) extends Provider[ActorSystem[ContactCommand]] {
-  override def get(): ActorSystem[ContactCommand] = {
-    ActorSystem(ContactEngine(repository), "contact-core")
-  }
-}
-```
-
-**Configuración: `conf/application.conf`**
-```conf
-# Slick Database Configuration
-slick.dbs.default {
-  profile = "slick.jdbc.H2Profile$"
-  db {
-    driver = "org.h2.Driver"
-    url = "jdbc:h2:mem:play;MODE=PostgreSQL"
-    numThreads = 10
-    maxConnections = 10
-  }
-}
-
-# Evolutions
-play.evolutions {
-  enabled = true
-  autoApply = true
-  db.default.enabled = true
-}
-
-# Akka Configuration
-akka {
-  loglevel = "INFO"
-  actor {
-    default-dispatcher {
-      fork-join-executor {
-        parallelism-min = 4
-        parallelism-factor = 2.0
-        parallelism-max = 16
-      }
-    }
-  }
-}
-```
-
-### 🔒 Principios Reactivos Implementados
-
-#### ✅ Responsive (Responsivo)
-- **Non-blocking I/O** en todos los niveles
-- **Futures** para operaciones asíncronas
-- **Timeouts** configurados (5s en Ask pattern)
-- **Fast fail** con manejo de errores apropiado
-
-#### ✅ Resilient (Resiliente)
-- **Actor supervision** (actores se reinician ante fallos)
-- **Error handling** en cada capa
-- **Graceful degradation** con mensajes de error claros
-- **Database connection pooling** con recuperación automática
-
-#### ✅ Elastic (Elástico)
-- **Actor model** permite escalado horizontal
-- **Stateless controllers** facilitan load balancing
-- **Connection pooling** ajustable según carga
-- **Arquitectura preparada** para clustering con Akka Cluster
-
-#### ✅ Message-Driven (Orientado a Mensajes)
-- **Akka Actors** como base de comunicación
-- **Asynchronous message passing** entre componentes
-- **Backpressure** implícito en sistema de actores
-- **Location transparency** (actores pueden estar en diferentes nodos)
-
-### 📊 Escalabilidad y Performance
-
-**Estrategias implementadas:**
-1. **Non-blocking I/O:** Toda operación I/O usa Futures
-2. **Connection pooling:** 10 conexiones máximas a DB
-3. **Actor concurrency:** Procesa múltiples requests en paralelo
-4. **Static asset caching:** Assets servidos con cache headers
-5. **Database indexes:** Queries optimizadas en email, fecha y status
-
-**Capacidad estimada (hardware modesto):**
-- **Throughput:** 1,000+ requests/segundo
-- **Latencia p99:** < 100ms (con DB local)
-- **Concurrent connections:** 10,000+ (limitado por DB connections)
-- **Memory footprint:** ~200MB (JVM + Play + Akka)
-
-### 🧪 Testing
-
-**Estrategias de testing por capa:**
-
-1. **Controllers:** Play Test helpers, FakeRequest
-2. **Actores:** Akka TestKit, TestProbe
-3. **Repository:** Base de datos H2 en memoria
-4. **Integration:** TestContainers para PostgreSQL real
-5. **UI:** Selenium/Playwright para E2E tests
-
-### 📚 Recursos y Referencias
-
-- **Play Framework:** https://www.playframework.com/
-- **Akka Typed:** https://doc.akka.io/docs/akka/current/typed/
-- **Slick:** https://scala-slick.org/
-- **Reactive Manifesto:** https://www.reactivemanifesto.org/
-- **Reactive Design Patterns:** https://www.reactivedesignpatterns.com/
-
-## 🔧 Arquitectura Reactiva
-
-### Flujo del Formulario de Contacto
-
-```scala
-Usuario → HomeController → ReactiveContactAdapter → ContactEngine (Akka Actor)
-                                                            ↓
-                                                     Procesamiento Asíncrono
-                                                            ↓
-Usuario ← Flash Message ← HomeController ← ContactResponse
-```
-
-### Componentes Clave
-
-**ContactEngine**: Actor Akka Typed que procesa mensajes de forma asíncrona
-```scala
-sealed trait ContactCommand
-case class SubmitContact(contact: Contact, replyTo: ActorRef[ContactResponse])
-```
-
-**ReactiveContactAdapter**: Adaptador que permite la comunicación entre Play y Akka
-```scala
-def submitContact(contact: Contact): Future[ContactResponse]
-```
-
-**HomeController**: Controlador que maneja peticiones HTTP y delega al sistema de actores
-```scala
-def submitContact() = Action.async { implicit request =>
-  // Validación y delegación al adapter
-}
-```
-
-## 📱 Diseño Responsivo
-
-La aplicación se adapta perfectamente a diferentes tamaños de pantalla:
-
-- **Mobile**: 375px - 767px
-- **Tablet**: 768px - 1023px
-- **Desktop**: 1024px+
-
-
-## 🧪 Testing
-
-El proyecto incluye tests unitarios para validar:
-- Lógica de actores Akka
-- Validación de formularios
-- Respuestas del controlador
-
-## 📝 Internacionalización
-
-Soporte para múltiples idiomas:
-- Español (es) - predeterminado
-- Inglés (en)
-
-Los mensajes se definen en `conf/messages` y `conf/messages.en`.
-
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT.
-
-## 👤 Autor
-
-**Federico Pfund**
-- GitHub: [@federicopfund](https://github.com/federicopfund)
-
-## 🙏 Agradecimientos
-
-- [The Reactive Manifesto](https://www.reactivemanifesto.org/)
-- [Play Framework](https://www.playframework.com/)
-- [Akka](https://akka.io/)
 
 ---
 
-**Responsive • Resilient • Elastic • Message-Driven**
+## 🎯 Patrones de diseño
+
+| Patrón | Ubicación |
+|--------|-----------|
+| Actor Model | `core/*Engine.scala` |
+| Hierarchical Supervision | `core/guardian/{Root,Domain,CrossCut,Infra}Guardian.scala` |
+| Backoff Supervision | `Behaviors.supervise(...).onFailure(restartWithBackoff(...))` en cada guardian |
+| Ask / Tell Pattern | `services/Reactive*Adapter.scala` |
+| Saga Orchestrator | `PublicationPipelineEngine` |
+| Cluster Pub/Sub | `EventBusEngine` (`DistributedPubSubMediator`) |
+| Circuit Breaker | `NotificationEngine` (SMTP) |
+| `pipeToSelf` | Todos los Engines |
+| Repository | `repositories/*` |
+| Adapter | `services/Reactive*Adapter.scala` |
+| Command | `sealed trait *Command` |
+| Dependency Injection | `Module.scala` (Guice) |
+| Health Endpoint | `controllers/HealthController` + `GET /health` |
+| MVC | Play estándar |
+| Capability-based RBAC | `models/AdminCapability` + `actions/AdminAction` |
+| Deterministic hashing | `utils/StageCommitHash` (SHA-1) |
+| BEM | `app/assets/stylesheets/components/*.scss` |
+
+---
+
+## 🌐 Internacionalización
+
+Español (default) e inglés vía `conf/messages` y `conf/messages.en`.
+
+---
+
+## 👤 Autor
+
+**Federico Pfund** — [@federicopfund](https://github.com/federicopfund)
+
+## 📄 Licencia
+
+MIT
+
+---
+
+<p align="center"><strong>Responsive · Resilient · Elastic · Message-Driven</strong></p>

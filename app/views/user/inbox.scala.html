@@ -1,0 +1,75 @@
+@(username: String, msgs: List[models.PrivateMessageWithUsers], tab: String, unreadCount: Int)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@main("Mensajes") {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@username</div>
+      <h1 class="ed-dash-title">Mensajes</h1>
+      <p class="ed-dash-sub">
+        @if(unreadCount > 0) { Tienes <strong>@unreadCount</strong> sin leer. }
+        else { Bandeja al día — sin mensajes pendientes. }
+      </p>
+    </header>
+
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+    @* ── Composer: escribir mensaje nuevo ───────────────── *@
+    <details class="ed-msg-compose">
+      <summary class="ed-msg-compose__summary">Escribir mensaje</summary>
+      <form method="POST" action="@routes.UserPublicationController.sendDirectMessage()" class="ed-msg-compose__body">
+        @helper.CSRF.formField
+        <div class="ed-msg-compose__row">
+          <label for="rcv-username">Para (usuario)</label>
+          <input id="rcv-username" type="text" name="receiverUsername" placeholder="ej: maria.lopez" required>
+          <p class="ed-msg-compose__hint">Escribe el username exacto del destinatario.</p>
+        </div>
+        <div class="ed-msg-compose__row">
+          <label for="msg-subject">Asunto</label>
+          <input id="msg-subject" type="text" name="subject" maxlength="200" required>
+        </div>
+        <div class="ed-msg-compose__row">
+          <label for="msg-content">Mensaje</label>
+          <textarea id="msg-content" name="content" rows="6" required></textarea>
+        </div>
+        <div class="ed-msg-compose__actions">
+          <button type="submit" class="ed-btn-primary">Enviar mensaje</button>
+        </div>
+      </form>
+    </details>
+
+    <nav class="ed-cat-row" role="tablist" aria-label="Filtro de bandeja">
+      <a class="ed-cat-pill @if(tab != "sent"){active}" href="@routes.UserPublicationController.inbox("received")">Recibidos</a>
+      <a class="ed-cat-pill @if(tab == "sent"){active}" href="@routes.UserPublicationController.inbox("sent")">Enviados</a>
+    </nav>
+
+    @if(msgs.isEmpty) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "envelope",
+        title = if(tab == "sent") "Aún no has enviado mensajes" else "Tu bandeja está tranquila",
+        body = "Cuando intercambies mensajes con autores y editores aparecerán aquí. Empieza una conversación desde la página de un autor.",
+        ctaLabel = Some("Explorar autores"),
+        ctaHref = Some(routes.HomeController.publicaciones().url)
+      )
+    } else {
+      <ul class="ed-msg-list">
+        @msgs.map { mu =>
+          @defining(if(tab == "sent") (mu.receiverUsername, mu.receiverFullName) else (mu.senderUsername, mu.senderFullName)) { case (uname, fname) =>
+            <li class="ed-msg-item @if(!mu.message.isRead && tab != "sent"){is-unread}">
+              <a href="@mu.message.id.map(routes.UserPublicationController.viewMessage(_))" class="ed-msg-link">
+                <div class="ed-msg-head">
+                  <strong>@fname</strong>
+                  <span class="ed-msg-uname">@@@uname</span>
+                  <span class="ed-msg-date">@mu.message.createdAt.toString.take(16).replace("T", " ")</span>
+                </div>
+                <div class="ed-msg-subject">@mu.message.subject</div>
+                <p class="ed-msg-snippet">@mu.message.content.take(140)…</p>
+              </a>
+            </li>
+          }
+        }
+      </ul>
+    }
+  </section>
+}

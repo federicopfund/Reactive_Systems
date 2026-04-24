@@ -1,0 +1,80 @@
+@(yearMonth: java.time.YearMonth,
+  monthEvents: Seq[models.CommunityEvent],
+  upcoming: Seq[models.CommunityEvent],
+  prev: java.time.YearMonth,
+  next: java.time.YearMonth,
+  userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
+
+@*
+  Vista mes — landing por defecto de /eventos.
+*@
+
+@monthLabel = @{
+  yearMonth.getMonth.getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es")).capitalize
+}
+
+@key(ym: java.time.YearMonth) = @{ f"${ym.getYear}%04d-${ym.getMonthValue}%02d" }
+
+@main(s"Agenda — $monthLabel ${yearMonth.getYear}") {
+
+  @request.flash.get("success").map { msg => <div class="ed-section"><div class="ed-flash ed-flash--success">@msg</div></div> }
+  @request.flash.get("error").map   { msg => <div class="ed-section"><div class="ed-flash ed-flash--error">@msg</div></div> }
+
+  <section class="ed-events-agenda">
+    <header class="ed-events-agenda__header">
+      <div>
+        <div class="ed-events-agenda__eyebrow">Agenda editorial · Calendario reactivo</div>
+        <h1 class="ed-events-agenda__title">@monthLabel <em>@yearMonth.getYear</em></h1>
+        <p class="ed-events-agenda__lead">
+          Charlas, workshops, AMAs y meetups de la comunidad reactiva.
+          Suscribite al calendario y no te pierdas nada.
+        </p>
+      </div>
+      <div class="ed-events-agenda__actions">
+        <a class="ed-btn-secondary" href="@routes.EventController.timeline()">Cronograma</a>
+        <a class="ed-btn-secondary" href="@routes.EventController.past()">Eventos pasados</a>
+        <a class="ed-btn-primary" href="@routes.EventController.calendarIcs()" download>
+          Suscribirse (.ics)
+        </a>
+      </div>
+    </header>
+
+    <nav class="ed-events-agenda__nav" aria-label="Navegacion de meses">
+      <a class="ed-btn-ghost" href="@routes.EventController.month(key(prev))" aria-label="Mes anterior">‹ @prev.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es")).capitalize</a>
+      <span class="ed-events-agenda__current">@monthLabel @yearMonth.getYear</span>
+      <a class="ed-btn-ghost" href="@routes.EventController.month(key(next))" aria-label="Mes siguiente">@next.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es")).capitalize ›</a>
+    </nav>
+
+    <div class="ed-events-agenda__layout">
+      <div class="ed-events-agenda__main">
+        @if(monthEvents.isEmpty) {
+          @partials.emptyState(
+            variant = "empty",
+            icon = "calendar",
+            title = "Sin eventos este mes",
+            body = "Todavia no hay eventos publicados para este periodo. Mira los proximos en el cronograma o suscribite al calendario.",
+            ctaLabel = Some("Ver cronograma"),
+            ctaHref = Some(routes.EventController.timeline().url)
+          )
+        } else {
+          <div class="ed-events-grid" role="list">
+            @monthEvents.zipWithIndex.map { case (e, idx) =>
+              <div role="listitem">@partials.eventCard(e, featured = idx == 0)</div>
+            }
+          </div>
+        }
+      </div>
+
+      <aside class="ed-events-agenda__side" aria-label="Proximos eventos">
+        <h2 class="ed-events-agenda__side-title">Proximos</h2>
+        @if(upcoming.isEmpty) {
+          <p class="ed-muted">No hay eventos en agenda. <a href="@routes.EventController.timeline()">Ver cronograma</a>.</p>
+        } else {
+          <div class="ed-events-mini-list">
+            @upcoming.map { e => @partials.eventMiniCard(e) }
+          </div>
+        }
+      </aside>
+    </div>
+  </section>
+}
