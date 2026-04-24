@@ -82,6 +82,20 @@
     sidebar = document.getElementById('ed-sidebar') || document.querySelector('.ed-sidebar');
     if (!sidebar) return;
 
+    // Persistencia del estado de las secciones colapsables (<details data-section>).
+    var sections = sidebar.querySelectorAll('details[data-section]');
+    sections.forEach(function (d) {
+      var key = 'edNavSection:' + d.getAttribute('data-section');
+      try {
+        var saved = localStorage.getItem(key);
+        if (saved === 'open')   d.setAttribute('open', '');
+        if (saved === 'closed') d.removeAttribute('open');
+      } catch (_) {}
+      d.addEventListener('toggle', function () {
+        try { localStorage.setItem(key, d.open ? 'open' : 'closed'); } catch (_) {}
+      });
+    });
+
     // Aplica preferencia en desktop.
     if (!isMobile()) applyRail(readCollapsed());
 

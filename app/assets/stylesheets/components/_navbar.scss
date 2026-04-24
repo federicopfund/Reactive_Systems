@@ -212,6 +212,89 @@
   display: block;
 }
 
+// ── Mi espacio — sección primaria (énfasis visual) ──
+.ed-nav-section--primary {
+  position: relative;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  .ed-nav-section-label {
+    color: var(--ed-accent, var(--ed-text));
+    font-weight: 600;
+  }
+
+  // Filete vertical sutil de acento al lado izquierdo
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0.4rem;
+    top: 1.6rem;
+    bottom: 0.2rem;
+    width: 2px;
+    background: var(--ed-accent, var(--ed-border));
+    opacity: 0.55;
+    border-radius: 2px;
+  }
+
+  .ed-nav-item {
+    font-weight: 500;
+  }
+}
+
+// ── Sección colapsable (Explorar como dropdown) ──
+.ed-nav-section--collapsible {
+  // Reset del marker nativo de <details>
+  > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.4rem;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+
+    &::-webkit-details-marker { display: none; }
+
+    &:hover { background: var(--ed-border); color: var(--ed-text); }
+    &:focus-visible {
+      outline: 2px solid var(--ed-accent, currentColor);
+      outline-offset: 2px;
+    }
+  }
+
+  .ed-nav-chevron {
+    width: 10px;
+    height: 10px;
+    transition: transform 0.2s ease;
+    color: var(--ed-text-faint);
+    flex-shrink: 0;
+  }
+
+  &[open] > summary .ed-nav-chevron {
+    transform: rotate(180deg);
+  }
+
+  .ed-nav-section__items {
+    animation: edNavSlideDown 0.18s ease-out;
+  }
+}
+
+@keyframes edNavSlideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// En modo rail (sidebar colapsada) ocultamos el chevron y los items;
+// el resto del comportamiento ya lo cubre la regla genérica de arriba.
+.ed-sidebar--rail .ed-nav-section--collapsible {
+  > summary { justify-content: center; }
+  .ed-nav-chevron { display: none; }
+}
+
 .ed-nav-item {
   display: flex;
   align-items: center;

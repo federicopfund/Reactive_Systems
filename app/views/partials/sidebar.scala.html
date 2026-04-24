@@ -50,41 +50,10 @@
   </div>
 
   <nav class="ed-sidebar-nav" aria-label="Secciones del sitio">
-    <div class="ed-nav-section">
-      <span class="ed-nav-section-label">Explorar</span>
-      <a href="@routes.HomeController.index()"
-         class="@navAttrs(isActive("/"))"
-         data-tip="Portada"
-         @if(isActive("/")){aria-current="page"}>
-        <span class="ed-nav-dot" aria-hidden="true"></span>Portada
-      </a>
-      <a href="@routes.HomeController.publicaciones()"
-         class="@navAttrs(isActive("/publicaciones"))"
-         data-tip="Artículos"
-         @if(isActive("/publicaciones")){aria-current="page"}>
-        <span class="ed-nav-dot" aria-hidden="true"></span>Artículos
-      </a>
-      <a href="@routes.EventController.index()"
-         class="@navAttrs(isActive("/eventos"))"
-         data-tip="Agenda"
-         @if(isActive("/eventos")){aria-current="page"}>
-        <span class="ed-nav-dot" aria-hidden="true"></span>Agenda
-      </a>
-      <a href="@routes.HomeController.portafolio()"
-         class="@navAttrs(isActive("/portafolio"))"
-         data-tip="Colecciones"
-         @if(isActive("/portafolio")){aria-current="page"}>
-        <span class="ed-nav-dot" aria-hidden="true"></span>Colecciones
-      </a>
-      <a href="@routes.HomeController.index()#contact"
-         class="ed-nav-item ed-nav-item--anchor"
-         data-tip="Contacto">
-        <span class="ed-nav-dot" aria-hidden="true"></span>Contacto
-      </a>
-    </div>
 
     @if(userId.isDefined) {
-      <div class="ed-nav-section">
+      @* ── 1) Mi espacio (primario para usuarios autenticados) ── *@
+      <div class="ed-nav-section ed-nav-section--primary">
         <span class="ed-nav-section-label">Mi espacio</span>
         @defining(isActive("/user/dashboard") || isActive("/user/publications")) { active =>
           <a href="@routes.UserPublicationController.dashboard()"
@@ -131,6 +100,52 @@
           </a>
         </div>
       }
+    }
+
+    @* ── Explorar — primario si guest, secundario (colapsable) si autenticado ── *@
+    @defining(isActive("/") || isActive("/publicaciones") || isActive("/eventos") || isActive("/portafolio")) { exploreActive =>
+      <details class="ed-nav-section ed-nav-section--collapsible"
+               data-section="explorar"
+               @if(userId.isEmpty || exploreActive){open}>
+        <summary class="ed-nav-section-label ed-nav-section-toggle"
+                 aria-label="Mostrar/ocultar sección Explorar">
+          <span>Explorar</span>
+          <svg class="ed-nav-chevron" viewBox="0 0 12 12" aria-hidden="true">
+            <polyline points="3 5 6 8 9 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </summary>
+        <div class="ed-nav-section__items">
+          <a href="@routes.HomeController.index()"
+             class="@navAttrs(isActive("/"))"
+             data-tip="Portada"
+             @if(isActive("/")){aria-current="page"}>
+            <span class="ed-nav-dot" aria-hidden="true"></span>Portada
+          </a>
+          <a href="@routes.HomeController.publicaciones()"
+             class="@navAttrs(isActive("/publicaciones"))"
+             data-tip="Artículos"
+             @if(isActive("/publicaciones")){aria-current="page"}>
+            <span class="ed-nav-dot" aria-hidden="true"></span>Artículos
+          </a>
+          <a href="@routes.EventController.index()"
+             class="@navAttrs(isActive("/eventos"))"
+             data-tip="Agenda"
+             @if(isActive("/eventos")){aria-current="page"}>
+            <span class="ed-nav-dot" aria-hidden="true"></span>Agenda
+          </a>
+          <a href="@routes.HomeController.portafolio()"
+             class="@navAttrs(isActive("/portafolio"))"
+             data-tip="Colecciones"
+             @if(isActive("/portafolio")){aria-current="page"}>
+            <span class="ed-nav-dot" aria-hidden="true"></span>Colecciones
+          </a>
+          <a href="@routes.HomeController.index()#contact"
+             class="ed-nav-item ed-nav-item--anchor"
+             data-tip="Contacto">
+            <span class="ed-nav-dot" aria-hidden="true"></span>Contacto
+          </a>
+        </div>
+      </details>
     }
   </nav>
 
