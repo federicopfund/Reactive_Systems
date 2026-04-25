@@ -1,21 +1,19 @@
-version: '3.9'
-
 services:
   # ==================== PostgreSQL Database ====================
   postgres:
     image: postgres:16-alpine
-    container_name: reactive_manifesto_db
+    container_name: ${POSTGRES_CONTAINER_NAME:-reactive_manifesto_db}
     
     # Configuración de Base de Datos
     environment:
-      POSTGRES_DB: reactive_manifesto
-      POSTGRES_USER: reactive_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-reactive_password}  # Usar variable de entorno
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
     
     # Puerto (internamente, no exponer en prod)
     ports:
-      - "5432:5432"  # Cambiar a algo random en prod o eliminar
+      - "${DB_PORT:-5432}:5432"  # Cambiar a algo random en prod o eliminar
     
     # ⭐ PERSISTENCIA: Los datos sobreviven a docker stop/start
     volumes:
@@ -27,7 +25,7 @@ services:
     
     # Healthcheck
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U reactive_user"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,22 +47,22 @@ services:
       context: .
       dockerfile: Dockerfile
     
-    container_name: reactive_manifesto_app
+    container_name: ${APP_CONTAINER_NAME:-reactive_manifesto_app}
     
     # Puerto
     ports:
-      - "9000:9000"
+      - "${APP_PORT:-9000}:9000"
     
     # Variables de entorno
     environment:
       # Base de Datos (apunta al servicio postgres)
-      SLICK_DBS_DEFAULT_DB_URL: "jdbc:postgresql://postgres:5432/reactive_manifesto"
-      SLICK_DBS_DEFAULT_DB_USER: "reactive_user"
-      SLICK_DBS_DEFAULT_DB_PASSWORD: "${DB_PASSWORD:-reactive_password}"
+      DATABASE_URL: "jdbc:postgresql://postgres:5432/${DB_NAME}"
+      DATABASE_USER: "${DB_USER}"
+      DATABASE_PASSWORD: "${DB_PASSWORD}"
       
       # Play Framework
-      PLAY_HTTP_PORT: 9000
-      PLAY_CRYPTO_SECRET: "${PLAY_SECRET:-changeme_in_production_use_strong_secret_key_32chars}"
+      PLAY_HTTP_PORT: ${PLAY_HTTP_PORT:-9000}
+      APPLICATION_SECRET: "${PLAY_SECRET}"
       
       # Modo
       PLAY_ENV: "prod"
@@ -100,7 +98,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: "${POSTGRES_DATA_PATH:-.//postgres_data}"  # Carpeta local
+      device: "${POSTGRES_DATA_PATH}"  # Carpeta local
 
 # ==================== Networks ====================
 networks:
