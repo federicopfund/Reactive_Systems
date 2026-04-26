@@ -1,4 +1,4 @@
-@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String, currentSeason: Option[models.EditorialSeason] = None)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @isEdit = @{ publication.isDefined }
 @formAction = @{ publication.flatMap(_.id) match {
@@ -12,6 +12,13 @@
       <div class="ed-dash-eyebrow">@if(isEdit){Editar}else{Nueva pieza}</div>
       <h1 class="ed-dash-title">@if(isEdit){@publication.map(_.title)}else{Cuenta tu pieza}</h1>
       <p class="ed-dash-sub">Recuerda: las piezas pasan por revisión editorial antes de publicarse.</p>
+      <p class="ed-dash-sub">
+        @currentSeason.map(_.name).filter(_.trim.nonEmpty).map { seasonName =>
+          Temporada vigente esperada al programar/publicar: <strong>@seasonName</strong>.
+        }.getOrElse {
+          No hay una temporada vigente configurada actualmente.
+        }
+      </p>
     </header>
 
     @flash.get("error").map { m => <div class="ed-flash ed-flash--error">@m</div> }

@@ -333,6 +333,19 @@ class PublicationRepository @Inject()(
     db.run(query).map(_ > 0)
   }
 
+  /**
+   * Asignar temporada solamente si la publicación aún no tiene season_id.
+   * No pisa asignaciones manuales existentes.
+   */
+  def assignSeasonIfEmpty(publicationId: Long, seasonIdValue: Long): Future[Boolean] = {
+    val query = publications
+      .filter(p => p.id === publicationId && p.seasonId.isEmpty)
+      .map(_.seasonId)
+      .update(Some(seasonIdValue))
+
+    db.run(query).map(_ > 0)
+  }
+
   /** Listar publicaciones por etapa actual. Base del tablero editorial. */
   def findByCurrentStage(stageId: Long, limit: Int = 100): Future[List[Publication]] = {
     db.run(

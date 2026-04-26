@@ -7,7 +7,7 @@ import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PublicationRepository, UserRepository, PublicationFeedbackRepository, UserNotificationRepository, ReactionRepository, CommentRepository, BookmarkRepository, BadgeRepository, PrivateMessageRepository, EditorialStageRepository, PublicationStageHistoryRepository, NewsletterRepository}
+import repositories.{PublicationRepository, UserRepository, PublicationFeedbackRepository, UserNotificationRepository, ReactionRepository, CommentRepository, BookmarkRepository, BadgeRepository, PrivateMessageRepository, EditorialStageRepository, PublicationStageHistoryRepository, NewsletterRepository, EditorialSeasonRepository}
 import models.{Publication, PublicationStatus, NotificationType, PublicationComment, PrivateMessage, EditorialStageCode}
 import services.{ReactiveMessageAdapter, ReactiveGamificationAdapter, ReactiveAnalyticsAdapter, ReactiveNotificationAdapter, ReactiveModerationAdapter}
 import core.{MessageSent, MessageError, ModerationResult}
@@ -38,6 +38,7 @@ class UserPublicationController @Inject()(
   stageRepo: EditorialStageRepository,
   stageHistoryRepo: PublicationStageHistoryRepository,
   newsletterRepo: NewsletterRepository,
+  seasonRepo: EditorialSeasonRepository,
   messageAdapter: ReactiveMessageAdapter,
   gamificationAdapter: ReactiveGamificationAdapter,
   analyticsAdapter: ReactiveAnalyticsAdapter,
@@ -45,6 +46,24 @@ class UserPublicationController @Inject()(
   moderationAdapter: ReactiveModerationAdapter,
   userAction: UserAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
+
+  private def renderPublicationForm(
+    form: Form[PublicationFormData],
+    publication: Option[Publication],
+    username: String
+  ): Future[Result] =
+    seasonRepo.findCurrent().map { currentSeason =>
+      Ok(views.html.user.publicationForm(form, publication, username, currentSeason))
+    }
+
+  private def renderPublicationFormBadRequest(
+    form: Form[PublicationFormData],
+    publication: Option[Publication],
+    username: String
+  ): Future[Result] =
+    seasonRepo.findCurrent().map { currentSeason =>
+      BadRequest(views.html.user.publicationForm(form, publication, username, currentSeason))
+    }
 
   // Definición del formulario
   val publicationForm = Form(
@@ -119,12 +138,12 @@ class UserPublicationController @Inject()(
   /**
    * Formulario para crear nueva publicación
    */
-  def newPublicationForm = userAction { implicit request: AuthRequest[AnyContent] =>
-    Ok(views.html.user.publicationForm(
+  def newPublicationForm = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    renderPublicationForm(
       publicationForm,
       None,
       request.username
-    ))
+    )
   }
 
   /**
@@ -133,12 +152,10 @@ class UserPublicationController @Inject()(
   def createPublication = userAction.async { implicit request: AuthRequest[AnyContent] =>
     publicationForm.bindFromRequest().fold(
       formWithErrors => {
-        Future.successful(
-          BadRequest(views.html.user.publicationForm(
-            formWithErrors,
-            None,
-            request.username
-          ))
+        renderPublicationFormBadRequest(
+          formWithErrors,
+          None,
+          request.username
         )
       },
       formData => {
@@ -173,7 +190,7 @@ class UserPublicationController @Inject()(
    * Formulario para editar publicación existente
    */
   def editPublicationForm(id: Long) = userAction.async { implicit request: AuthRequest[AnyContent] =>
-    publicationRepo.findById(id).map {
+    publicationRepo.findById(id).flatMap {
       case Some(publication) if publication.userId == request.userId =>
         val filledForm = publicationForm.fill(PublicationFormData(
           title = publication.title,
@@ -183,15 +200,15 @@ class UserPublicationController @Inject()(
           category = publication.category,
           tags = publication.tags
         ))
-        Ok(views.html.user.publicationForm(
+        renderPublicationForm(
           filledForm,
           Some(publication),
           request.username
-        ))
+        )
       case Some(_) =>
-        Forbidden("No tienes permiso para editar esta publicación")
+        Future.successful(Forbidden("No tienes permiso para editar esta publicación"))
       case None =>
-        NotFound("Publicación no encontrada")
+        Future.successful(NotFound("Publicación no encontrada"))
     }
   }
 
@@ -203,12 +220,10 @@ class UserPublicationController @Inject()(
       case Some(existingPub) if existingPub.userId == request.userId =>
         publicationForm.bindFromRequest().fold(
           formWithErrors => {
-            Future.successful(
-              BadRequest(views.html.user.publicationForm(
-                formWithErrors,
-                Some(existingPub),
-                request.username
-              ))
+            renderPublicationFormBadRequest(
+              formWithErrors,
+              Some(existingPub),
+              request.username
             )
           },
           formData => {

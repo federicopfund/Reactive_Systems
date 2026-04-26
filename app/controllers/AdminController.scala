@@ -6,7 +6,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json._
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository, PrivateMessageRepository, EditorialStageRepository, PublicationStageHistoryRepository}
+import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository, PrivateMessageRepository, EditorialStageRepository, PublicationStageHistoryRepository, EditorialSeasonRepository}
 import models.{ContactRecord, PublicationFeedback, UserNotification, FeedbackType, EditorialStageCode, PublicationStageHistory}
 import services.{ReactivePublicationAdapter, ReactiveNotificationAdapter, ReactiveAnalyticsAdapter}
 import core.{PublicationApproved, PublicationRejected, PublicationError}
@@ -18,6 +18,12 @@ case class LoginForm(username: String, password: String)
 case class ContactForm(name: String, email: String, message: String)
 case class ContactUpdateForm(id: Long, name: String, email: String, message: String, status: String)
 case class PublicationReviewForm(publicationId: Long, action: String, rejectionReason: Option[String])
+
+private[controllers] object SeasonAutoAssignment {
+  def shouldAssign(targetCode: String, currentSeasonId: Option[Long]): Boolean =
+    currentSeasonId.isEmpty &&
+      (targetCode == EditorialStageCode.Scheduled || targetCode == EditorialStageCode.Published)
+}
 
 @Singleton
 class AdminController @Inject()(
@@ -31,6 +37,7 @@ class AdminController @Inject()(
   messageRepository: PrivateMessageRepository,
   stageRepository: EditorialStageRepository,
   stageHistoryRepository: PublicationStageHistoryRepository,
+  seasonRepository: EditorialSeasonRepository,
   publicationAdapter: ReactivePublicationAdapter,
   notificationAdapter: ReactiveNotificationAdapter,
   analyticsAdapter: ReactiveAnalyticsAdapter,
@@ -549,6 +556,7 @@ class AdminController @Inject()(
           } else {
             val target       = targetStage.get
             val legacyStatus = EditorialStageCode.toLegacyStatus(target.code)
+            val shouldAutoAssignSeason = SeasonAutoAssignment.shouldAssign(target.code, pub.seasonId)
             for {
               _ <- stageHistoryRepository.insertTransition(PublicationStageHistory(
                      publicationId = id,
@@ -560,6 +568,16 @@ class AdminController @Inject()(
               _ <- publicationRepository.updateCurrentStage(id, target.id.get)
               _ <- publicationRepository.changeStatus(id, legacyStatus, request.userId,
                      reason.filter(_ => legacyStatus == "rejected"))
+              _ <- if (shouldAutoAssignSeason && pub.seasonId.isEmpty) {
+                     seasonRepository.findCurrent().flatMap {
+                       case Some(currentSeason) =>
+                         currentSeason.id match {
+                           case Some(seasonId) => publicationRepository.assignSeasonIfEmpty(id, seasonId).map(_ => ())
+                           case None           => Future.successful(())
+                         }
+                       case None => Future.successful(())
+                     }
+                   } else Future.successful(())
               _ <- notificationRepository.create(UserNotification(
                      userId           = pub.userId,
                      notificationType = "publication_status",
