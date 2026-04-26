@@ -100,7 +100,9 @@ case class Publication(
   // ── Campos editoriales (Sprint 1) ──
   currentStageId: Option[Long] = None,
   publicationType: String = PublicationType.Article,
-  requiresTechnicalReview: Boolean = false
+  requiresTechnicalReview: Boolean = false,
+  // ── Temporada editorial (Issue #22) ──
+  seasonId: Option[Long] = None
 )
 
 /**
