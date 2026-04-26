@@ -6,6 +6,7 @@ import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
+import play.api.Logging
 import services.ReactiveContactAdapter
 import services.ReactiveAnalyticsAdapter
 import repositories.{
@@ -40,7 +41,7 @@ class HomeController @Inject()(
   identityRepo: EditorialIdentityRepository,
   seasonRepo: EditorialSeasonRepository,
   optionalAuth: OptionalAuthAction
-)(implicit ec: ExecutionContext) extends BaseController with I18nSupport {
+)(implicit ec: ExecutionContext) extends BaseController with I18nSupport with Logging {
 
   // Form definition
 
@@ -53,7 +54,11 @@ class HomeController @Inject()(
   )
 
   private def loadCurrentSeason(): Future[Option[models.EditorialSeason]] =
-    seasonRepo.findCurrent().recover { case _: Throwable => None }
+    seasonRepo.findCurrent().recover {
+      case ex: Throwable =>
+        logger.warn("No se pudo cargar la temporada actual. Se aplicará fallback neutro en la UI pública.", ex)
+        None
+    }
 
   def index() = Action.async { implicit request: Request[AnyContent] =>
     analyticsAdapter.trackPageView("/", None, request.headers.get("Referer"))

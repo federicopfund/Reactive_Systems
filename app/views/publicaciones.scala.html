@@ -15,6 +15,12 @@
 @allActive = @{ searchCategory.isEmpty || searchCategory.exists(_.trim.isEmpty) }
 @totalCount = @{ dynamicPublications.size + editorialArticles.size }
 @seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
+@seasonEmptyBody = @{
+  seasonName match {
+    case Some(name) => s"Sé de los primeros en proponer un artículo para la temporada $name del Manifiesto Reactivo."
+    case None       => "Sé de los primeros en proponer un artículo para la próxima temporada del Manifiesto Reactivo."
+  }
+}
 
 @main("Publicaciones") {
 
@@ -24,7 +30,7 @@
   <div class="ed-pub-toolbar">
     <header class="ed-pub-header">
       <div>
-        <div class="ed-pub-count">@totalCount publicaciones · @seasonName.map(name => s"Temporada: $name").getOrElse("Flujo editorial continuo")</div>
+        <div class="ed-pub-count">@totalCount publicaciones · @seasonName.map(name => "Temporada: " + name).getOrElse("Flujo editorial continuo")</div>
         <h1 class="ed-pub-title">Artículos <em>@seasonName.map(_ => "de la temporada").getOrElse("publicados")</em></h1>
       </div>
       <form action="@routes.HomeController.searchPublicaciones()" method="GET" class="ed-search-wrap">
@@ -66,7 +72,7 @@
         variant = "empty",
         icon = "feather",
         title = "Aún no hay piezas publicadas",
-        body = seasonName.map(name => s"Sé de los primeros en proponer un artículo para la temporada $name del Manifiesto Reactivo.").getOrElse("Sé de los primeros en proponer un artículo para la próxima temporada del Manifiesto Reactivo."),
+        body = seasonEmptyBody,
         ctaLabel = Some("Proponer publicación"),
         ctaHref = Some(routes.UserPublicationController.dashboard().url),
         secondaryLabel = Some("Suscribirme"),
