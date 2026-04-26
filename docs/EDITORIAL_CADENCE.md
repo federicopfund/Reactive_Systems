@@ -111,21 +111,21 @@ La pieza inaugural debe:
 
 ## 6) Copy base (español)
 
-## 6.1 Hero del home
+### 6.1 Hero del home
 **Título (base):**  
 `Ideas, tecnología y criterio editorial en flujo continuo.`
 
 **Bajada (base):**  
 `Publicamos por temporadas: piezas vivas que dialogan entre sí, sin esperar cierres artificiales de edición.`
 
-## 6.2 CTA newsletter
+### 6.2 CTA newsletter
 **Texto CTA (base):**  
 `Recibí cada nueva pieza y la apertura de temporada en tu correo. Sin ruido, con contexto.`
 
 **Botón (base):**  
 `Suscribirme al newsletter`
 
-## 6.3 Plantilla breve para editorial de apertura de temporada
+### 6.3 Plantilla breve para editorial de apertura de temporada
 
 Extensión sugerida: **400–700 palabras**.  
 Tono: **sobrio, argumentativo, cercano**.
