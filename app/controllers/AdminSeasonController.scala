@@ -4,11 +4,13 @@ import controllers.actions.{AdminOnlyAction, CapabilityCheck}
 import models.EditorialSeason
 import play.api.mvc._
 import repositories.EditorialSeasonRepository
+import repositories.{NewsletterRepository, UserNotificationRepository, UserRepository}
 import utils.Capabilities.Cap
 
 import javax.inject._
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.Logging
 
 private[controllers] object AdminSeasonValidation {
   case class Parsed(
@@ -23,6 +25,29 @@ private[controllers] object AdminSeasonValidation {
   def parseForm(form: Map[String, Seq[String]]): Map[String, String] = {
     def s(k: String): String = form.get(k).flatMap(_.headOption).map(_.trim).getOrElse("")
     Seq("code", "name", "tagline", "openingEssay", "startsOn", "endsOn").map(k => k -> s(k)).toMap
+  }
+
+  def shouldAnnounceNewsletter(form: Map[String, Seq[String]]): Boolean =
+    form.get("announceNewsletter")
+      .flatMap(_.headOption)
+      .exists(v => Set("on", "true").contains(v.trim.toLowerCase))
+
+  case class SeasonAnnouncement(title: String, message: String)
+
+  def buildSeasonAnnouncement(season: EditorialSeason): SeasonAnnouncement = {
+    val trimmedName = season.name.trim
+    val tagline = season.tagline.map(_.trim).filter(_.nonEmpty)
+    val openingEssayLink = season.openingEssay.map(_.trim).filter(_.nonEmpty)
+
+    val title = s"Nueva temporada activa: $trimmedName"
+    val lines = Seq(
+      Some(s"Comenzó «$trimmedName»."),
+      tagline.map(t => s"Tagline: $t"),
+      openingEssayLink.map(link => s"Opening essay: $link")
+    ).flatten
+    val message = lines.mkString("\n")
+
+    SeasonAnnouncement(title, message)
   }
 
   def validate(data: Map[String, String], isCreate: Boolean): Either[Map[String, String], Parsed] = {
@@ -70,8 +95,11 @@ private[controllers] object AdminSeasonValidation {
 class AdminSeasonController @Inject()(
   cc: ControllerComponents,
   seasonRepo: EditorialSeasonRepository,
+  newsletterRepo: NewsletterRepository,
+  userRepo: UserRepository,
+  notificationRepo: UserNotificationRepository,
   adminAction: AdminOnlyAction
-)(implicit ec: ExecutionContext) extends AbstractController(cc) {
+)(implicit ec: ExecutionContext) extends AbstractController(cc) with Logging {
 
   import AdminSeasonValidation._
 
@@ -137,9 +165,36 @@ class AdminSeasonController @Inject()(
 
   def setCurrent(id: Long): Action[AnyContent] = adminAction.async { implicit request =>
     CapabilityCheck.require(request, Cap.SeasonsManage) {
-      seasonRepo.setCurrent(id).map {
-        case true  => Redirect(routes.AdminSeasonController.list()).flashing("success" -> "Temporada marcada como actual.")
-        case false => Redirect(routes.AdminSeasonController.list()).flashing("error" -> "No se encontró la temporada.")
+      val announceNewsletter = shouldAnnounceNewsletter(request.body.asFormUrlEncoded.getOrElse(Map.empty))
+
+      seasonRepo.findById(id).flatMap {
+        case None =>
+          Future.successful(Redirect(routes.AdminSeasonController.list()).flashing("error" -> "No se encontró la temporada."))
+        case Some(season) =>
+          seasonRepo.setCurrent(id).flatMap {
+            case false =>
+              Future.successful(Redirect(routes.AdminSeasonController.list()).flashing("error" -> "No se encontró la temporada."))
+            case true if !announceNewsletter =>
+              Future.successful(Redirect(routes.AdminSeasonController.list()).flashing("success" -> "Temporada marcada como actual."))
+            case true =>
+              val announcement = buildSeasonAnnouncement(season)
+              (for {
+                emails <- newsletterRepo.findActiveEmails()
+                recipients <- userRepo.findByEmails(emails)
+                recipientIds = recipients.flatMap(_.id).distinct
+                _ <- notificationRepo.createBroadcast(
+                  userIds = recipientIds,
+                  notificationType = "season_opening",
+                  title = announcement.title,
+                  message = announcement.message
+                )
+              } yield Redirect(routes.AdminSeasonController.list()).flashing("success" -> "Temporada marcada como actual y anuncio enviado."))
+                .recover { case ex =>
+                  logger.error(s"No se pudo enviar anuncio de apertura para temporada id=$id", ex)
+                  Redirect(routes.AdminSeasonController.list())
+                    .flashing("success" -> "Temporada marcada como actual, pero no se pudo enviar el anuncio de newsletter.")
+                }
+          }
       }
     }
   }

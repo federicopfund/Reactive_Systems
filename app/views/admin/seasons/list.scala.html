@@ -57,6 +57,10 @@
                   <span> · </span>
                   <form method="POST" action="@routes.AdminSeasonController.setCurrent(sid)" class="ed-inline-form">
                     @helper.CSRF.formField
+                    <label>
+                      <input type="checkbox" name="announceNewsletter" value="on">
+                      Anunciar apertura
+                    </label>
                     <button type="submit" class="ed-link-btn ed-link-btn--success">Marcar actual</button>
                   </form>
                 }
