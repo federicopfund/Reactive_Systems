@@ -89,6 +89,7 @@ class HomeController @Inject()(
   }
 
   def temporada(code: String) = Action.async { implicit request: Request[AnyContent] =>
+    analyticsAdapter.trackPageView(s"/temporadas/$code", None, request.headers.get("Referer"))
     seasonRepo.findByCode(code).flatMap {
       case Some(season) =>
         season.id match {
