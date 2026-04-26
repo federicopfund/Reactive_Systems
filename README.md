@@ -57,6 +57,12 @@ sbt "testOnly core.guardian.DomainGuardianSpec"
 
 ---
 
+## 📚 Documentación editorial
+
+- [Cadencia editorial y decisión de producto](docs/EDITORIAL_CADENCE.md) — **fuente de verdad** sobre flujo continuo por temporadas, cadencia mensual y pieza inaugural.
+
+---
+
 ## 🧭 Mapa funcional
 
 | Área | Rutas | Vistas | Roles |
