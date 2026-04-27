@@ -32,6 +32,12 @@
   function writeCollapsed(v) {
     try { localStorage.setItem(KEY_COLLAPSED, v ? '1' : '0'); }
     catch (e) { /* ignore */ }
+    // Cookie espejo: la lee el partial del sidebar para SSR-rail (anti-FOUC).
+    try {
+      var maxAge = 60 * 60 * 24 * 365; // 1 año
+      document.cookie = KEY_COLLAPSED + '=' + (v ? '1' : '0') +
+        '; path=/; max-age=' + maxAge + '; SameSite=Lax';
+    } catch (e) { /* ignore */ }
   }
 
   function applyRail(collapsed) {
@@ -96,8 +102,16 @@
       });
     });
 
-    // Aplica preferencia en desktop.
-    if (!isMobile()) applyRail(readCollapsed());
+    // Aplica preferencia en desktop. En mobile, garantiza que el rail
+    // (que pudo venir aplicado por SSR via cookie) quede limpio.
+    if (isMobile()) {
+      sidebar.classList.remove('ed-sidebar--rail');
+    } else {
+      // Sincroniza cookie con localStorage por si difieren.
+      var collapsed = readCollapsed();
+      writeCollapsed(collapsed);
+      applyRail(collapsed);
+    }
 
     // Click delegation.
     document.addEventListener('click', function (ev) {

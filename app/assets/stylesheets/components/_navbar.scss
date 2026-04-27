@@ -46,7 +46,14 @@
     padding: 0.6rem 0;
     gap: 0;
     position: relative;
-    .ed-nav-dot { width: 8px; height: 8px; flex-shrink: 0; }
+    // En rail: el dot guía desaparece; el icono toma su lugar.
+    .ed-nav-dot { display: none; }
+    .ed-nav-icon {
+      display: inline-flex;
+      width: 20px;
+      height: 20px;
+      svg { width: 20px; height: 20px; }
+    }
 
     // Tooltip flotante en modo rail (Issue #18 follow-up).
     // Se materializa con data-tip="…" en cada <a>.
@@ -355,6 +362,17 @@
   background: var(--ed-text-faint);
   flex-shrink: 0;
   transition: background 0.15s;
+}
+
+// Iconos contextuales del sidebar — solo visibles en modo rail (colapsado).
+// En modo expandido, el "punto guía" sigue marcando los items.
+.ed-nav-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
 // Sidebar auth block (footer)

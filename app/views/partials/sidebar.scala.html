@@ -15,6 +15,56 @@
   if (active) "ed-nav-item is-active" else "ed-nav-item"
 }
 
+@*
+ * Iconos para el modo rail (sidebar colapsado).
+ * Cuando el sidebar muestra solo iconos (sin texto), cada item exhibe
+ * un glyph contextual en lugar del clásico punto guía. En modo expandido
+ * el icono queda oculto vía CSS y el punto vuelve a ser visible.
+ *@
+@navIcon(name: String) = {
+  <span class="ed-nav-icon" aria-hidden="true">
+    @name match {
+      case "propuestas" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4z"/><path d="M14 4v6h6"/><path d="M8 14h8M8 18h5"/></svg>
+      }
+      case "perfil" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      }
+      case "mensajes" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>
+      }
+      case "notificaciones" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2H4.5z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+      }
+      case "guardados" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+      }
+      case "admin" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7z"/></svg>
+      }
+      case "portada" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+      }
+      case "acerca" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v5h1"/></svg>
+      }
+      case "articulos" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 8h7M9 12h7M9 16h4"/></svg>
+      }
+      case "agenda" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+      }
+      case "colecciones" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7"/><rect x="14" y="4" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      }
+      case "contacto" => {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16.5v3a1.5 1.5 0 0 1-1.6 1.5A18 18 0 0 1 3 4.6 1.5 1.5 0 0 1 4.5 3h3a1.5 1.5 0 0 1 1.5 1.3c.1.9.3 1.7.6 2.5a1.5 1.5 0 0 1-.4 1.6L7.9 9.7a16 16 0 0 0 6.4 6.4l1.3-1.3a1.5 1.5 0 0 1 1.6-.4c.8.3 1.6.5 2.5.6A1.5 1.5 0 0 1 21 16.5z"/></svg>
+      }
+      case _ => { <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg> }
+    }
+  </span>
+}
+
 @userId   = @{ request.session.get("userId") }
 @userName = @{ request.session.get("userName").getOrElse("Invitado") }
 @userRole = @{ request.session.get("userRole").getOrElse("guest") }
@@ -32,7 +82,20 @@
   }
 }
 
-<aside id="ed-sidebar" class="ed-sidebar" aria-label="Navegación principal">
+@*
+ * Anti-FOUC del rail: si la cookie `ed-sidebar-collapsed=1` existe, ya
+ * renderizamos con `ed-sidebar--rail` para evitar que el sidebar se
+ * dibuje expandido y el JS lo colapse después (parpadeo entre páginas).
+ * La cookie la mantiene sincronizada `sidebar.js` junto al localStorage.
+ *@
+@railClass = @{
+  request.cookies.get("ed-sidebar-collapsed").map(_.value) match {
+    case Some("1") => " ed-sidebar--rail"
+    case _         => ""
+  }
+}
+
+<aside id="ed-sidebar" class="ed-sidebar@railClass" aria-label="Navegación principal">
   <button type="button"
           class="ed-sidebar__rail-toggle"
           data-action="toggle-rail"
@@ -60,32 +123,32 @@
              class="@navAttrs(active)"
              data-tip="Mis propuestas"
              @if(active){aria-current="page"}>
-            <span class="ed-nav-dot" aria-hidden="true"></span>Mis propuestas
+            @navIcon("propuestas")<span class="ed-nav-dot" aria-hidden="true"></span>Mis propuestas
           </a>
         }
         <a href="@routes.UserPublicationController.editProfileForm()"
            class="@navAttrs(isActive("/user/profile"))"
            data-tip="Mi perfil"
            @if(isActive("/user/profile")){aria-current="page"}>
-          <span class="ed-nav-dot" aria-hidden="true"></span>Mi perfil
+          @navIcon("perfil")<span class="ed-nav-dot" aria-hidden="true"></span>Mi perfil
         </a>
         <a href="@routes.UserPublicationController.inbox()"
            class="@navAttrs(isActive("/user/messages"))"
            data-tip="Mensajes"
            @if(isActive("/user/messages")){aria-current="page"}>
-          <span class="ed-nav-dot" aria-hidden="true"></span>Mensajes
+          @navIcon("mensajes")<span class="ed-nav-dot" aria-hidden="true"></span>Mensajes
         </a>
         <a href="@routes.UserPublicationController.notifications()"
            class="@navAttrs(isActive("/user/notifications"))"
            data-tip="Notificaciones"
            @if(isActive("/user/notifications")){aria-current="page"}>
-          <span class="ed-nav-dot" aria-hidden="true"></span>Notificaciones
+          @navIcon("notificaciones")<span class="ed-nav-dot" aria-hidden="true"></span>Notificaciones
         </a>
         <a href="@routes.UserPublicationController.bookmarks()"
            class="@navAttrs(isActive("/user/bookmarks"))"
            data-tip="Guardados"
            @if(isActive("/user/bookmarks")){aria-current="page"}>
-          <span class="ed-nav-dot" aria-hidden="true"></span>Guardados
+          @navIcon("guardados")<span class="ed-nav-dot" aria-hidden="true"></span>Guardados
         </a>
       </div>
 
@@ -96,7 +159,7 @@
              class="@navAttrs(isActive("/admin"))"
              data-tip="Panel Admin"
              @if(isActive("/admin")){aria-current="page"}>
-            <span class="ed-nav-dot" aria-hidden="true"></span>Panel Admin
+            @navIcon("admin")<span class="ed-nav-dot" aria-hidden="true"></span>Panel Admin
           </a>
         </div>
       }
@@ -119,36 +182,36 @@
              class="@navAttrs(isActive("/"))"
              data-tip="Portada"
              @if(isActive("/")){aria-current="page"}>
-            <span class="ed-nav-dot" aria-hidden="true"></span>Portada
+            @navIcon("portada")<span class="ed-nav-dot" aria-hidden="true"></span>Portada
           </a>
           <a href="@routes.HomeController.acercaDe()"
              class="@navAttrs(isActive("/acerca-de"))"
              data-tip="Acerca de"
              @if(isActive("/acerca-de")){aria-current="page"}>
-            <span class="ed-nav-dot" aria-hidden="true"></span>Acerca de
+            @navIcon("acerca")<span class="ed-nav-dot" aria-hidden="true"></span>Acerca de
           </a>
           <a href="@routes.HomeController.publicaciones()"
              class="@navAttrs(isActive("/publicaciones") || isActive("/temporadas"))"
              data-tip="Artículos"
              @if(isActive("/publicaciones") || isActive("/temporadas")){aria-current="page"}>
-            <span class="ed-nav-dot" aria-hidden="true"></span>Artículos
+            @navIcon("articulos")<span class="ed-nav-dot" aria-hidden="true"></span>Artículos
           </a>
           <a href="@routes.EventController.index()"
              class="@navAttrs(isActive("/eventos"))"
              data-tip="Agenda"
              @if(isActive("/eventos")){aria-current="page"}>
-            <span class="ed-nav-dot" aria-hidden="true"></span>Agenda
+            @navIcon("agenda")<span class="ed-nav-dot" aria-hidden="true"></span>Agenda
           </a>
           <a href="@routes.HomeController.portafolio()"
              class="@navAttrs(isActive("/portafolio"))"
              data-tip="Colecciones"
              @if(isActive("/portafolio")){aria-current="page"}>
-            <span class="ed-nav-dot" aria-hidden="true"></span>Colecciones
+            @navIcon("colecciones")<span class="ed-nav-dot" aria-hidden="true"></span>Colecciones
           </a>
           <a href="@routes.HomeController.index()#contact"
              class="ed-nav-item ed-nav-item--anchor"
              data-tip="Contacto">
-            <span class="ed-nav-dot" aria-hidden="true"></span>Contacto
+            @navIcon("contacto")<span class="ed-nav-dot" aria-hidden="true"></span>Contacto
           </a>
         </div>
       </details>

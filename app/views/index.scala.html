@@ -338,37 +338,48 @@ de la comunidad</div>
   }
 
   @* ── CONTACTO ── *@
-  <section class="ed-section" id="contact">
+  <section class="ed-section ed-contact" id="contact">
     <div class="ed-section-label">IV — Hablemos</div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2.5rem;">
-      <div>
-        <h2 class="ed-h2" style="margin-bottom: 0.75rem;">Escribe a la redacción</h2>
-        <p class="ed-prose" style="max-width: 48ch;">
+    <div class="ed-contact__grid">
+      <aside class="ed-contact__intro">
+        <span class="ed-contact__ornament" aria-hidden="true">✒</span>
+        <h2 class="ed-h2 ed-contact__title">Escribe a la redacción</h2>
+        <p class="ed-prose ed-contact__lede">
           Propuestas, errores en publicaciones, colaboraciones o consultas técnicas.
           Respondemos en un plazo razonable.
         </p>
-      </div>
-      <form action="@routes.HomeController.submitContact()" method="POST" class="ed-form">
+        <ul class="ed-contact__meta" aria-label="Canales de contacto">
+          <li><span class="ed-contact__meta-key">Cadencia</span><span class="ed-contact__meta-val">L–V · 09–18 ART</span></li>
+          <li><span class="ed-contact__meta-key">Formato</span><span class="ed-contact__meta-val">Texto plano, sin adjuntos</span></li>
+          <li><span class="ed-contact__meta-key">Privacidad</span><span class="ed-contact__meta-val">No compartimos tu correo</span></li>
+        </ul>
+      </aside>
+      <form action="@routes.HomeController.submitContact()" method="POST" class="ed-form ed-contact__form" novalidate>
         @helper.CSRF.formField
+        <header class="ed-contact__form-head">
+          <span class="ed-contact__form-eyebrow">Carta abierta</span>
+          <span class="ed-contact__form-rule" aria-hidden="true"></span>
+        </header>
         <div class="ed-form__row">
           <div class="ed-field @if(contactForm("name").hasErrors){ed-field--error}">
-            <label>Nombre</label>
-            <input type="text" name="name" value="@contactForm("name").value.getOrElse("")" required>
+            <label for="ed-contact-name">Nombre</label>
+            <input id="ed-contact-name" type="text" name="name" value="@contactForm("name").value.getOrElse("")" placeholder="Tu nombre" required>
             @contactForm("name").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
           </div>
           <div class="ed-field @if(contactForm("email").hasErrors){ed-field--error}">
-            <label>Email</label>
-            <input type="email" name="email" value="@contactForm("email").value.getOrElse("")" required>
+            <label for="ed-contact-email">Email</label>
+            <input id="ed-contact-email" type="email" name="email" value="@contactForm("email").value.getOrElse("")" placeholder="nombre@@dominio.com" required>
             @contactForm("email").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
           </div>
         </div>
         <div class="ed-field @if(contactForm("message").hasErrors){ed-field--error}">
-          <label>Mensaje</label>
-          <textarea name="message" rows="5" required>@contactForm("message").value.getOrElse("")</textarea>
+          <label for="ed-contact-message">Mensaje</label>
+          <textarea id="ed-contact-message" name="message" rows="6" placeholder="Contanos brevemente el motivo del contacto…" required>@contactForm("message").value.getOrElse("")</textarea>
           @contactForm("message").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
         </div>
-        <div class="ed-form__actions">
-          <button type="submit" class="ed-btn-primary">Enviar mensaje</button>
+        <div class="ed-form__actions ed-contact__actions">
+          <p class="ed-contact__legal">Al enviar aceptás nuestra <a href="@routes.HomeController.politicaPrivacidad()">política de privacidad</a>.</p>
+          <button type="submit" class="ed-btn-primary">Enviar mensaje →</button>
         </div>
       </form>
     </div>
