@@ -125,3 +125,50 @@
   line-height: 1.6;
   white-space: pre-line;
 }
+
+// ── CTA secundario: Journey editorial (acceso a Temporadas)
+.ed-hero-journey-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--ed-border);
+  border-left: 3px solid var(--ed-accent);
+  background: transparent;
+  text-decoration: none;
+  color: var(--ed-text);
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--ed-bg2);
+    border-color: var(--ed-accent);
+    transform: translateY(-1px);
+  }
+}
+
+.ed-hero-journey-cta__eyebrow {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+  font-weight: 700;
+}
+
+.ed-hero-journey-cta__body {
+  font-family: $font-body;
+  font-size: 0.78rem;
+  color: var(--ed-text-dim);
+  line-height: 1.45;
+
+  em {
+    font-style: italic;
+    color: var(--ed-text);
+    text-decoration: underline;
+    text-decoration-color: var(--ed-accent);
+    text-underline-offset: 3px;
+  }
+}
+

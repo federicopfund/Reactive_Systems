@@ -1,0 +1,273 @@
+// ============================================
+// Notificaciones — grafo de hilos (thread graph)
+// Renderizado como puntos sobre un tronco con
+// ramificaciones para conversaciones que se bifurcan.
+// ============================================
+
+$ed-graph-trunk-color:    var(--ed-border);
+$ed-graph-trunk-active:   var(--ed-accent);
+$ed-graph-dot-size:       14px;
+$ed-graph-trunk-w:        2px;
+$ed-graph-indent-trunk:   1.75rem;
+$ed-graph-indent-branch:  1.75rem;
+
+.ed-thread-graph {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0 0 0 #{$ed-graph-indent-trunk};
+  position: relative;
+
+  // Tronco principal
+  &::before {
+    content: '';
+    position: absolute;
+    left: calc(#{$ed-graph-indent-trunk} / 2);
+    top: 1.4rem;
+    bottom: 1.4rem;
+    width: $ed-graph-trunk-w;
+    background: $ed-graph-trunk-color;
+    border-radius: 1px;
+  }
+}
+
+.ed-thread-graph__group {
+  position: relative;
+  padding: 0.85rem 0;
+
+  & + & { margin-top: 0.25rem; }
+}
+
+// ── Nodo ────────────────────────────────────────
+.ed-thread-graph__node {
+  position: relative;
+  padding: 0.95rem 1.1rem;
+  background: var(--ed-bg2);
+  border: 1px solid var(--ed-border);
+  border-left: 3px solid var(--ed-text-faint);
+  border-radius: 2px;
+  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+
+  &:hover {
+    border-left-color: $ed-graph-trunk-active;
+    transform: translateX(2px);
+  }
+
+  &.is-unread {
+    border-left-color: $ed-graph-trunk-active;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 109, 56, 0.06) 0%,
+      var(--ed-bg2) 30%
+    );
+  }
+}
+
+// ── Punto sobre el tronco ──────────────────────
+.ed-thread-graph__dot {
+  position: absolute;
+  // Empuja el dot fuera de la tarjeta hacia el tronco
+  left: calc(-1 * (#{$ed-graph-indent-trunk} / 2) - #{$ed-graph-dot-size} / 2 - 0.05rem);
+  top: 1.1rem;
+  width: $ed-graph-dot-size;
+  height: $ed-graph-dot-size;
+  border-radius: 50%;
+  background: var(--ed-bg);
+  border: 2px solid var(--ed-text-faint);
+  box-shadow: 0 0 0 4px var(--ed-bg);
+  z-index: 2;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+
+  &.is-unread {
+    background: $ed-graph-trunk-active;
+    border-color: $ed-graph-trunk-active;
+    box-shadow: 0 0 0 4px var(--ed-bg), 0 0 0 7px rgba(255, 109, 56, 0.18);
+  }
+}
+
+// Conector horizontal: del tronco al borde de la tarjeta del nodo
+.ed-thread-graph__node:not(.ed-thread-graph__node--branch)::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * (#{$ed-graph-indent-trunk} / 2));
+  top: calc(1.1rem + #{$ed-graph-dot-size} / 2 - 1px);
+  width: calc(#{$ed-graph-indent-trunk} / 2);
+  height: $ed-graph-trunk-w;
+  background: $ed-graph-trunk-color;
+  z-index: 1;
+}
+
+// ── Encabezado del nodo ────────────────────────
+.ed-thread-graph__node-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ed-thread-graph__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.ed-thread-graph__type {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--ed-border);
+  border-radius: 2px;
+}
+
+.ed-thread-graph__time {
+  margin-left: auto;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  color: var(--ed-text-faint);
+}
+
+.ed-thread-graph__title {
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin: 0 0 0.3rem;
+  line-height: 1.3;
+}
+
+.ed-thread-graph__msg {
+  font-family: $font-body;
+  font-size: 0.88rem;
+  color: var(--ed-text-dim);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.ed-thread-graph__link {
+  display: inline-block;
+  margin-top: 0.65rem;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $ed-graph-trunk-active;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+// ── Ramas (subhilo) ────────────────────────────
+.ed-thread-graph__branches {
+  list-style: none;
+  margin: 0.85rem 0 0 #{$ed-graph-indent-branch};
+  padding: 0 0 0 #{$ed-graph-indent-branch};
+  position: relative;
+
+  // Subtronco vertical
+  &::before {
+    content: '';
+    position: absolute;
+    left: calc(#{$ed-graph-indent-branch} / 2);
+    top: 0;
+    bottom: 1.1rem;
+    width: $ed-graph-trunk-w;
+    background: $ed-graph-trunk-color;
+    border-radius: 1px;
+  }
+
+  // Curva: parte del tronco padre, baja y dobla a la derecha
+  // hasta tocar el subtronco. Esto materializa la "rama".
+  &::after {
+    content: '';
+    position: absolute;
+    left: calc(-1 * #{$ed-graph-indent-branch} - #{$ed-graph-trunk-w} / 2 + 0.05rem);
+    top: -0.85rem;
+    width: calc(#{$ed-graph-indent-branch} + #{$ed-graph-indent-branch} / 2);
+    height: 1.6rem;
+    border-left: $ed-graph-trunk-w solid $ed-graph-trunk-color;
+    border-bottom: $ed-graph-trunk-w solid $ed-graph-trunk-color;
+    border-bottom-left-radius: 14px;
+    pointer-events: none;
+  }
+}
+
+.ed-thread-graph__branch {
+  position: relative;
+  padding: 0.5rem 0;
+
+  // Conector horizontal del subtronco al nodo de la rama
+  &::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * (#{$ed-graph-indent-branch} / 2));
+    top: calc(50% - 1px);
+    width: calc(#{$ed-graph-indent-branch} / 2);
+    height: $ed-graph-trunk-w;
+    background: $ed-graph-trunk-color;
+    z-index: 1;
+  }
+
+  // El dot del nodo rama queda alineado al subtronco
+  .ed-thread-graph__dot {
+    top: 50%;
+    transform: translateY(-50%);
+    left: calc(-1 * (#{$ed-graph-indent-branch} / 2) - #{$ed-graph-dot-size} / 2 - 0.05rem);
+  }
+}
+
+.ed-thread-graph__node--branch {
+  background: var(--ed-bg);
+  border-style: solid;
+  border-color: var(--ed-border);
+}
+
+// ── Estados a nivel de grupo ───────────────────
+.ed-thread-graph__group.has-unread > .ed-thread-graph__node {
+  border-left-color: $ed-graph-trunk-active;
+}
+
+// Cuando un grupo tiene ramas, marcamos el dot raíz como "nodo bifurcación"
+.ed-thread-graph__group.has-branches > .ed-thread-graph__node > .ed-thread-graph__dot {
+  border-color: $ed-graph-trunk-active;
+}
+
+// ── Responsive ─────────────────────────────────
+@media (max-width: 640px) {
+  .ed-thread-graph {
+    padding-left: 1.25rem;
+
+    &::before { left: 0.4rem; }
+  }
+  .ed-thread-graph__branches {
+    margin-left: 1rem;
+    padding-left: 1rem;
+  }
+  .ed-thread-graph__time {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}
+
+// ── Acciones del nodo (CTAs por notificación) ──
+.ed-thread-graph__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.65rem;
+}
+
+.ed-thread-graph__link--reply {
+  color: var(--ed-text);
+  border: 1px solid var(--ed-border);
+  padding: 0.35rem 0.7rem;
+  border-radius: 2px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+
+  &:hover {
+    border-color: $ed-graph-trunk-active;
+    background: rgba(255, 109, 56, 0.08);
+    text-decoration: none;
+  }
+}

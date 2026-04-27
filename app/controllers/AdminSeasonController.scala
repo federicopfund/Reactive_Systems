@@ -3,7 +3,7 @@ package controllers
 import controllers.actions.{AdminOnlyAction, CapabilityCheck}
 import models.EditorialSeason
 import play.api.mvc._
-import repositories.EditorialSeasonRepository
+import repositories.{EditorialSeasonRepository, PublicationRepository}
 import repositories.{NewsletterRepository, UserNotificationRepository, UserRepository}
 import utils.Capabilities.Cap
 
@@ -95,6 +95,7 @@ private[controllers] object AdminSeasonValidation {
 class AdminSeasonController @Inject()(
   cc: ControllerComponents,
   seasonRepo: EditorialSeasonRepository,
+  publicationRepo: PublicationRepository,
   newsletterRepo: NewsletterRepository,
   userRepo: UserRepository,
   notificationRepo: UserNotificationRepository,
@@ -113,7 +114,7 @@ class AdminSeasonController @Inject()(
 
   def newForm(): Action[AnyContent] = adminAction.async { implicit request =>
     CapabilityCheck.require(request, Cap.SeasonsManage) {
-      Future.successful(Ok(views.html.admin.seasons.form(None, Map.empty, defaultFormData)))
+      Future.successful(Ok(views.html.admin.seasons.form(None, Map.empty, defaultFormData, Nil, Nil)))
     }
   }
 
@@ -122,11 +123,11 @@ class AdminSeasonController @Inject()(
       val formData = parseForm(request.body.asFormUrlEncoded.getOrElse(Map.empty))
       validate(formData, isCreate = true) match {
         case Left(errors) =>
-          Future.successful(BadRequest(views.html.admin.seasons.form(None, errors, formData)))
+          Future.successful(BadRequest(views.html.admin.seasons.form(None, errors, formData, Nil, Nil)))
         case Right(parsed) =>
           seasonRepo.findByCode(parsed.code).flatMap {
             case Some(_) =>
-              Future.successful(BadRequest(views.html.admin.seasons.form(None, Map("code" -> "Ya existe una temporada con ese código."), formData)))
+              Future.successful(BadRequest(views.html.admin.seasons.form(None, Map("code" -> "Ya existe una temporada con ese código."), formData, Nil, Nil)))
             case None =>
               seasonRepo.create(parsed.code, parsed.name, parsed.tagline, parsed.openingEssay, parsed.startsOn, parsed.endsOn).map { id =>
                 Redirect(routes.AdminSeasonController.editForm(id)).flashing("success" -> "Temporada creada.")
@@ -138,9 +139,19 @@ class AdminSeasonController @Inject()(
 
   def editForm(id: Long): Action[AnyContent] = adminAction.async { implicit request =>
     CapabilityCheck.require(request, Cap.SeasonsManage) {
-      seasonRepo.findById(id).map {
-        case Some(season) => Ok(views.html.admin.seasons.form(Some(season), Map.empty, toFormData(season)))
-        case None         => NotFound("Temporada no encontrada")
+      seasonRepo.findById(id).flatMap {
+        case None => Future.successful(NotFound("Temporada no encontrada"))
+        case Some(season) =>
+          for {
+            assigned   <- publicationRepo.findApprovedBySeasonId(id)
+            assignable <- publicationRepo.findApprovedAssignableForSeason(id)
+          } yield Ok(views.html.admin.seasons.form(
+            existing   = Some(season),
+            formErrors = Map.empty,
+            formData   = toFormData(season),
+            assigned   = assigned,
+            assignable = assignable
+          ))
       }
     }
   }
@@ -153,10 +164,13 @@ class AdminSeasonController @Inject()(
           val formData = parseForm(request.body.asFormUrlEncoded.getOrElse(Map.empty)) + ("code" -> existing.code)
           validate(formData, isCreate = false) match {
             case Left(errors) =>
-              Future.successful(BadRequest(views.html.admin.seasons.form(Some(existing), errors, formData)))
+              for {
+                assigned   <- publicationRepo.findApprovedBySeasonId(id)
+                assignable <- publicationRepo.findApprovedAssignableForSeason(id)
+              } yield BadRequest(views.html.admin.seasons.form(Some(existing), errors, formData, assigned, assignable))
             case Right(parsed) =>
               seasonRepo.updateBasic(id, parsed.name, parsed.tagline, parsed.openingEssay, parsed.startsOn, parsed.endsOn).map { _ =>
-                Redirect(routes.AdminSeasonController.list()).flashing("success" -> "Temporada actualizada.")
+                Redirect(routes.AdminSeasonController.editForm(id)).flashing("success" -> "Temporada actualizada.")
               }
           }
       }
@@ -195,6 +209,33 @@ class AdminSeasonController @Inject()(
                     .flashing("success" -> "Temporada marcada como actual, pero no se pudo enviar el anuncio de newsletter.")
                 }
           }
+      }
+    }
+  }
+
+  // ─── Asignación de publicaciones a la temporada ───
+  // Patrón equivalente al de Colecciones, pero usando la FK
+  // publications.season_id en lugar de una tabla pivot.
+
+  def assignPublication(seasonId: Long, publicationId: Long): Action[AnyContent] = adminAction.async { implicit request =>
+    CapabilityCheck.require(request, Cap.SeasonsManage) {
+      seasonRepo.findById(seasonId).flatMap {
+        case None =>
+          Future.successful(Redirect(routes.AdminSeasonController.list()).flashing("error" -> "Temporada no encontrada."))
+        case Some(_) =>
+          publicationRepo.setSeasonForPublication(publicationId, seasonId).map { ok =>
+            val flash = if (ok) "success" -> "Publicación asignada a la temporada." else "error" -> "No se pudo asignar la publicación."
+            Redirect(routes.AdminSeasonController.editForm(seasonId)).flashing(flash)
+          }
+      }
+    }
+  }
+
+  def unassignPublication(seasonId: Long, publicationId: Long): Action[AnyContent] = adminAction.async { implicit request =>
+    CapabilityCheck.require(request, Cap.SeasonsManage) {
+      publicationRepo.clearSeasonForPublication(publicationId).map { ok =>
+        val flash = if (ok) "success" -> "Publicación quitada de la temporada." else "error" -> "No se pudo quitar la publicación."
+        Redirect(routes.AdminSeasonController.editForm(seasonId)).flashing(flash)
       }
     }
   }

@@ -1,4 +1,8 @@
-@(existing: Option[models.EditorialSeason], formErrors: Map[String, String], formData: Map[String, String])(implicit request: RequestHeader)
+@(existing: Option[models.EditorialSeason],
+  formErrors: Map[String, String],
+  formData: Map[String, String],
+  assigned: List[models.PublicationWithAuthor] = Nil,
+  assignable: List[models.PublicationWithAuthor] = Nil)(implicit request: RequestHeader)
 
 @isEdit = @{ existing.isDefined }
 @actionUrl = @{
@@ -9,8 +13,11 @@
 @v(field: String) = @{ formData.getOrElse(field, "") }
 @err(field: String) = @{
   formErrors.get(field).map { msg =>
-    play.twirl.api.Html(s"""<small class="ed-bo__field-error">$msg</small>""")
+    play.twirl.api.Html(s"""<small class="ed-bo__error">$msg</small>""")
   }.getOrElse(play.twirl.api.Html(""))
+}
+@inputClass(field: String) = @{
+  if (formErrors.contains(field)) "ed-bo__input is-error" else "ed-bo__input"
 }
 
 @admin.adminLayout(if(isEdit) "Editar temporada" else "Nueva temporada", "seasons") {
@@ -18,61 +25,152 @@
   <div class="ed-bo__page-head">
     <div>
       <h1 class="ed-bo__page-title">@if(isEdit) {Editar temporada} else {Nueva temporada}</h1>
-      <p class="ed-bo__page-lead">Define el marco editorial de la temporada.</p>
+      <p class="ed-bo__page-lead">Define el marco editorial: nombre, fechas, opening essay y las publicaciones que conforman su colección.</p>
     </div>
     <div class="ed-bo__page-actions">
       <a class="ed-btn-ghost" href="@routes.AdminSeasonController.list()">Volver</a>
     </div>
   </div>
 
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+  @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
+
   @if(formErrors.nonEmpty) {
     <div class="ed-flash ed-flash--error">Revisa los campos marcados.</div>
   }
 
-  <form method="POST" action="@actionUrl" class="ed-bo__form">
-    @helper.CSRF.formField
+  <div class="ed-bo__detail-grid">
 
-    <div class="ed-bo__field">
-      <label for="code">Código *</label>
-      <input id="code" name="code" type="text" value="@v("code")" pattern="^[a-z0-9-]+$" required @if(isEdit){readonly}>
-      <small class="ed-bo__field-hint">Solo a-z, 0-9 y guiones.</small>
-      @err("code")
-    </div>
+    @* ── Columna principal: metadatos ── *@
+    <section class="ed-bo__panel">
+      <h2 class="ed-bo__panel-title">Metadatos de la temporada</h2>
 
-    <div class="ed-bo__field">
-      <label for="name">Nombre *</label>
-      <input id="name" name="name" type="text" value="@v("name")" required>
-      @err("name")
-    </div>
+      <form method="POST" action="@actionUrl" class="ed-bo__form">
+        @helper.CSRF.formField
 
-    <div class="ed-bo__field">
-      <label for="tagline">Tagline</label>
-      <input id="tagline" name="tagline" type="text" value="@v("tagline")" maxlength="255">
-      @err("tagline")
-    </div>
+        <div class="ed-bo__form-row">
+          <label class="ed-bo__label" for="code">Código *</label>
+          <input id="code" name="code" type="text" value="@v("code")"
+                 class="@inputClass("code")"
+                 pattern="^[a-z0-9-]+$" required @if(isEdit){readonly}>
+          <small class="ed-bo__hint">Solo a-z, 0-9 y guiones. No se modifica luego de crear.</small>
+          @err("code")
+        </div>
 
-    <div class="ed-bo__field">
-      <label for="openingEssay">Opening essay</label>
-      <textarea id="openingEssay" name="openingEssay" rows="8">@v("openingEssay")</textarea>
-      @err("openingEssay")
-    </div>
+        <div class="ed-bo__form-row">
+          <label class="ed-bo__label" for="name">Nombre *</label>
+          <input id="name" name="name" type="text" value="@v("name")"
+                 class="@inputClass("name")" required>
+          @err("name")
+        </div>
 
-    <div class="ed-bo__field-row">
-      <div class="ed-bo__field">
-        <label for="startsOn">Inicio</label>
-        <input id="startsOn" name="startsOn" type="date" value="@v("startsOn")">
-        @err("startsOn")
-      </div>
-      <div class="ed-bo__field">
-        <label for="endsOn">Fin</label>
-        <input id="endsOn" name="endsOn" type="date" value="@v("endsOn")">
-        @err("endsOn")
-      </div>
-    </div>
+        <div class="ed-bo__form-row">
+          <label class="ed-bo__label" for="tagline">Tagline</label>
+          <input id="tagline" name="tagline" type="text" value="@v("tagline")"
+                 class="@inputClass("tagline")" maxlength="255"
+                 placeholder="Frase breve que describe el eje editorial">
+          @err("tagline")
+        </div>
 
-    <div class="ed-bo__form-actions">
-      <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios} else {Crear temporada}</button>
-      <a class="ed-btn-ghost" href="@routes.AdminSeasonController.list()">Cancelar</a>
-    </div>
-  </form>
+        <div class="ed-bo__form-row">
+          <label class="ed-bo__label" for="openingEssay">Opening essay</label>
+          <textarea id="openingEssay" name="openingEssay" rows="6"
+                    class="ed-bo__textarea @if(formErrors.contains("openingEssay")){is-error}"
+                    placeholder="Texto editorial que abre la temporada (opcional)">@v("openingEssay")</textarea>
+          @err("openingEssay")
+        </div>
+
+        <div class="ed-bo__form-row ed-bo__form-row--inline">
+          <div>
+            <label class="ed-bo__label" for="startsOn">Inicio</label>
+            <input id="startsOn" name="startsOn" type="date" value="@v("startsOn")"
+                   class="@inputClass("startsOn")">
+            @err("startsOn")
+          </div>
+          <div>
+            <label class="ed-bo__label" for="endsOn">Fin</label>
+            <input id="endsOn" name="endsOn" type="date" value="@v("endsOn")"
+                   class="@inputClass("endsOn")">
+            @err("endsOn")
+          </div>
+        </div>
+
+        <div class="ed-bo__form-actions">
+          <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios} else {Crear temporada}</button>
+          <a class="ed-btn-ghost" href="@routes.AdminSeasonController.list()">Cancelar</a>
+        </div>
+      </form>
+    </section>
+
+    @* ── Columna lateral: colección de publicaciones (solo en edición) ── *@
+    @existing.flatMap(_.id).map { sid =>
+      <aside class="ed-bo__panel">
+        <h2 class="ed-bo__panel-title">Colección de la temporada (@assigned.size)</h2>
+        <p class="ed-bo__hint" style="margin-bottom:1rem">
+          Publicaciones aprobadas que forman parte de esta temporada. Solo se listan piezas con estado <strong>aprobado</strong>.
+        </p>
+
+        @if(assigned.isEmpty) {
+          <p class="ed-bo__muted">Aún no hay publicaciones asignadas.</p>
+        } else {
+          <ul class="ed-bo__items-list ed-bo__items-list--season">
+            @for(pwa <- assigned) {
+              <li class="ed-bo__item-row">
+                <div class="ed-bo__item-meta">
+                  <span class="ed-bo__item-type">@pwa.publication.category</span>
+                  <strong class="ed-bo__item-title">@pwa.publication.title</strong>
+                  <span class="ed-bo__item-author">por @pwa.authorFullName</span>
+                </div>
+                <div class="ed-bo__item-actions">
+                  <form method="POST"
+                        action="@routes.AdminSeasonController.unassignPublication(sid, pwa.publication.id.get)"
+                        style="display:inline">
+                    @helper.CSRF.formField
+                    <button class="ed-bo__link ed-bo__link--danger" type="submit"
+                            onclick="return confirm('¿Quitar esta publicación de la temporada?')">Quitar</button>
+                  </form>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        <h3 class="ed-bo__panel-title">Agregar publicación</h3>
+        @if(assignable.isEmpty) {
+          <p class="ed-bo__muted">No hay publicaciones aprobadas disponibles para asignar.</p>
+        } else {
+          <form method="POST"
+                action="@routes.AdminSeasonController.assignPublication(sid, 0)"
+                class="ed-bo__items-add"
+                id="ed-season-assign-form">
+            @helper.CSRF.formField
+            <div class="ed-bo__items-add-row ed-bo__items-add-row--season">
+              <select name="publicationId" id="ed-season-pick" class="ed-bo__input" required>
+                <option value="">— Elegí una publicación aprobada —</option>
+                @for(pwa <- assignable) {
+                  <option value="@pwa.publication.id.get">
+                    @pwa.publication.title — @pwa.authorFullName
+                  </option>
+                }
+              </select>
+              <button type="submit" class="ed-btn-primary">Agregar</button>
+            </div>
+          </form>
+          <script>
+            (function () {
+              var f = document.getElementById('ed-season-assign-form');
+              var s = document.getElementById('ed-season-pick');
+              if (!f || !s) return;
+              f.addEventListener('submit', function (e) {
+                var pid = s.value;
+                if (!pid) { e.preventDefault(); return; }
+                // Reescribe la URL con el publicationId real (ruta tipo /:pid/assign)
+                f.action = f.action.replace(/\/0\/assign$/, '/' + pid + '/assign');
+              });
+            })();
+          </script>
+        }
+      </aside>
+    }
+  </div>
 }

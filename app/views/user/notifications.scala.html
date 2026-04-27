@@ -1,11 +1,74 @@
-@(username: String, notifs: List[models.UserNotification])(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(username: String,
+  notifs: List[models.UserNotification],
+  editorialContact: Option[models.User] = None)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@*
+ * Notificaciones del usuario — grafo de hilos.
+ *
+ * Visualización tipo "thread graph":
+ *   • Cada notificación es un nodo (punto) sobre un tronco vertical.
+ *   • Las notificaciones que comparten publicationId se agrupan en
+ *     una RAMA que cuelga del nodo raíz de ese hilo (curva +
+ *     subtronco), permitiendo ver la conversación bifurcada.
+ *   • Las notificaciones sin publicationId quedan como nodos sueltos
+ *     en el tronco principal.
+ *@
+
+@grouped = @{
+  val acc = scala.collection.mutable.LinkedHashMap.empty[Either[Long, Long], List[models.UserNotification]]
+  notifs.foreach { n =>
+    val key: Either[Long, Long] = n.publicationId match {
+      case Some(pid) => Left(pid)
+      case None      => Right(n.id.getOrElse(scala.util.Random.nextLong()))
+    }
+    acc.updateWith(key)(opt => Some(opt.getOrElse(Nil) :+ n))
+  }
+  acc.toList
+    .map { case (k, items) => (k, items.sortBy(_.createdAt)) }
+    .sortBy { case (_, items) => -items.last.createdAt.toEpochMilli }
+}
+
+@formatTs(ts: java.time.Instant) = @{ ts.toString.take(16).replace("T", " ") }
+
+@nodeMarkup(n: models.UserNotification, isBranch: Boolean) = {
+  <article class="ed-thread-graph__node @if(!n.isRead){is-unread} @if(isBranch){ed-thread-graph__node--branch}">
+    <span class="ed-thread-graph__dot @if(!n.isRead){is-unread}" aria-hidden="true"></span>
+    <header class="ed-thread-graph__node-head">
+      <span class="ed-thread-graph__icon" aria-hidden="true">@models.NotificationType.icon(n.notificationType)</span>
+      <span class="ed-thread-graph__type">@n.notificationType.replace("_", " ")</span>
+      <time class="ed-thread-graph__time" datetime="@n.createdAt.toString">@formatTs(n.createdAt)</time>
+    </header>
+    <h3 class="ed-thread-graph__title">@n.title</h3>
+    <p class="ed-thread-graph__msg">@n.message</p>
+    <div class="ed-thread-graph__actions">
+      @n.publicationId.map { pid =>
+        <a href="@routes.UserPublicationController.viewPublication(pid)" class="ed-thread-graph__link">
+          Ver pieza →
+        </a>
+      }
+      @editorialContact.map { admin =>
+        @defining("Re: " + n.title) { subj =>
+          @defining("Hola equipo editorial,\n\nEn referencia a la notificación del " + formatTs(n.createdAt) + ":\n> " + n.title + "\n> " + n.message + "\n\n") { body =>
+            <a href="@routes.UserPublicationController.inbox("received")?to=@admin.username&subject=@java.net.URLEncoder.encode(subj, "UTF-8")&body=@java.net.URLEncoder.encode(body, "UTF-8")"
+               class="ed-thread-graph__link ed-thread-graph__link--reply">
+              Responder a la editorial ↙
+            </a>
+          }
+        }
+      }
+    </div>
+  </article>
+}
 
 @main("Notificaciones") {
   <section class="ed-dashboard">
     <header class="ed-dash-header">
       <div class="ed-dash-eyebrow">@username</div>
       <h1 class="ed-dash-title">Notificaciones</h1>
-      <p class="ed-dash-sub">Actividad reciente sobre tus piezas y mensajes.</p>
+      <p class="ed-dash-sub">
+        Hilo editorial de avisos. Cada punto es una notificación; las que pertenecen a la
+        misma pieza se agrupan en una rama de la conversación.
+      </p>
     </header>
 
     @if(notifs.isEmpty) {
@@ -18,21 +81,27 @@
         ctaHref = Some(routes.UserPublicationController.dashboard().url)
       )
     } else {
-      <ul class="ed-notif-list">
-        @notifs.map { n =>
-          <li class="ed-notif @if(!n.isRead){is-unread}">
-            <span class="ed-notif__icon">@models.NotificationType.icon(n.notificationType)</span>
-            <div class="ed-notif__body">
-              <div class="ed-notif__title">@n.title</div>
-              <div class="ed-notif__msg">@n.message</div>
-              <div class="ed-notif__date">@n.createdAt.toString.take(16).replace("T", " ")</div>
-            </div>
-            @n.publicationId.map { pid =>
-              <a href="@routes.UserPublicationController.viewPublication(pid)" class="ed-link-btn">Ver pieza</a>
+      <ol class="ed-thread-graph" aria-label="Hilo de notificaciones">
+        @grouped.map { case (key, items) =>
+          @defining(items.head) { head =>
+            @defining(items.tail) { branches =>
+              <li class="ed-thread-graph__group @if(branches.nonEmpty){has-branches} @if(items.exists(!_.isRead)){has-unread}">
+                @nodeMarkup(head, isBranch = false)
+
+                @if(branches.nonEmpty) {
+                  <ol class="ed-thread-graph__branches" aria-label="Continuación del hilo">
+                    @branches.map { n =>
+                      <li class="ed-thread-graph__branch">
+                        @nodeMarkup(n, isBranch = true)
+                      </li>
+                    }
+                  </ol>
+                }
+              </li>
             }
-          </li>
+          }
         }
-      </ul>
+      </ol>
     }
   </section>
 }

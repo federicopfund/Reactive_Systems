@@ -15,7 +15,17 @@
 
 @isAuthenticated = @{ request.session.get("userId").isDefined }
 @seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
-@seasonTagline = @{ currentSeason.flatMap(s => s.tagline.orElse(s.description)).map(_.trim).filter(_.nonEmpty) }
+@seasonTagline = @{
+  currentSeason
+    .flatMap(s => s.tagline.orElse(s.description))
+    .map(_.trim)
+    .filter(_.nonEmpty)
+    .map { text =>
+      if (text == "Temporada editorial inicial para desarrollo.")
+        "Una edición digital sobre el Manifiesto Reactivo: arquitecturas que conviven con el fallo, la carga y el cambio."
+      else text
+    }
+}
 
 @main("Portada") {
 
@@ -51,6 +61,18 @@
       </div>
     </div>
     <aside class="ed-hero-aside">
+      @defining(currentSeason.map(s => routes.HomeController.temporada(s.code)).getOrElse(routes.HomeController.temporadas())) { journeyHref =>
+        <a href="@journeyHref" class="ed-hero-journey-cta">
+          <span class="ed-hero-journey-cta__eyebrow">Journey editorial</span>
+          <span class="ed-hero-journey-cta__body">
+            @seasonName.map { name =>
+              Temporada vigente: @name · <em>Conocer la temporada</em>
+            }.getOrElse {
+              Recorré el archivo · <em>Ver temporadas</em>
+            }
+          </span>
+        </a>
+      }
       <div class="ed-aside-stat">
         <div class="ed-aside-stat-num">@{"%02d".format(pillars.size)} <span>·</span></div>
         <div class="ed-aside-stat-label">Pilares

@@ -389,3 +389,10 @@
   font-size: .88rem;
   white-space: pre-wrap;
 }
+
+// ── Variante para asignación de publicaciones a temporada ──
+.ed-bo__items-add-row--season {
+  grid-template-columns: 1fr auto;
+  @media (max-width: 720px) { grid-template-columns: 1fr; }
+}
+.ed-bo__items-list--season .ed-bo__item-row { background: rgba(0,0,0,.02); }

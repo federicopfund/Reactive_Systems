@@ -225,6 +225,8 @@ POST    /admin/seasons/new                          controllers.AdminSeasonContr
 GET     /admin/seasons/:id/edit                     controllers.AdminSeasonController.editForm(id: Long)
 POST    /admin/seasons/:id/edit                     controllers.AdminSeasonController.update(id: Long)
 POST    /admin/seasons/:id/current                  controllers.AdminSeasonController.setCurrent(id: Long)
+POST    /admin/seasons/:id/publications/:pid/assign     controllers.AdminSeasonController.assignPublication(id: Long, pid: Long)
+POST    /admin/seasons/:id/publications/:pid/unassign   controllers.AdminSeasonController.unassignPublication(id: Long, pid: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

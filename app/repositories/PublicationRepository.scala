@@ -218,6 +218,43 @@ class PublicationRepository @Inject()(
     db.run(query).map(_.toList)
   }
 
+  /**
+   * Listar publicaciones aprobadas que NO pertenecen a una temporada
+   * (season_id IS NULL o distinto al seasonId pasado). Sirve para que el
+   * admin pueda elegir qué piezas asignar a una temporada.
+   */
+  def findApprovedAssignableForSeason(seasonId: Long, limit: Int = 200): Future[List[PublicationWithAuthor]] = {
+    val query = sql"""
+      SELECT p.*, u.username, u.full_name
+      FROM publications p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.status = 'approved'
+        AND (p.season_id IS NULL OR p.season_id <> $seasonId)
+      ORDER BY p.published_at DESC, p.created_at DESC
+      LIMIT $limit
+    """.as[PublicationWithAuthor]
+
+    db.run(query).map(_.toList)
+  }
+
+  /** Asignar (o reasignar) una temporada a una publicación. */
+  def setSeasonForPublication(publicationId: Long, seasonIdValue: Long): Future[Boolean] = {
+    val query = publications
+      .filter(_.id === publicationId)
+      .map(_.seasonId)
+      .update(Some(seasonIdValue))
+    db.run(query).map(_ > 0)
+  }
+
+  /** Quitar la temporada de una publicación (season_id = NULL). */
+  def clearSeasonForPublication(publicationId: Long): Future[Boolean] = {
+    val query = publications
+      .filter(_.id === publicationId)
+      .map(_.seasonId)
+      .update(None)
+    db.run(query).map(_ > 0)
+  }
+
   /** Listar publicaciones pendientes de aprobación */
   def findPending(limit: Int = 100): Future[List[PublicationWithAuthor]] = {
     val query = sql"""

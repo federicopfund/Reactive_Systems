@@ -51,7 +51,7 @@ class UserPublicationController @Inject()(
     form: Form[PublicationFormData],
     publication: Option[Publication],
     username: String
-  ): Future[Result] =
+  )(implicit request: RequestHeader): Future[Result] =
     seasonRepo.findCurrent().map { currentSeason =>
       Ok(views.html.user.publicationForm(form, publication, username, currentSeason))
     }
@@ -60,7 +60,7 @@ class UserPublicationController @Inject()(
     form: Form[PublicationFormData],
     publication: Option[Publication],
     username: String
-  ): Future[Result] =
+  )(implicit request: RequestHeader): Future[Result] =
     seasonRepo.findCurrent().map { currentSeason =>
       BadRequest(views.html.user.publicationForm(form, publication, username, currentSeason))
     }
@@ -390,10 +390,11 @@ class UserPublicationController @Inject()(
    */
   def notifications = userAction.async { implicit request: AuthRequest[AnyContent] =>
     for {
-      notifs <- notificationRepo.findByUserId(request.userId)
-      _ <- notificationRepo.markAllAsRead(request.userId)
+      notifs           <- notificationRepo.findByUserId(request.userId)
+      _                <- notificationRepo.markAllAsRead(request.userId)
+      editorialContact <- userRepo.findApprovedAdmins().map(_.headOption)
     } yield {
-      Ok(views.html.user.notifications(request.username, notifs))
+      Ok(views.html.user.notifications(request.username, notifs, editorialContact))
     }
   }
 
@@ -592,11 +593,16 @@ class UserPublicationController @Inject()(
       case "sent" => messageRepo.findSentWithUsers(request.userId)
       case _      => messageRepo.findReceivedWithUsers(request.userId)
     }
+    val q = request.queryString
+    def qs(k: String): Option[String] = q.get(k).flatMap(_.headOption).map(_.trim).filter(_.nonEmpty)
+    val prefillTo      = qs("to")
+    val prefillSubject = qs("subject")
+    val prefillBody    = qs("body")
     for {
-      msgs <- messagesF
+      msgs        <- messagesF
       unreadCount <- messageRepo.countUnread(request.userId)
     } yield {
-      Ok(views.html.user.inbox(request.username, msgs, tab, unreadCount))
+      Ok(views.html.user.inbox(request.username, msgs, tab, unreadCount, prefillTo, prefillSubject, prefillBody))
     }
   }
 

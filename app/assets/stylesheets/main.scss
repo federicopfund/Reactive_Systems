@@ -53,6 +53,7 @@
 @import 'components/agents-dashboard';
 @import 'components/agent-settings';
 @import 'components/events';
+@import 'components/seasons';
 
 // 8. Componentes — flujos de usuario
 @import 'components/auth';
@@ -64,6 +65,7 @@
 @import 'components/about';
 @import 'components/graph-popup';
 @import 'components/messages';
+@import 'components/notifications';
 
 // 8b. Componentes transversales (Issue #18)
 @import 'components/states';

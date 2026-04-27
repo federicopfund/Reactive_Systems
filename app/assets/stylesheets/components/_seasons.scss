@@ -1,0 +1,161 @@
+// ============================================
+// Temporadas — detalle de temporada editorial
+// Transmite la "información de la temporada":
+// estado vigente, código, nombre, tagline, fechas,
+// descripción, ensayo de apertura e índice de piezas.
+// ============================================
+
+.ed-season-hero {
+  padding: 3.5rem 3.5rem 2.5rem;
+  border-bottom: 1px solid var(--ed-border);
+  background: var(--ed-bg);
+}
+
+.ed-season-hero__back {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+
+  a {
+    color: var(--ed-text-dim);
+    text-decoration: none;
+
+    &:hover { color: var(--ed-accent); }
+  }
+}
+
+.ed-season-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-dim);
+  margin-bottom: 1rem;
+
+  code {
+    font-family: $font-mono;
+    color: var(--ed-text);
+    background: var(--ed-bg2);
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+  }
+}
+
+.ed-season-hero__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ed-text-faint);
+
+  &.is-active {
+    background: var(--ed-accent);
+    box-shadow: 0 0 0 3px rgba(255, 109, 56, 0.15);
+  }
+}
+
+.ed-season-hero__title {
+  font-family: $font-display;
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ed-text);
+  margin: 0 0 1rem;
+}
+
+.ed-season-hero__tagline {
+  font-family: $font-body;
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--ed-text-dim);
+  max-width: 60ch;
+  margin: 0 0 2rem;
+}
+
+.ed-season-hero__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
+  margin: 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ed-border);
+
+  > div { margin: 0; }
+
+  dt {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ed-text-faint);
+    margin-bottom: 0.35rem;
+  }
+
+  dd {
+    font-family: $font-display;
+    font-size: 1rem;
+    color: var(--ed-text);
+    margin: 0;
+  }
+}
+
+.ed-season-block {
+  padding: 2.25rem 3.5rem;
+  border-bottom: 1px solid var(--ed-border);
+}
+
+.ed-season-block__label {
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  margin: 0 0 1rem;
+}
+
+.ed-season-block__body {
+  font-family: $font-body;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ed-text);
+  max-width: 70ch;
+
+  p { margin: 0 0 1rem; }
+}
+
+.ed-season-block--essay {
+  background: var(--ed-bg2);
+}
+
+.ed-season-index {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin: 0;
+  max-width: 70ch;
+
+  li {
+    padding: 0.6rem 0;
+    border-bottom: 1px dotted var(--ed-border);
+    font-family: $font-body;
+
+    a {
+      color: var(--ed-text);
+      text-decoration: none;
+      font-weight: 600;
+
+      &:hover { color: var(--ed-accent); }
+    }
+  }
+}
+
+.ed-season-index__author {
+  color: var(--ed-text-dim);
+  font-style: italic;
+  font-size: 0.9rem;
+}

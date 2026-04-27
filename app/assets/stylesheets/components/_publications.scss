@@ -281,3 +281,33 @@
     text-transform: none;
   }
 }
+
+// ── Acceso secundario: archivo de temporadas (en la toolbar de Artículos)
+.ed-pub-archive-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-text-dim);
+  text-decoration: none;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 2px;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+
+  &__icon {
+    color: var(--ed-accent);
+    font-size: 0.85rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--ed-text);
+    border-color: var(--ed-accent);
+    background: var(--ed-bg2);
+  }
+}
+

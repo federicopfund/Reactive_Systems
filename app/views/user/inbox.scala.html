@@ -1,4 +1,12 @@
-@(username: String, msgs: List[models.PrivateMessageWithUsers], tab: String, unreadCount: Int)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(username: String,
+  msgs: List[models.PrivateMessageWithUsers],
+  tab: String,
+  unreadCount: Int,
+  prefillTo: Option[String] = None,
+  prefillSubject: Option[String] = None,
+  prefillBody: Option[String] = None)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+
+@hasPrefill = @{ prefillTo.isDefined || prefillSubject.isDefined || prefillBody.isDefined }
 
 @main("Mensajes") {
   <section class="ed-dashboard">
@@ -15,28 +23,39 @@
     @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
 
     @* ── Composer: escribir mensaje nuevo ───────────────── *@
-    <details class="ed-msg-compose">
+    <details class="ed-msg-compose" id="ed-msg-compose" @if(hasPrefill){open}>
       <summary class="ed-msg-compose__summary">Escribir mensaje</summary>
       <form method="POST" action="@routes.UserPublicationController.sendDirectMessage()" class="ed-msg-compose__body">
         @helper.CSRF.formField
         <div class="ed-msg-compose__row">
           <label for="rcv-username">Para (usuario)</label>
-          <input id="rcv-username" type="text" name="receiverUsername" placeholder="ej: maria.lopez" required>
+          <input id="rcv-username" type="text" name="receiverUsername" value="@prefillTo.getOrElse("")" placeholder="ej: maria.lopez" required>
           <p class="ed-msg-compose__hint">Escribe el username exacto del destinatario.</p>
         </div>
         <div class="ed-msg-compose__row">
           <label for="msg-subject">Asunto</label>
-          <input id="msg-subject" type="text" name="subject" maxlength="200" required>
+          <input id="msg-subject" type="text" name="subject" value="@prefillSubject.getOrElse("")" maxlength="200" required>
         </div>
         <div class="ed-msg-compose__row">
           <label for="msg-content">Mensaje</label>
-          <textarea id="msg-content" name="content" rows="6" required></textarea>
+          <textarea id="msg-content" name="content" rows="6" required>@prefillBody.getOrElse("")</textarea>
         </div>
         <div class="ed-msg-compose__actions">
           <button type="submit" class="ed-btn-primary">Enviar mensaje</button>
         </div>
       </form>
     </details>
+
+    @if(hasPrefill) {
+      <script>
+        (function(){
+          var c = document.getElementById('ed-msg-compose');
+          if (c && c.scrollIntoView) { c.scrollIntoView({behavior:'smooth', block:'start'}); }
+          var focusEl = document.getElementById('msg-content') || document.getElementById('rcv-username');
+          if (focusEl) { focusEl.focus(); }
+        })();
+      </script>
+    }
 
     <nav class="ed-cat-row" role="tablist" aria-label="Filtro de bandeja">
       <a class="ed-cat-pill @if(tab != "sent"){active}" href="@routes.UserPublicationController.inbox("received")">Recibidos</a>

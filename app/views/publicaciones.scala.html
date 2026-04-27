@@ -33,6 +33,12 @@
         <div class="ed-pub-count">@totalCount publicaciones · @seasonName.map(name => "Temporada: " + name).getOrElse("Flujo editorial continuo")</div>
         <h1 class="ed-pub-title">Artículos <em>@seasonName.map(_ => "de la temporada").getOrElse("publicados")</em></h1>
       </div>
+      @defining(currentSeason.map(s => routes.HomeController.temporada(s.code)).getOrElse(routes.HomeController.temporadas())) { journeyHref =>
+        <a href="@journeyHref" class="ed-pub-archive-link">
+          <span class="ed-pub-archive-link__icon" aria-hidden="true">◷</span>
+          journey editorial
+        </a>
+      }
       <form action="@routes.HomeController.searchPublicaciones()" method="GET" class="ed-search-wrap">
         <span class="ed-search-icon">⌕</span>
         <input type="text" name="q" value="@searchQuery" placeholder="Buscar por título, contenido o tags…" autocomplete="off">
