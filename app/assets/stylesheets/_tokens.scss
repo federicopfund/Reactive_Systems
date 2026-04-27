@@ -18,17 +18,21 @@
 //  NIVEL 1 — PRIMITIVOS
 // ────────────────────────────────────────────────────────────
 
-// Crema (escala cálida — base del front editorial)
-$crema-50:   #faf6ee;
-$crema-100:  #f5f0e8;
-$crema-200:  #ede8de;
-$crema-300:  #e0dbd0;
-$crema-400:  #c9c3b7;
-$crema-500:  #a8a193;
-$crema-600:  #6a6058;   // texto secundario sobre crema (4.7:1 ✓)
-$crema-700:  #4a4138;   // texto terciario sobre crema (8.5:1 ✓)
-$crema-800:  #2a241e;
-$crema-900:  #1a1612;   // texto primario sobre crema (≥ 13:1 ✓)
+// Crema (escala neutral cálida — base editorial · papel limpio)
+// Reskin de superficie: blanco puro como papel principal y una escala
+// de grises ligeramente cálida (HUE ~40°, saturación muy baja) que
+// evita el frío industrial sin caer en el tono crema saturado anterior.
+// Inspiración: Stripe Press · The Browser Company · Notion 2024.
+$crema-50:   #ffffff;   // blanco papel · cards / superficies elevadas
+$crema-100:  #fafaf7;   // off-white tibio · superficie principal
+$crema-200:  #f1efe9;   // gris cálido sumido · zebra y secciones
+$crema-300:  #d8d4ca;   // borde fuerte / divisor
+$crema-400:  #b3ad9f;   // iconografía secundaria
+$crema-500:  #8a8478;   // texto desactivado
+$crema-600:  #57534b;   // texto secundario (8.4:1 sobre #fafaf7 ✓)
+$crema-700:  #3a3631;   // texto terciario (12.1:1 ✓)
+$crema-800:  #26231f;   // gray-warm-90
+$crema-900:  #181613;   // tinta cálida (≥ 17:1 sobre el papel ✓)
 
 // Tinta cálida (base del tema noche — no es negro puro)
 $ink-900:    #14110d;   // surface base noche
@@ -37,17 +41,20 @@ $ink-700:    #26211a;
 $ink-600:    #3a3329;
 $ink-500:    #5a5042;
 
-// Terracota (acento editorial)
+// Acento editorial · terracota (preservado del tema editorial original)
+// Mantiene los nombres `$terracota-*` con sus valores históricos. Sobre la
+// nueva base Carbon de grises/blanco logra un contraste editorial alto y
+// se diferencia ntidamente del azul institucional habitual.
 $terracota-300: #f0a878;
-$terracota-500: #c1440e;   // acento primario en crema
-$terracota-600: #a93a09;   // hover en crema
+$terracota-500: #c1440e;   // acento primario (5.4:1 sobre #f4f4f4 ✓)
+$terracota-600: #a93a09;   // hover
 $terracota-400: #e06a2c;   // acento en noche (≥ 4.5:1 sobre $ink-900)
 
-// Estados
-$success-500: #4f7a55;
-$warning-500: #a45f00;
-$danger-500:  #a02c2c;
-$info-500:    #4a6f8f;
+// Estados (alineados con la escala Carbon, ajustados al ojo cálido)
+$success-500: #198038;   // green-60
+$warning-500: #b28600;   // yellow-50 oscurecido para contraste sobre blanco
+$danger-500:  #da1e28;   // red-60
+$info-500:    #0072c3;   // cyan-60
 
 // ────────────────────────────────────────────────────────────
 //  NIVEL 2 — SEMÁNTICOS (CSS variables)
@@ -57,23 +64,25 @@ $info-500:    #4a6f8f;
 // ────────────────────────────────────────────────────────────
 
 // Mapa para programación (usado por _base.scss para emitir las CSS vars)
+// Tema "crema" — escala cálida limpia (off-white · acento terracota).
 $theme-crema: (
-  color-surface:          $crema-100,
-  color-surface-raised:   $crema-50,
-  color-surface-sunken:   $crema-200,
-  color-surface-strong:   $crema-300,
+  color-surface:          $crema-100,   // #fafaf7 — off-white tibio
+  color-surface-raised:   $crema-50,    // #ffffff — papel/cards
+  color-surface-sunken:   $crema-200,   // #f1efe9
+  color-surface-strong:   $crema-300,   // #d8d4ca
 
-  color-text-primary:     $crema-900,
-  color-text-secondary:   $crema-600,
-  color-text-tertiary:    $crema-700,   // ≥ 4.5:1 sobre crema-100/200
+  color-text-primary:     $crema-900,   // #181613 — tinta cálida
+  color-text-secondary:   $crema-600,   // #57534b
+  color-text-tertiary:    $crema-700,   // #3a3631
 
-  color-border-subtle:    rgba(26, 22, 18, 0.10),
-  color-border-strong:    rgba(26, 22, 18, 0.18),
+  color-border-subtle:    rgba(24, 22, 19, 0.08),
+  color-border-strong:    rgba(24, 22, 19, 0.18),
 
-  color-accent:           $terracota-500,
-  color-accent-hover:     $terracota-600,
+  color-accent:           $terracota-500,   // #c1440e — terracota editorial
+  color-accent-hover:     $terracota-600,   // #a93a09
+  color-accent-rgb:       "193, 68, 14",
   color-accent-soft:      rgba(193, 68, 14, 0.10),
-  color-on-accent:        #ffffff,              // 4.8:1 sobre terracota-500 ✓
+  color-on-accent:        #ffffff,
 
   color-focus-ring:       $terracota-500,
 
@@ -96,10 +105,11 @@ $theme-noche: (
   color-border-subtle:    rgba(245, 240, 232, 0.12),
   color-border-strong:    rgba(245, 240, 232, 0.24),
 
-  color-accent:           $terracota-400,       // 4.6:1 sobre $ink-900 ✓
+  color-accent:           $terracota-400,       // #e06a2c · 4.6:1 sobre $ink-900 ✓
   color-accent-hover:     #f08348,
+  color-accent-rgb:       "224, 106, 44",
   color-accent-soft:      rgba(224, 106, 44, 0.16),
-  color-on-accent:        $ink-900,             // 9.7:1 sobre terracota-400 ✓
+  color-on-accent:        $ink-900,
 
   color-focus-ring:       $terracota-400,
 

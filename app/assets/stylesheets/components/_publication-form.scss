@@ -1,4 +1,933 @@
 // ============================================
+// Publication Editor Pro
+// Two-column writers' room: lienzo + metadata sticky.
+// Conecta con public/javascripts/publicationForm.js
+// (autosave, contadores, preview, toolbar, chips, fullscreen).
+// ============================================
+
+// ──────────────────────────────────────────────
+// Shell + topbar
+// ──────────────────────────────────────────────
+.ed-editor-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ed-editor-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+
+  &__left { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+  &__right { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+  &__eyebrow {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  &__hint {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+    strong { color: var(--color-text-primary); font-weight: 600; }
+  }
+}
+
+// ──────────────────────────────────────────────
+// Grid principal
+// ──────────────────────────────────────────────
+.ed-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 1080px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ed-editor-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.ed-editor-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 1.25rem;
+
+  @media (max-width: 1080px) {
+    position: static;
+  }
+}
+
+// ──────────────────────────────────────────────
+// Bloques del lienzo
+// ──────────────────────────────────────────────
+.ed-editor-block {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1.25rem 1.4rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+  }
+
+  &__hint {
+    font-family: $font-body;
+    font-size: 0.7rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--color-text-tertiary, var(--color-text-secondary));
+    font-weight: 400;
+    margin-left: 0.4rem;
+  }
+
+  &__counter {
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    span { color: var(--color-text-primary); font-weight: 600; }
+  }
+
+  &__preview {
+    margin: 0;
+    padding-top: 0.4rem;
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    border-top: 1px dashed var(--color-border);
+    span { color: var(--color-text-primary); }
+  }
+
+  textarea {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-elevated, var(--color-bg));
+    border-radius: 4px;
+    padding: 0.75rem 0.9rem;
+    font-family: $font-body;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--color-text-primary);
+    resize: vertical;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.18);
+    }
+  }
+}
+
+.ed-editor-title-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: $font-display;
+  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+  padding: 0.25rem 0 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  transition: border-color 140ms ease;
+
+  &::placeholder { color: var(--color-text-secondary); font-weight: 600; opacity: 0.5; }
+  &:focus { outline: none; border-bottom-color: var(--color-accent); }
+}
+
+.ed-editor-view-toggles {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.ed-editor-view-btn {
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 120ms ease;
+
+  &:hover { color: var(--color-text-primary); border-color: var(--color-text-secondary); }
+  &.active {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+}
+
+// ──────────────────────────────────────────────
+// Markdown toolbar
+// ──────────────────────────────────────────────
+.ed-md-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.6rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  position: sticky;
+  top: 0.5rem;
+  z-index: 5;
+  // Sombra suave que se intensifica cuando la barra "se pega" al borde superior.
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  transition: box-shadow 160ms ease, transform 160ms ease;
+  // Trick: cuando top:0 hace match (sticky activo), reforzamos sombra.
+  &:where(.ed-editor-canvas__main &) { width: 100%; }
+
+  &__group {
+    display: inline-flex;
+    gap: 0.15rem;
+    padding-right: 0.6rem;
+    border-right: 1px solid var(--color-border);
+    &:last-child { border-right: none; padding-right: 0; }
+  }
+}
+
+// Estado "stuck": cuando la toolbar choca con el top, agrega más profundidad.
+// Implementado con un sentinel + IntersectionObserver opcional; CSS-only fallback:
+.ed-md-toolbar.is-stuck {
+  box-shadow: 0 6px 18px -8px rgba(0,0,0,0.18), 0 1px 0 rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.10);
+}
+
+.ed-md-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-secondary);
+  font-family: $font-body;
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-width: 2rem;
+  height: 1.85rem;
+  padding: 0 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 100ms ease;
+
+  &:hover {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+  &:active {
+    background: rgba(var(--color-accent-rgb), 0.10);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+}
+
+// ──────────────────────────────────────────────
+// Textarea principal del contenido
+// ──────────────────────────────────────────────
+.ed-editor-textarea {
+  width: 100%;
+  min-height: 460px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated, var(--color-bg));
+  border-radius: 4px;
+  padding: 1rem 1.1rem;
+  font-family: $font-mono;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--color-text-primary);
+  resize: vertical;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  tab-size: 4;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.18);
+  }
+}
+
+// ──────────────────────────────────────────────
+// Canvas: textarea + side (preview / TOC) lado a lado
+// ──────────────────────────────────────────────
+.ed-editor-canvas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+  min-width: 0;
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+
+  &__side {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+    // Compensa la altura de la toolbar sticky de la columna izquierda
+    // para que el preview/TOC se alineen con la parte superior del textarea.
+    padding-top: calc(2.85rem + 0.45rem); // ~ alto toolbar + gap del __main
+  }
+
+  // Cuando preview o TOC están visibles, partimos en dos columnas.
+  &:has(.ed-editor-preview-pane.visible),
+  &:has(.ed-editor-toc-pane.visible) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+    .ed-editor-canvas__side { display: flex; }
+
+    .ed-editor-textarea {
+      min-height: 520px;
+      font-size: 0.74rem;
+      line-height: 1.6;
+    }
+  }
+
+  @media (max-width: 900px) {
+    &:has(.ed-editor-preview-pane.visible),
+    &:has(.ed-editor-toc-pane.visible) {
+      grid-template-columns: 1fr;
+      .ed-editor-textarea { font-size: 0.78rem; min-height: 360px; }
+    }
+  }
+}
+
+// ──────────────────────────────────────────────
+// Stats footer
+// ──────────────────────────────────────────────
+.ed-editor-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--color-border);
+
+  strong { color: var(--color-text-primary); font-weight: 600; }
+  &__total { display: none; } // contentCount usado solo por JS
+}
+
+// ──────────────────────────────────────────────
+// Indicadores de caracteres (warning/error)
+// ──────────────────────────────────────────────
+.character-indicator {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  min-height: 1em;
+
+  &.warning { color: #b28600; }
+  &.error   { color: #da1e28; font-weight: 600; }
+}
+
+// ──────────────────────────────────────────────
+// Preview pane + TOC (viven dentro de .ed-editor-canvas__side)
+// ──────────────────────────────────────────────
+.ed-editor-preview-pane,
+.ed-editor-toc-pane {
+  display: none;
+  padding: 1rem 1.15rem;
+  background: var(--color-bg-elevated, var(--color-bg));
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  min-width: 0;
+  overflow-y: auto;
+  max-height: 560px;
+
+  &.visible { display: block; }
+}
+
+.ed-editor-preview-pane {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: var(--color-text-primary);
+  flex: 1;
+
+  h1, h2, h3 { font-family: $font-display; font-weight: 800; line-height: 1.2; margin: 1.2em 0 0.4em; }
+  h1 { font-size: 1.35rem; }
+  h2 { font-size: 1.15rem; }
+  h3 { font-size: 1rem; }
+  p  { margin: 0 0 0.8em; }
+  blockquote {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 0.85rem;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    margin: 0.9em 0;
+  }
+  code {
+    font-family: $font-mono;
+    background: var(--color-surface-muted, rgba(0,0,0,0.04));
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.82em;
+    word-break: break-word;
+  }
+  pre {
+    background: var(--color-surface-muted, rgba(0,0,0,0.04));
+    padding: 0.8rem 0.9rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.78rem;
+    code { background: none; padding: 0; }
+  }
+  ul, ol {
+    padding-left: 1.5em;
+    margin: 0 0 0.9em;
+
+    li { margin: 0.15em 0; padding-left: 0.15em; }
+    li > p { margin: 0 0 0.4em; }
+
+    // Sangría progresiva con guía visual para niveles anidados.
+    ul, ol {
+      margin: 0.3em 0 0.3em;
+      padding-left: 1.4em;
+      border-left: 1px dashed rgba(var(--color-accent-rgb), 0.25);
+      margin-left: 0.25em;
+    }
+    ul ul, ol ol, ul ol, ol ul {
+      border-left-style: dotted;
+      border-left-color: var(--color-border);
+    }
+  }
+
+  // Lista que sigue a un párrafo: queda visualmente "subordinada" a él.
+  p + ul,
+  p + ol {
+    margin-top: -0.4em;
+    padding-left: 1.75em;
+    border-left: 2px solid rgba(var(--color-accent-rgb), 0.18);
+    margin-left: 0.35em;
+  }
+  hr { border: none; border-top: 1px solid var(--color-border); margin: 1.3em 0; }
+  a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; word-break: break-word; }
+  img { max-width: 100%; height: auto; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 1em 0; }
+  th, td { border: 1px solid var(--color-border); padding: 0.4rem 0.6rem; text-align: left; }
+  th { background: var(--color-surface-muted, rgba(0,0,0,0.03)); font-weight: 600; }
+}
+
+.preview-empty {
+  font-family: $font-mono;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.ed-editor-toc-pane {
+  &__head {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.6rem;
+  }
+  ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+  li {
+    font-size: 0.85rem;
+    a { color: var(--color-text-primary); text-decoration: none; &:hover { color: var(--color-accent); } }
+    &.level-1 { font-weight: 600; }
+    &.level-2 { padding-left: 1rem; font-size: 0.82rem; }
+    &.level-3 { padding-left: 2rem; font-size: 0.78rem; color: var(--color-text-secondary); }
+  }
+}
+
+// ──────────────────────────────────────────────
+// Aside cards (metadata)
+// ──────────────────────────────────────────────
+.ed-editor-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem 1.1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  &__title {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin: 0;
+    font-weight: 600;
+  }
+
+  &__chip {
+    font-family: $font-mono;
+    font-size: 0.68rem;
+    color: var(--color-text-primary);
+    background: var(--color-surface-muted, rgba(0,0,0,0.04));
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+  }
+
+  &__sublabel {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+
+  &__hint {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  input[type="url"],
+  input[type="text"],
+  select {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-elevated, var(--color-bg));
+    border-radius: 4px;
+    padding: 0.55rem 0.7rem;
+    font-family: $font-body;
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.18);
+    }
+  }
+}
+
+// ──────────────────────────────────────────────
+// Progress bar
+// ──────────────────────────────────────────────
+.ed-progress {
+  width: 100%;
+  height: 6px;
+  background: var(--color-surface-muted, rgba(0,0,0,0.06));
+  border-radius: 999px;
+  overflow: hidden;
+
+  &__fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-accent-soft, var(--color-accent)) 100%);
+    background: var(--color-accent);
+    transition: width 240ms ease;
+    border-radius: inherit;
+  }
+}
+
+// ──────────────────────────────────────────────
+// Cover preview
+// ──────────────────────────────────────────────
+.ed-cover-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface-muted, rgba(0,0,0,0.02));
+  overflow: hidden;
+  display: none;
+  transition: aspect-ratio 160ms ease, background 160ms ease;
+
+  &.visible { display: block; }
+
+  // Si el JS está mostrando "loading" o "error" (display != none),
+  // colapsamos el aspect-ratio para no dejar un rectángulo gigante.
+  &:has(#imagePreviewLoading[style*="inline"]),
+  &:has(#imagePreviewError[style*="flex"]) {
+    aspect-ratio: auto;
+    min-height: 3.2rem;
+    background: rgba(218, 30, 40, 0.04);
+    border-color: rgba(218, 30, 40, 0.30);
+  }
+  &:has(#imagePreviewLoading[style*="inline"]) {
+    background: rgba(0, 114, 195, 0.05);
+    border-color: rgba(0, 114, 195, 0.30);
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+    &.visible { display: block; }
+  }
+
+  &__msg {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-mono;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: 0.6rem 0.8rem;
+    line-height: 1.4;
+    &.visible { display: flex; }
+    &--err { color: #da1e28; }
+  }
+
+  &__dims {
+    position: absolute;
+    bottom: 0.4rem;
+    right: 0.5rem;
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    color: #fff;
+    background: rgba(0,0,0,0.55);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+  }
+}
+
+// ──────────────────────────────────────────────
+// Tag chips
+// ──────────────────────────────────────────────
+.ed-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated, var(--color-bg));
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  min-height: 2.4rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+
+  &:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.18);
+  }
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: $font-mono;
+  font-size: 0.72rem;
+  background: rgba(var(--color-accent-rgb), 0.10);
+  color: var(--color-accent);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.25);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem 0.15rem 0.65rem;
+  line-height: 1;
+}
+
+.tag-chip-remove {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0 0.1rem;
+  opacity: 0.7;
+  &:hover { opacity: 1; }
+}
+
+.ed-tag-input {
+  flex: 1;
+  min-width: 5rem;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0.2rem 0.3rem !important;
+  font-family: $font-body;
+  font-size: 0.82rem;
+  color: var(--color-text-primary);
+}
+
+.tag-count-badge {
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  color: var(--color-text-secondary);
+  min-height: 1em;
+
+  &.warning { color: #b28600; }
+  &.error   { color: #da1e28; font-weight: 600; }
+}
+
+.ed-tag-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+}
+
+.tag-suggestion {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  cursor: pointer;
+  transition: all 120ms ease;
+
+  &:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    border-style: solid;
+  }
+  &.used {
+    opacity: 0.4;
+    pointer-events: none;
+    text-decoration: line-through;
+  }
+}
+
+// ──────────────────────────────────────────────
+// Acciones
+// ──────────────────────────────────────────────
+.ed-editor-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+
+  .ed-btn-primary {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+// ──────────────────────────────────────────────
+// Autosave indicator
+// ──────────────────────────────────────────────
+.autosave-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+
+  &__dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-text-secondary);
+    transition: background 160ms ease;
+  }
+
+  &.saving {
+    .autosave-indicator__dot {
+      background: #b28600;
+      animation: ed-autosave-pulse 1s ease-in-out infinite;
+    }
+  }
+  &.saved {
+    color: #198038;
+    .autosave-indicator__dot { background: #198038; animation: none; }
+  }
+  &.error {
+    color: #da1e28;
+    .autosave-indicator__dot { background: #da1e28; animation: none; }
+  }
+}
+
+@keyframes ed-autosave-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.4); }
+}
+
+// ──────────────────────────────────────────────
+// Botones xs ghost (topbar)
+// ──────────────────────────────────────────────
+.ed-btn-xs {
+  font-family: $font-mono;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.32rem 0.7rem !important;
+  border-radius: 999px !important;
+}
+
+// ──────────────────────────────────────────────
+// Fullscreen overlay
+// ──────────────────────────────────────────────
+.ed-fs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--color-bg);
+  display: none;
+  flex-direction: column;
+
+  &.active { display: flex; }
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  &__meta {
+    display: flex;
+    gap: 1.25rem;
+    font-family: $font-mono;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    strong { color: var(--color-text-primary); font-weight: 600; }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  &__body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: hidden;
+    &.with-preview { grid-template-columns: 1fr 1fr; }
+  }
+
+  &__textarea {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    padding: 2rem clamp(1.5rem, 8vw, 6rem);
+    font-family: $font-mono;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    resize: none;
+    outline: none;
+  }
+
+  &__preview {
+    display: none;
+    overflow-y: auto;
+    padding: 2rem clamp(1.5rem, 6vw, 4rem);
+    border-left: 1px solid var(--color-border);
+    background: var(--color-bg-elevated, var(--color-bg));
+    font-family: $font-body;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--color-text-primary);
+
+    &.visible { display: block; }
+
+    h1, h2, h3 { font-family: $font-display; font-weight: 800; }
+    h1 { font-size: 1.7rem; margin: 1.2em 0 0.5em; }
+    h2 { font-size: 1.35rem; margin: 1.2em 0 0.5em; }
+    h3 { font-size: 1.1rem; margin: 1em 0 0.4em; }
+    blockquote {
+      border-left: 3px solid var(--color-accent);
+      padding-left: 1rem;
+      color: var(--color-text-secondary);
+      font-style: italic;
+    }
+    code { font-family: $font-mono; background: rgba(0,0,0,0.05); padding: 0.1em 0.35em; border-radius: 3px; }
+    pre  { background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 4px; overflow-x: auto; }
+  }
+}
+
+// ──────────────────────────────────────────────
+// Compatibilidad: clases legacy aún referenciadas
+// ──────────────────────────────────────────────
+.ed-pub-form-page { padding: 0; max-width: none; } // anulado por shell
+.ed-pub-form { gap: 0; }
+.ed-flash { padding: 0.7rem 0.95rem; border-radius: 4px; font-size: 0.85rem; }
+.ed-flash--error { background: rgba(218, 30, 40, 0.08); color: #da1e28; border: 1px solid rgba(218, 30, 40, 0.25); }
+.ed-field-error { color: #da1e28; font-size: 0.78rem; margin-top: 0.25rem; }
+.ed-field-hint  { color: var(--color-text-secondary); font-weight: 400; font-size: 0.72rem; }
+// ============================================
 // Publication form — Crear / editar publicación
 // ============================================
 
@@ -58,4 +987,102 @@
     border-top: 1px solid var(--ed-border);
     flex-wrap: wrap;
   }
+}
+
+// ──────────────────────────────────────────────
+// Extras: paste hint, drop overlay, toast, back btn
+// ──────────────────────────────────────────────
+.ed-editor-paste-hint {
+  margin: 0.4rem 0 0.2rem;
+  font-family: $font-mono;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  background: rgba(var(--color-accent-rgb), 0.06);
+  border: 1px dashed rgba(var(--color-accent-rgb), 0.25);
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.ed-editor-textarea.is-dropping {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 4px rgba(var(--color-accent-rgb), 0.20);
+  background: rgba(var(--color-accent-rgb), 0.04);
+}
+
+.ed-editor-toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translate(-50%, 1rem);
+  background: #181613;
+  color: #fafaf7;
+  font-family: $font-mono;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  padding: 0.7rem 1.1rem;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease;
+  z-index: 1100;
+  max-width: 90vw;
+
+  &.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  &.success { background: #198038; }
+  &.error   { background: #da1e28; }
+  &.info    { background: #0072c3; }
+}
+
+.ed-back-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+// ──────────────────────────────────────────────
+// Embed (iframe) — Claude artifacts, YouTube, etc.
+// ──────────────────────────────────────────────
+.ed-embed {
+  position: relative;
+  width: 100%;
+  margin: 1.2em 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  &__caption {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 160ms ease;
+    pointer-events: auto;
+  }
+  &:hover &__caption { opacity: 1; }
 }

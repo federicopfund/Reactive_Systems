@@ -1,75 +1,279 @@
-@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String, currentSeason: Option[models.EditorialSeason] = None)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String, currentSeason: Option[models.EditorialSeason])(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@isEdit = @{ publication.isDefined }
-@currentSeasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
-@formAction = @{ publication.flatMap(_.id) match {
+@*
+ * Editor de publicaciones — experiencia "writers' room".
+ *
+ * Layout:
+ *   - Topbar de la pieza (eyebrow + título contextual + estado de autoguardado).
+ *   - Main grid:
+ *        izquierda  → editor (título, excerpt, toolbar markdown, textarea,
+ *                     pie de stats, preview en vivo, TOC, modo fullscreen).
+ *        derecha    → metadata sticky (progress, portada con preview,
+ *                     categoría, chips de tags, sugerencias y submit).
+ *
+ * El comportamiento interactivo lo proporciona public/javascripts/publicationForm.js
+ * (autosave, contadores, preview, toolbar, chips, fullscreen, etc.). Aquí
+ * EXPONEMOS los hooks (ids/clases) que el JS espera.
+ *@
+
+@isEdit               = @{ publication.isDefined }
+@currentSeasonName    = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
+@formAction           = @{ publication.flatMap(_.id) match {
   case Some(id) => routes.UserPublicationController.updatePublication(id)
   case None     => routes.UserPublicationController.createPublication()
 }}
+@pageTitle            = @{ if(isEdit) "Editar publicación" else "Nueva publicación" }
 
-@main(if(isEdit) "Editar publicación" else "Nueva publicación") {
-  <section class="ed-pub-form-page">
-    <header class="ed-dash-header">
-      <div class="ed-dash-eyebrow">@if(isEdit){Editar}else{Nueva pieza}</div>
-      <h1 class="ed-dash-title">@if(isEdit){@publication.map(_.title)}else{Cuenta tu pieza}</h1>
-      <p class="ed-dash-sub">Recuerda: las piezas pasan por revisión editorial antes de publicarse.</p>
-      <p class="ed-dash-sub">
-        @currentSeasonName.map { seasonName =>
-          Temporada vigente esperada al programar/publicar: <strong>@seasonName</strong>.
-        }.getOrElse {
-          No hay una temporada vigente configurada actualmente.
+@categories  = @{ List("Tutorial","Artículo","Guía","Caso de Estudio","Recurso") }
+@tagSuggested = @{ List("akka","actores","scala","play","resiliencia","streams","reactive","testing","docker") }
+
+@main(pageTitle, fullBleed = true) {
+  <section class="ed-editor-shell">
+
+    @* ── Topbar contextual del editor ───────────────────────────── *@
+    <header class="ed-editor-topbar">
+      <div class="ed-editor-topbar__left">
+        <span class="ed-editor-topbar__eyebrow">@if(isEdit){Editor · @publication.flatMap(_.id).map("ID " + _).getOrElse("")}else{Nueva pieza}</span>
+        <h1 class="ed-editor-topbar__title">
+          @if(isEdit){@publication.map(_.title)}else{Cuenta tu pieza}
+        </h1>
+        @currentSeasonName.map { name =>
+          <p class="ed-editor-topbar__hint">Temporada vigente: <strong>@name</strong>.</p>
         }
-      </p>
+      </div>
+      <div class="ed-editor-topbar__right">
+        <a href="@routes.UserPublicationController.dashboard()"
+           class="ed-btn-ghost ed-btn-xs ed-back-btn"
+           data-confirm-unsaved="true"
+           title="Volver al dashboard">← Volver</a>
+        <div id="autosaveIndicator" class="autosave-indicator" aria-live="polite">
+          <span class="autosave-indicator__dot" aria-hidden="true"></span>
+          <span id="autosaveText">Auto-guardado activo</span>
+          <button id="restoreDraftBtn" type="button" class="ed-btn-ghost ed-btn-xs" style="display:none" onclick="restoreDraft()">Restaurar borrador</button>
+        </div>
+        <button type="button" class="ed-btn-ghost ed-btn-xs" onclick="openFullscreen()" title="Modo concentración (Ctrl+Shift+F)">
+          ⤢ Fullscreen
+        </button>
+      </div>
     </header>
 
     @flash.get("error").map { m => <div class="ed-flash ed-flash--error">@m</div> }
     @form.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
 
-    <form method="POST" action="@formAction" class="ed-pub-form ed-form">
+    <form method="POST" action="@formAction" class="ed-pub-form ed-form publication-form ed-editor-grid">
       @helper.CSRF.formField
 
-      <div class="ed-field">
-        <label for="title">Título</label>
-        <input type="text" id="title" name="title" value="@form("title").value.getOrElse("")" required maxlength="200">
-        @form("title").error.map { e => <div class="ed-field-error">@e.message</div> }
-      </div>
+      @* ═════════ Columna principal: el lienzo ═════════ *@
+      <div class="ed-editor-main">
 
-      <div class="ed-field-row">
-        <div class="ed-field">
-          <label for="category">Categoría</label>
-          <select id="category" name="category" required>
-            @for(c <- List("Tutorial","Artículo","Guía","Caso de Estudio","Recurso")) {
-              <option value="@c" @if(form("category").value.contains(c)){selected}>@c</option>
-            }
-          </select>
-          @form("category").error.map { e => <div class="ed-field-error">@e.message</div> }
+        @* ── Título ── *@
+        <div class="ed-editor-block">
+          <div class="ed-editor-block__head">
+            <label for="title" class="ed-editor-block__label">Título</label>
+            <span class="ed-editor-block__counter"><span id="titleCount">0</span>/200</span>
+          </div>
+          <input type="text"
+                 id="title" name="title"
+                 class="ed-editor-title-input"
+                 value="@form("title").value.getOrElse("")"
+                 maxlength="200"
+                 placeholder="Un titular memorable…"
+                 required>
+          <div id="titleIndicator" class="character-indicator"></div>
+          <p class="ed-editor-block__preview" aria-hidden="true">Vista previa: <span id="titlePreview">Tu título aparecerá aquí</span></p>
+          @form("title").error.map { e => <div class="ed-field-error">@e.message</div> }
         </div>
-        <div class="ed-field">
-          <label for="tags">Tags <span class="ed-field-hint">(separados por coma)</span></label>
-          <input type="text" id="tags" name="tags" value="@form("tags").value.getOrElse("")" placeholder="akka, actores, resiliencia">
+
+        @* ── Excerpt ── *@
+        <div class="ed-editor-block">
+          <div class="ed-editor-block__head">
+            <label for="excerpt" class="ed-editor-block__label">Resumen <span class="ed-editor-block__hint">(opcional · ~200 caracteres)</span></label>
+            <span class="ed-editor-block__counter"><span id="excerptCount">0</span>/280</span>
+          </div>
+          <textarea id="excerpt" name="excerpt" rows="3" maxlength="280"
+                    placeholder="Una sinopsis de un par de oraciones que enganche al lector.">@form("excerpt").value.getOrElse("")</textarea>
+          <div id="excerptIndicator" class="character-indicator"></div>
+        </div>
+
+        @* ── Contenido + Toolbar + Stats + Preview + TOC ── *@
+        <div class="ed-editor-block ed-editor-block--content">
+          <div class="ed-editor-block__head">
+            <label for="content" class="ed-editor-block__label">Contenido <span class="ed-editor-block__hint">(markdown)</span></label>
+            <div class="ed-editor-view-toggles">
+              <button id="tocToggle" type="button" class="ed-editor-view-btn" onclick="toggleTOC()" title="Tabla de contenidos">☰ Índice</button>
+              <button id="previewToggle" type="button" class="ed-editor-view-btn" onclick="togglePreview()" title="Vista previa">👁 Preview</button>
+            </div>
+          </div>
+
+          @* Lienzo: (toolbar + textarea) | (preview / TOC) en split *@
+          <div class="ed-editor-canvas">
+            <div class="ed-editor-canvas__main">
+              @* Markdown toolbar (sticky dentro de la columna del editor) *@
+              <div class="ed-md-toolbar" role="toolbar" aria-label="Herramientas de formato">
+                <div class="ed-md-toolbar__group">
+                  <button type="button" class="ed-md-btn" title="Negrita (Ctrl+B)" onclick="insertMd('bold')"><strong>B</strong></button>
+                  <button type="button" class="ed-md-btn" title="Cursiva (Ctrl+I)" onclick="insertMd('italic')"><em>I</em></button>
+                  <button type="button" class="ed-md-btn" title="Tachado" onclick="insertMd('strike')"><s>S</s></button>
+                </div>
+                <div class="ed-md-toolbar__group">
+                  <button type="button" class="ed-md-btn" title="Encabezado 1" onclick="insertMd('h1')">H1</button>
+                  <button type="button" class="ed-md-btn" title="Encabezado 2" onclick="insertMd('h2')">H2</button>
+                  <button type="button" class="ed-md-btn" title="Encabezado 3" onclick="insertMd('h3')">H3</button>
+                </div>
+                <div class="ed-md-toolbar__group">
+                  <button type="button" class="ed-md-btn" title="Lista" onclick="insertMd('ul')">• Lista</button>
+                  <button type="button" class="ed-md-btn" title="Lista numerada" onclick="insertMd('ol')">1. Orden</button>
+                  <button type="button" class="ed-md-btn" title="Cita" onclick="insertMd('quote')">❝</button>
+                </div>
+                <div class="ed-md-toolbar__group">
+                  <button type="button" class="ed-md-btn" title="Código en línea" onclick="insertMd('code')">‹/›</button>
+                  <button type="button" class="ed-md-btn" title="Bloque de código" onclick="insertMd('codeblock')">{ }</button>
+                  <button type="button" class="ed-md-btn" title="Tabla" onclick="insertMd('table')">▦</button>
+                </div>
+                <div class="ed-md-toolbar__group">
+                  <button type="button" class="ed-md-btn" title="Enlace" onclick="insertMd('link')">🔗</button>
+                  <button type="button" class="ed-md-btn" title="Imagen" onclick="insertMd('image')">🖼</button>
+                  <button type="button" class="ed-md-btn" title="Embed (Claude / YouTube / iframe)" onclick="insertEmbed()">⧉</button>
+                  <button type="button" class="ed-md-btn" title="Separador" onclick="insertMd('hr')">―</button>
+                </div>
+              </div>
+
+              <textarea id="content" name="content"
+                        class="ed-editor-textarea"
+                        rows="22"
+                        placeholder="# Tu primer encabezado&#10;&#10;Empezá a escribir. Soporta **negrita**, *cursiva*, listas, citas, ```bloques de código```, [enlaces](url) e imágenes."
+                        required>@form("content").value.getOrElse("")</textarea>
+            </div>
+
+            <div class="ed-editor-canvas__side">
+              @* Preview pane (toggle) *@
+              <div id="previewPane" class="ed-editor-preview-pane" aria-live="polite">
+                <div class="preview-empty">Activa la vista previa para renderizar el markdown.</div>
+              </div>
+
+              @* TOC pane (toggle) *@
+              <aside id="tocPanel" class="ed-editor-toc-pane" aria-label="Tabla de contenidos">
+                <header class="ed-editor-toc-pane__head">Tabla de contenidos</header>
+                <ul id="tocList"></ul>
+              </aside>
+            </div>
+          </div>
+
+          @* Pie de stats *@
+          <footer class="ed-editor-stats">
+            <span><strong id="wordCount">0</strong> palabras</span>
+            <span><strong id="readTime">1 min</strong> lectura</span>
+            <span><strong id="charCount">0</strong> caracteres</span>
+            <span><strong id="lineCount">0</strong> líneas</span>
+            <span><strong id="contentCount" class="ed-editor-stats__total">0</strong></span>
+          </footer>
+          <div id="contentIndicator" class="character-indicator"></div>
+          @form("content").error.map { e => <div class="ed-field-error">@e.message</div> }
         </div>
       </div>
 
-      <div class="ed-field">
-        <label for="excerpt">Resumen <span class="ed-field-hint">(opcional, ~200 caracteres)</span></label>
-        <textarea id="excerpt" name="excerpt" rows="3" maxlength="280">@form("excerpt").value.getOrElse("")</textarea>
-      </div>
+      @* ═════════ Aside: metadata sticky ═════════ *@
+      <aside class="ed-editor-side" aria-label="Metadata de la pieza">
 
-      <div class="ed-field">
-        <label for="coverImage">URL de imagen de portada <span class="ed-field-hint">(opcional)</span></label>
-        <input type="url" id="coverImage" name="coverImage" value="@form("coverImage").value.getOrElse("")" placeholder="https://…">
-      </div>
+        @* Progreso editorial *@
+        <section class="ed-editor-card">
+          <header class="ed-editor-card__head">
+            <h3 class="ed-editor-card__title">Progreso</h3>
+            <span class="ed-editor-card__chip" id="progressText">0%</span>
+          </header>
+          <div class="ed-progress" aria-hidden="true">
+            <span id="progressFill" class="ed-progress__fill" style="width:0%"></span>
+          </div>
+          <p class="ed-editor-card__hint">Completa título, categoría, contenido (≥ 50c), resumen, tags y portada para llegar al 100%.</p>
+        </section>
 
-      <div class="ed-field">
-        <label for="content">Contenido <span class="ed-field-hint">(soporta markdown ligero)</span></label>
-        <textarea id="content" name="content" class="ed-editor-textarea" rows="22" required>@form("content").value.getOrElse("")</textarea>
-        @form("content").error.map { e => <div class="ed-field-error">@e.message</div> }
-      </div>
+        @* Portada *@
+        <section class="ed-editor-card">
+          <header class="ed-editor-card__head">
+            <h3 class="ed-editor-card__title">Portada</h3>
+          </header>
+          <div class="ed-field">
+            <label for="coverImage" class="ed-editor-card__sublabel">URL de imagen <span class="ed-field-hint">(opcional)</span></label>
+            <input type="url" id="coverImage" name="coverImage"
+                   value="@form("coverImage").value.getOrElse("")"
+                   placeholder="https://…">
+          </div>
+          <div id="imagePreviewContainer" class="ed-cover-preview">
+            <span id="imagePreviewLoading" class="ed-cover-preview__msg">Cargando…</span>
+            <span id="imagePreviewError" class="ed-cover-preview__msg ed-cover-preview__msg--err">⚠ URL no accesible. Usa un enlace público (no claude.ai/private, no localhost).</span>
+            <img id="imagePreviewImg" alt="Vista previa de portada">
+            <small id="imageDimensions" class="ed-cover-preview__dims"></small>
+          </div>
+        </section>
 
-      <div class="ed-form-actions">
-        <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Cancelar</a>
-        <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios}else{Enviar a revisión}</button>
-      </div>
+        @* Categoría *@
+        <section class="ed-editor-card">
+          <header class="ed-editor-card__head">
+            <h3 class="ed-editor-card__title">Categoría</h3>
+          </header>
+          <div class="ed-field">
+            <select id="category" name="category" required>
+              @for(c <- categories) {
+                <option value="@c" @if(form("category").value.contains(c)){selected}>@c</option>
+              }
+            </select>
+            @form("category").error.map { e => <div class="ed-field-error">@e.message</div> }
+          </div>
+        </section>
+
+        @* Tags como chips *@
+        <section class="ed-editor-card">
+          <header class="ed-editor-card__head">
+            <h3 class="ed-editor-card__title">Tags <span id="tagsLabel" class="ed-editor-card__chip">(0)</span></h3>
+          </header>
+          <div id="tagChips" class="ed-tag-chips">
+            <input type="text" id="tagInputInline" class="ed-tag-input"
+                   placeholder="Escribe y Enter…"
+                   autocomplete="off">
+          </div>
+          <input type="hidden" id="tags" name="tags" value="@form("tags").value.getOrElse("")">
+          <div id="tagCountBadge" class="tag-count-badge"></div>
+          <div class="ed-tag-suggestions">
+            <span class="ed-editor-card__sublabel">Sugerencias</span>
+            <div class="ed-tag-suggestions__list">
+              @for(s <- tagSuggested) {
+                <button type="button" class="tag-suggestion" data-tag="@s" onclick="addTagFromSuggestion(this)">+ @s</button>
+              }
+            </div>
+          </div>
+        </section>
+
+        @* Acciones *@
+        <div class="ed-editor-actions">
+          <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Cancelar</a>
+          <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios}else{Enviar a revisión →}</button>
+        </div>
+      </aside>
     </form>
+
+    @* ═════════ Overlay Fullscreen ═════════ *@
+    <div id="fullscreenOverlay" class="ed-fs-overlay" role="dialog" aria-modal="true" aria-label="Modo concentración">
+      <header class="ed-fs-overlay__bar">
+        <div class="ed-fs-overlay__meta">
+          <span><strong id="fsWordCount">0</strong> palabras</span>
+          <span><strong id="fsReadTime">1</strong> min</span>
+          <span><strong id="fsCharCount">0</strong> chars</span>
+        </div>
+        <div class="ed-fs-overlay__actions">
+          <button id="fsPreviewToggle" type="button" class="ed-btn-ghost ed-btn-xs" onclick="toggleFullscreenPreview()">👁 Preview</button>
+          <button type="button" class="ed-btn-ghost ed-btn-xs" onclick="closeFullscreen()" title="Esc">✕ Cerrar</button>
+        </div>
+      </header>
+      <div class="ed-fs-overlay__body">
+        <textarea id="fsContent" class="ed-fs-overlay__textarea" placeholder="Escribe sin distracciones…"></textarea>
+        <div id="fsPreview" class="ed-fs-overlay__preview"></div>
+      </div>
+    </div>
+
+    @* Toast volátil (paste de imágenes, mensajes informativos) *@
+    <div id="edEditorToast" class="ed-editor-toast" role="status" aria-live="polite"></div>
   </section>
+
+  <script defer src="@routes.Assets.versioned("javascripts/publicationForm.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/publicationFormExtras.js")"></script>
 }

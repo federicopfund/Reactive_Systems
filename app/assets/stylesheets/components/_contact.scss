@@ -124,7 +124,8 @@
       &:hover { border-color: var(--ed-border-strong); }
       &:focus {
         border-color: var(--ed-accent);
-        box-shadow: 0 0 0 3px rgba(var(--ed-accent-rgb, 196 79 36), 0.14);
+        // Anillo de foco derivado del acento vía canales RGB del token.
+        box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.20);
         background: var(--ed-bg);
       }
     }

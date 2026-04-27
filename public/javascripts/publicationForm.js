@@ -551,6 +551,7 @@
         imageDims.textContent         = '';
 
         var img     = new Image();
+        img.referrerPolicy = 'no-referrer';
         img.onload  = function () {
             imagePreviewImg.src           = url;
             imagePreviewImg.style.display = 'block';
@@ -560,6 +561,17 @@
         img.onerror = function () {
             imageLoading.style.display = 'none';
             imageError.style.display   = 'flex';
+            // Diagnóstico: intentamos descubrir el content-type real (best effort).
+            try {
+                fetch(url, { method: 'HEAD', mode: 'cors', referrerPolicy: 'no-referrer' })
+                    .then(function (r) {
+                        var ct = r.headers.get('content-type') || '';
+                        if (ct && !/^image\//i.test(ct)) {
+                            imageError.textContent = '⚠ La URL devuelve "' + ct.split(';')[0] + '", no una imagen. Usa el enlace directo al archivo (.jpg/.png/.webp).';
+                        }
+                    })
+                    .catch(function () { /* noop */ });
+            } catch (_) {}
         };
         img.src = url;
     }

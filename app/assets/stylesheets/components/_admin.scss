@@ -39,8 +39,8 @@ $bo-warning:   var(--color-warning);
 $bo-danger:    var(--color-danger);
 $bo-info:      var(--color-info);
 
-// Banda superior de identidad admin (gradiente terracota → ámbar)
-$bo-id-bar: linear-gradient(90deg, #6b3410 0%, #c1440e 50%, #d97706 100%);
+// Banda superior de identidad admin (gradiente Carbon · gris→terracota)
+$bo-id-bar: linear-gradient(90deg, #393939 0%, #161616 45%, var(--color-accent) 100%);
 
 // Tipografías: alias hacia los tokens centralizados de `_variables.scss`
 $bo-mono:    $font-mono;
@@ -196,7 +196,7 @@ body.ed-admin-body-root {
   border: 1px solid $bo-border-2;
   color: $bo-text-3;
 
-  &--super_admin { color: $bo-accent-2; border-color: rgba(193, 68, 14, 0.45); background: $bo-accent-soft; }
+  &--super_admin { color: $bo-accent-2; border-color: rgba(var(--color-accent-rgb), 0.45); background: $bo-accent-soft; }
   &--admin       { color: $bo-success; border-color: rgba(79, 122, 85, 0.35); background: rgba(79, 122, 85, 0.08); }
 }
 
@@ -210,7 +210,7 @@ body.ed-admin-body-root {
     height: 30px;
     border-radius: 50%;
     background: $bo-accent-soft;
-    border: 1px solid rgba(193, 68, 14, 0.25);
+    border: 1px solid rgba(var(--color-accent-rgb), 0.25);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -311,7 +311,7 @@ body.ed-admin-body-root {
 
   &.is-active {
     color: $bo-accent;
-    background: rgba(193, 68, 14, 0.06);
+    background: rgba(var(--color-accent-rgb), 0.06);
     border-left-color: $bo-accent;
 
     .ed-bo__nav-dot { background: $bo-accent; }
@@ -723,7 +723,7 @@ body.ed-admin-body-root .ed-admin-shell {
     text-decoration: none;
 
     &:hover { color: $bo-text; border-color: $bo-border-2; }
-    &.is-active { color: $bo-accent; border-color: rgba(193, 68, 14, 0.45); }
+    &.is-active { color: $bo-accent; border-color: rgba(var(--color-accent-rgb), 0.45); }
   }
 }
 
@@ -1118,7 +1118,7 @@ body.ed-admin-body-root .ed-admin-shell {
 
   &--approve  { color: $bo-success; border-color: rgba(79, 122, 85, 0.35);  &:hover { background: rgba(79, 122, 85, 0.10); } }
   &--reject   { color: $bo-danger;  border-color: rgba(160, 44, 44, 0.35);    &:hover { background: rgba(160, 44, 44, 0.08); } }
-  &--feedback { color: $bo-accent;  border-color: rgba(193, 68, 14, 0.45);   &:hover { background: rgba(193, 68, 14, 0.06); } }
+  &--feedback { color: $bo-accent;  border-color: rgba(var(--color-accent-rgb), 0.45);   &:hover { background: rgba(var(--color-accent-rgb), 0.06); } }
   &--delete   { color: $bo-danger;  border-color: rgba(160, 44, 44, 0.35);    &:hover { background: rgba(160, 44, 44, 0.08); } }
   &--neutral  { color: $bo-text-2;  border-color: $bo-border-2;              &:hover { color: $bo-text; border-color: rgba(45, 24, 16, 0.22); } }
 }
