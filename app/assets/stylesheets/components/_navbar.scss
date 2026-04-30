@@ -33,6 +33,7 @@
   .ed-user-role,
   .ed-auth-cta,
   .ed-sidebar-footer,
+  .ed-sidebar-rule,
   .ed-theme-toggle { display: none !important; }
 
   // Truco: los items contienen text-nodes sueltos ("Portada", "Artículos"…),
@@ -135,8 +136,19 @@
   .ed-nav-section { padding: 0 0.5rem; }
   .ed-sidebar-auth { padding: 0.5rem; text-align: center; }
 
+  // Rail: apilar avatar + logout verticalmente, centrados
+  .ed-user-block {
+    flex-direction: column;
+    align-items: center;
+    gap: $space-2;
+  }
+  .ed-user-avatar { margin: 0 auto; }
+  .ed-user-logout { margin: 0 auto; }
+
   // Botón "expandir": invertimos el chevron cuando está colapsado.
-  .ed-sidebar__rail-toggle svg { transform: rotate(180deg); }
+  .ed-sidebar__rail-toggle .ed-sidebar__rail-toggle-chevron {
+    transform: rotate(180deg);
+  }
 }
 
 // ── Drawer mobile (controlado por sidebar.js + .is-open) ──
@@ -169,24 +181,40 @@
 .ed-no-scroll { overflow: hidden; }
 
 // ── Botón de toggle del rail (oculto en mobile) ──
-// Reubicado debajo del brand mediante `order` (sidebar es flex column).
+// Anclado al pie de la sidebar (debajo del footer) mediante `order` alto.
 .ed-sidebar__rail-toggle {
   display: none;
   align-items: center;
   justify-content: center;
-  order: 2; // brand=auto(1), toggle=2, nav=3, etc.
-  margin: 0 auto $space-4;
-  width: 32px;
-  height: 32px;
-  background: transparent;
+  order: 99; // siempre al final del flex column
+  margin: $space-3 auto $space-4;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface-sunken);
   border: 1px solid var(--color-border-subtle);
   border-radius: $radius-md;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   cursor: pointer;
+  transition:
+    background $duration-fast $ease-out,
+    color $duration-fast $ease-out,
+    border-color $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
 
   @include focus-ring(2px);
-  &:hover { color: var(--color-text-primary); background: var(--color-surface-sunken); }
-  svg { width: 14px; height: 14px; }
+  &:hover {
+    color: var(--color-text-primary);
+    background: var(--color-surface-raised);
+    border-color: var(--color-accent);
+    transform: translateY(-1px);
+  }
+  &:active { transform: translateY(0); }
+
+  .ed-sidebar__rail-toggle-icon { width: 18px; height: 18px; }
+  .ed-sidebar__rail-toggle-chevron {
+    transition: transform $duration-fast $ease-out;
+    transform-origin: 15.5px 12px;
+  }
 
   @media (min-width: $bp-md) { display: inline-flex; }
 }
@@ -428,21 +456,65 @@
 }
 
 .ed-user-logout {
-  background: none;
-  border: none;
-  color: var(--ed-text-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 50%;
+  color: var(--color-text-tertiary);
   cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0.2rem;
-  transition: color 0.15s;
   flex-shrink: 0;
   text-decoration: none;
+  transition:
+    color $duration-fast $ease-out,
+    background $duration-fast $ease-out,
+    border-color $duration-fast $ease-out;
 
-  &:hover { color: var(--ed-text); }
+  svg { width: 16px; height: 16px; display: block; }
+
+  &:hover {
+    color: var(--color-accent);
+    background: var(--color-surface-sunken);
+    border-color: var(--color-accent);
+  }
+
+  @include focus-ring(2px);
 }
 
 .ed-auth-cta {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+}
+
+// ── Divisor ornamental del sidebar (línea ··· ❦ ··· línea) ──
+.ed-sidebar-rule {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  margin: $space-3 1.25rem;
+  opacity: 0.85;
+}
+
+.ed-sidebar-rule__line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border-subtle) 25%,
+    var(--color-border-subtle) 75%,
+    transparent
+  );
+}
+
+.ed-sidebar-rule__mark {
+  font-family: $font-display;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--ed-accent);
+  user-select: none;
 }

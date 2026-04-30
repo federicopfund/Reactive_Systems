@@ -37,6 +37,7 @@
   }
 
   function syncToggles(theme) {
+    // Switcher legacy (radiogroup tri-estado)
     var btns = document.querySelectorAll('.ed-theme-toggle__btn[data-theme-value]');
     for (var i = 0; i < btns.length; i++) {
       var v = btns[i].getAttribute('data-theme-value');
@@ -45,10 +46,36 @@
       btns[i].classList.toggle('is-active', active);
       btns[i].tabIndex = active ? 0 : -1;
     }
+    // Botón único (toggle binario)
+    var single = document.querySelectorAll('[data-theme-toggle]');
+    for (var j = 0; j < single.length; j++) {
+      single[j].setAttribute('data-current-theme', theme);
+    }
+  }
+
+  function resolveBinary(theme) {
+    if (theme === 'crema' || theme === 'noche') return theme;
+    // 'auto' u otro → usar preferencia del sistema
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'noche';
+    }
+    return 'crema';
   }
 
   function bind() {
     document.addEventListener('click', function (ev) {
+      // Botón único → alterna claro/oscuro
+      var single = ev.target.closest && ev.target.closest('[data-theme-toggle]');
+      if (single) {
+        ev.preventDefault();
+        var current = resolveBinary(read());
+        var next = current === 'crema' ? 'noche' : 'crema';
+        write(next);
+        apply(next);
+        return;
+      }
+
+      // Switcher legacy con data-theme-value
       var btn = ev.target.closest && ev.target.closest('.ed-theme-toggle__btn[data-theme-value]');
       if (!btn) return;
       ev.preventDefault();
