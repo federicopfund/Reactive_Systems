@@ -5,15 +5,15 @@ services:
     image: postgres:16-alpine
     container_name: reactive_manifesto_db
     environment:
-      POSTGRES_DB: reactive_manifesto
-      POSTGRES_USER: reactive_user
-      POSTGRES_PASSWORD: reactive_password
+      POSTGRES_DB: ${DB_NAME:-reactive_manifesto}
+      POSTGRES_USER: ${DB_USER:-reactive_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-reactive_password}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U reactive_user"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-reactive_user} -d ${DB_NAME:-reactive_manifesto}"]
       interval: 10s
       timeout: 5s
       retries: 5
