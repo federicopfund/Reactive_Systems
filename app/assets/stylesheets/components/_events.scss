@@ -62,13 +62,6 @@ $event-accents: (
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-
-    &::before {
-      content: '';
-      width: 28px;
-      height: 1px;
-      background: var(--ed-color-accent);
-    }
   }
 
   &__title {
