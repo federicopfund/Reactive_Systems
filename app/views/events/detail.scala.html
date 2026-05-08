@@ -27,6 +27,11 @@
   <article class="ed-event-detail ed-event-detail--accent-@e.accentToken" data-event-slug="@e.slug">
 
     <header class="ed-event-detail__header">
+      <a href="@routes.EventController.index()" class="ed-back-btn ed-event-detail__back">
+        <span class="ed-back-btn__arrow" aria-hidden="true">&larr;</span>
+        <span>Volver a la agenda</span>
+      </a>
+
       <nav class="ed-event-detail__breadcrumb" aria-label="Breadcrumb">
         <a href="@routes.EventController.index()">Agenda</a>
         <span aria-hidden="true">/</span>

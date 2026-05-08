@@ -347,7 +347,7 @@ $event-accents: (
       mix-blend-mode: normal;
     }
 
-    .ed-event-card__title { font-size: 1.65rem; }
+    .ed-event-card__title { font-size: 1.25rem; hyphens: manual; }
     .ed-event-card__excerpt { font-size: 1rem; -webkit-line-clamp: 3; }
   }
 
@@ -403,7 +403,7 @@ $event-accents: (
 
   &__title {
     font-family: var(--ed-font-serif, 'Playfair Display', serif);
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.2;
     margin: 0;
@@ -413,6 +413,12 @@ $event-accents: (
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    // Permite romper palabras largas (e.g. "Persistence", "Streams:")
+    // dentro del ancho del card en vez de clippear horizontalmente
+    // y mostrar "Akka Persiste...". Mantiene el clamp a 2 líneas.
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
   }
 
   &__excerpt {
@@ -743,6 +749,10 @@ $event-accents: (
   max-width: 880px;
   margin: 0 auto;
   padding: 2.5rem clamp(1rem, 4vw, 3rem) 4rem;
+
+  &__back {
+    margin-bottom: 1.25rem;
+  }
 
   &__breadcrumb {
     font-family: var(--ed-font-mono, 'IBM Plex Mono', monospace);
