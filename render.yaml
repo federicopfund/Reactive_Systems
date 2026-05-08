@@ -4,7 +4,12 @@ services:
     name: reactive-manifesto
     env: java
     buildCommand: sbt clean compile stage
-    startCommand: ./target/universal/stage/bin/web -Dhttp.port=$PORT -Dplay.http.secret.key=$APPLICATION_SECRET -Dconfig.file=conf/application.prod.conf
+    # IMPORTANTE:
+    # - http.address=0.0.0.0 → Render exige binding a 0.0.0.0 para detectar el puerto.
+    # - config.resource (NO config.file) carga el HOCON desde el classpath del jar
+    #   stageado. Con -Dconfig.file=conf/... el path es relativo y no existe en el
+    #   binario empaquetado, por lo que la app caía a application.conf por defecto.
+    startCommand: ./target/universal/stage/bin/web -Dhttp.port=$PORT -Dhttp.address=0.0.0.0 -Dplay.http.secret.key=$APPLICATION_SECRET -Dconfig.resource=application.prod.conf
     envVars:
       - key: APPLICATION_SECRET
         generateValue: true
@@ -12,12 +17,31 @@ services:
         value: -Xmx512m -Xms256m
       - key: SBT_OPTS
         value: -Xmx1024m -Xms512m
-      - key: DATABASE_URL
+      # Render expone el connection string como postgres://... que Slick/JDBC NO
+      # entienden (necesitan jdbc:postgresql://...). Usamos los campos individuales
+      # y construimos el JDBC URL en application.prod.conf.
+      - key: DB_HOST
         fromDatabase:
           name: reactive-manifesto-db
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: reactive-manifesto-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: reactive-manifesto-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: reactive-manifesto-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: reactive-manifesto-db
+          property: password
     autoDeploy: true
-    healthCheckPath: /
+    healthCheckPath: /health
 
 databases:
   # PostgreSQL Database
