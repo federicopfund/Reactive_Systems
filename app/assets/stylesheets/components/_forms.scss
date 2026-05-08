@@ -139,6 +139,91 @@
   }
 }
 
+.ed-search-empty {
+  margin: 2rem auto;
+  max-width: 560px;
+  padding: 1.5rem 1.75rem;
+  border: 1px dashed var(--ed-border-strong, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  text-align: center;
+  font-family: $font-mono;
+  font-size: 0.8rem;
+  color: var(--ed-text-dim, var(--ed-text-faint));
+
+  strong { color: var(--ed-text); }
+
+  &__hint {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--ed-text-faint);
+  }
+}
+
+// Barra de estado de búsqueda (contador + botón limpiar)
+.ed-search-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0 1.25rem;
+  padding: 0.45rem 0.85rem;
+  // Reserva alto fijo y usamos visibility en vez de display para evitar
+  // que el layout salte mientras el usuario tipea.
+  min-height: 2.4rem;
+  border: 1px solid var(--ed-border-strong, rgba(0, 0, 0, 0.12));
+  border-left: 3px solid var(--ed-accent, #d65a31);
+  border-radius: 4px;
+  background: var(--ed-color-surface-alt, rgba(0, 0, 0, 0.02));
+  font-family: $font-mono;
+  font-size: 0.72rem;
+  color: var(--ed-text-dim, var(--ed-text-faint));
+
+  &__count {
+    color: var(--ed-text);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  &__label { letter-spacing: 0.04em; }
+
+  &__clear {
+    margin-left: auto;
+    background: none;
+    border: 1px solid currentColor;
+    color: inherit;
+    font: inherit;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.65rem;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--ed-accent, #d65a31);
+      border-color: var(--ed-accent, #d65a31);
+      color: #fff;
+      outline: none;
+    }
+  }
+}
+
+// Highlight de coincidencias dentro de los cards
+.ed-search-hl {
+  background: rgba(214, 90, 49, 0.22);
+  color: inherit;
+  padding: 0 0.1em;
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 rgba(214, 90, 49, 0.55);
+}
+
+// Ocultar cards filtrados sin tocar su contenido (toggle de clase = no
+// reflow del innerHTML, mucho más estable mientras el usuario tipea).
+.ed-article-card.is-search-out {
+  display: none !important;
+}
+
 // Checkbox / radio
 .ed-checkbox {
   display: inline-flex;
