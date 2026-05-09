@@ -10,7 +10,7 @@
     </div>
     <div class="ed-admin-actions">
       <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
-      <button id="refreshStats" class="ed-link-btn ed-link-btn--accent">Refrescar</button>
+      <button id="refreshStats" type="button" class="ed-link-btn ed-link-btn--accent">Refrescar</button>
     </div>
   </header>
 
@@ -99,11 +99,29 @@
       renderList('topPublications', json.topPublications, 'title');
     }
     function load() {
-      fetch('@routes.AdminController.advancedStats()',  {credentials:'same-origin'}).then(function(r){return r.json();}).then(fillStats).catch(function(){});
-      fetch('@routes.AdminController.messagingStats()', {credentials:'same-origin'}).then(function(r){return r.json();}).then(fillMsg).catch(function(){});
+      var btn = document.getElementById('refreshStats');
+      if (btn) { btn.disabled = true; btn.textContent = 'Cargando…'; }
+
+      var p1 = fetch('@routes.AdminController.advancedStats()',  {credentials:'same-origin'})
+        .then(function(r){ if (!r.ok) throw new Error('stats ' + r.status); return r.json(); })
+        .then(fillStats);
+      var p2 = fetch('@routes.AdminController.messagingStats()', {credentials:'same-origin'})
+        .then(function(r){ if (!r.ok) throw new Error('msg ' + r.status); return r.json(); })
+        .then(fillMsg);
+
+      Promise.all([p1, p2])
+        .then(function() {
+          if (btn) { btn.textContent = '✓ Actualizado'; }
+          setTimeout(function() { if (btn) { btn.disabled = false; btn.textContent = 'Refrescar'; } }, 1500);
+        })
+        .catch(function(err) {
+          console.error('Error al refrescar estadísticas:', err);
+          if (btn) { btn.disabled = false; btn.textContent = 'Error — reintentar'; }
+          setTimeout(function() { if (btn) { btn.textContent = 'Refrescar'; } }, 3000);
+        });
     }
     load();
-    document.getElementById('refreshStats').addEventListener('click', function(e){ e.preventDefault(); load(); });
+    document.getElementById('refreshStats').addEventListener('click', function() { load(); });
   })();
   </script>
 }

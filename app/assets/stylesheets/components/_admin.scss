@@ -282,6 +282,12 @@ body.ed-admin-body-root {
   .ed-bo__nav-label {
     padding: 0 1.25rem;
   }
+
+  // Cuando es <details>: ocultar marker nativo y permitir cursor pointer.
+  &[open] > .ed-bo__nav-chevron,
+  > summary { list-style: none; }
+  > summary::-webkit-details-marker { display: none; }
+  > summary::marker { display: none; }
 }
 
 .ed-bo__nav-label {
@@ -291,6 +297,38 @@ body.ed-admin-body-root {
   text-transform: uppercase;
   color: $bo-text-4;
   padding: 0 1.25rem 0.5rem;
+
+  // Cuando se usa como <summary> dentro de <details>.
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+
+  &:hover { color: $bo-text-2; }
+  &:focus-visible {
+    color: $bo-accent;
+    outline: 2px solid $bo-accent;
+    outline-offset: -2px;
+    border-radius: 2px;
+  }
+}
+
+.ed-bo__nav-chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  transition: transform 0.15s ease;
+  transform: rotate(-90deg); // colapsado → apunta a la derecha
+  opacity: 0.7;
+}
+
+.ed-bo__nav-group[open] > .ed-bo__nav-label .ed-bo__nav-chevron {
+  transform: rotate(0); // abierto → apunta hacia abajo
 }
 
 .ed-bo__nav-item {

@@ -70,8 +70,16 @@
   margin: $space-3 $space-4;
 }
 
-// ── Topbar admin (fondo oscuro) ──
+// ── Topbar admin — color consciente del tema activo ──
 .ed-bo .ed-theme-toggle {
+  color: var(--color-text-secondary);
+  &:hover { color: var(--color-text-primary); }
+}
+
+// En temas oscuros seguimos usando blanco para mayor contraste
+:root[data-theme="noche"] .ed-bo .ed-theme-toggle,
+:root[data-theme="negro"] .ed-bo .ed-theme-toggle,
+:root[data-theme="azul"]  .ed-bo .ed-theme-toggle {
   color: rgba(255, 255, 255, 0.7);
   &:hover { color: #fff; }
 }
