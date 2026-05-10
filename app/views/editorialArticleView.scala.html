@@ -48,6 +48,16 @@
         <div class="ed-aside-eyebrow">Categoría</div>
         <a href="@routes.HomeController.searchPublicaciones("", Some(article.categoryLabel))" class="ed-aside-author">@article.categoryLabel</a>
       </div>
+
+      <div class="ed-aside-card ed-aside-newsletter">
+        <div class="ed-aside-eyebrow">Novedades</div>
+        <p class="ed-aside-newsletter__text">Recibí una notificación cada vez que se publique una nueva pieza.</p>
+        <form method="POST" action="@routes.HomeController.subscribeNewsletter()" class="ed-aside-newsletter__form">
+          @helper.CSRF.formField
+          <input type="email" name="email" placeholder="tu@@email.com" required class="ed-aside-newsletter__input">
+          <button type="submit" class="ed-btn-primary ed-aside-newsletter__btn">Suscribirme</button>
+        </form>
+      </div>
     </aside>
   </article>
 }

@@ -102,40 +102,48 @@
   }
 }
 
-// Search bar editorial (publicaciones)
+// Search bar editorial (publicaciones) — magazine style
 .ed-search-wrap {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid var(--ed-border-strong);
-  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  background: var(--color-surface-raised);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+  &:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.12);
+  }
 
   input {
     background: none;
     border: none;
     outline: none;
-    color: var(--ed-text);
+    color: var(--color-text-primary);
     font-family: $font-mono;
-    font-size: 0.75rem;
-    width: 200px;
+    font-size: 0.72rem;
+    width: 210px;
 
-    &::placeholder { color: var(--ed-text-faint); }
+    &::placeholder { color: var(--color-text-tertiary); }
   }
 
   .ed-search-icon {
-    color: var(--ed-text-faint);
+    color: var(--color-text-tertiary);
     font-size: 0.9rem;
     font-family: $font-mono;
   }
 
   .ed-search-clear {
-    color: var(--ed-text-faint);
+    color: var(--color-text-tertiary);
     text-decoration: none;
     font-size: 1rem;
     line-height: 1;
     padding: 0 0.2rem;
 
-    &:hover { color: var(--ed-text); }
+    &:hover { color: var(--color-accent); }
   }
 }
 

@@ -4,7 +4,7 @@
 
 .ed-article-topbar {
   padding: 1.5rem 3.5rem;
-  border-bottom: 1px solid var(--ed-border);
+  border-bottom: 1px solid var(--color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -15,55 +15,181 @@
 .ed-breadcrumb {
   font-family: $font-mono;
   font-size: 0.62rem;
-  color: var(--ed-text-faint);
+  color: var(--color-text-tertiary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 
-  span { color: var(--ed-text-dim); }
+  span { color: var(--color-text-secondary); }
 
   a {
-    color: var(--ed-text-faint);
+    color: var(--color-text-tertiary);
     transition: color 0.15s;
     text-decoration: none;
 
-    &:hover { color: var(--ed-accent); }
+    &:hover { color: var(--color-accent); }
   }
 }
 
 .ed-read-time {
   font-family: $font-mono;
   font-size: 0.6rem;
-  color: var(--ed-text-faint);
+  color: var(--color-text-tertiary);
   letter-spacing: 0.1em;
 }
 
+// ── Layout principal: 2 columnas (cuerpo + aside)
 .ed-article-layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  min-height: 80vh;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  &--legacy { // clase extra para artículos editoriales estáticos
+    grid-template-columns: minmax(0, 1fr) 300px;
+
+    @media (max-width: 900px) { grid-template-columns: 1fr; }
+  }
 }
 
 .ed-article-body-col {
-  padding: 3rem 3.5rem;
-  border-right: 1px solid var(--ed-border);
+  padding: 3rem 3.5rem 5rem;
+  border-right: 1px solid var(--color-border-subtle);
+  min-width: 0;
+
+  @media (max-width: 900px) {
+    padding: 2rem 1.5rem 3rem;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
 }
 
 .ed-article-aside {
-  padding: 2.5rem 2rem;
+  padding: 2.5rem 1.75rem;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+
+  @media (max-width: 900px) {
+    position: static;
+    max-height: none;
+    padding: 2rem 1.5rem;
+  }
 }
 
 .ed-article-header {
   margin-bottom: 2.5rem;
   padding-bottom: 2.5rem;
-  border-bottom: 1px solid var(--ed-border);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+// ── Cabecera del artículo (dentro del body col)
+.ed-article-head {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.ed-article-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 2rem;
+    height: 2px;
+    background: var(--color-accent);
+    border-radius: 999px;
+  }
+}
+
+.ed-article-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  color: var(--color-text-tertiary);
+  margin-top: 1rem;
+  letter-spacing: 0.04em;
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ── Imagen de portada
+.ed-article-cover {
+  margin: 0 0 2.5rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+}
+
+// ── Lede (extracto destacado)
+.ed-article-lede {
+  font-family: $font-display;
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  margin: 0 0 2.5rem;
+  padding: 1.5rem 2rem;
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-surface-sunken);
+  border-radius: 0 8px 8px 0;
+  text-wrap: pretty;
+}
+
+// ── Tags en detalle de artículo
+.ed-article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+// ── Back nav
+.ed-article-back {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .ed-article-cat-badge {
   font-family: $font-mono;
-  font-size: 0.6rem;
-  letter-spacing: 0.18em;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ed-accent);
+  color: var(--color-accent);
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -72,28 +198,29 @@
   &::before {
     content: '';
     width: 2rem;
-    height: 1px;
-    background: var(--ed-accent);
+    height: 2px;
+    background: var(--color-accent);
+    border-radius: 999px;
   }
 }
 
 .ed-article-h1 {
   font-family: $font-display;
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-size: clamp(1.9rem, 3.5vw, 2.8rem);
   font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--ed-text);
-  margin-bottom: 1.25rem;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
   text-wrap: pretty;
 }
 
 .ed-article-lead {
   font-family: $font-display;
   font-style: italic;
-  font-size: 1.05rem;
-  line-height: 1.65;
-  color: var(--ed-text-dim);
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
   text-wrap: pretty;
 }
 
@@ -103,40 +230,40 @@
 
 .ed-article-h2 {
   font-family: $font-display;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--ed-text);
+  color: var(--color-text-primary);
   margin-bottom: 1rem;
   padding-top: 0.5rem;
-  scroll-margin-top: 80px; // Issue #18-I: anchors editoriales precisos
+  scroll-margin-top: 80px;
 }
 
 .ed-article-h3 {
   font-family: $font-display;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: var(--ed-text);
+  color: var(--color-text-primary);
   margin: 1.25rem 0 0.5rem;
-  scroll-margin-top: 80px; // Issue #18-I
+  scroll-margin-top: 80px;
 }
 
 .ed-article-p {
-  font-size: 0.9rem;
-  line-height: 1.85;
-  color: var(--ed-text-dim);
+  font-size: 0.92rem;
+  line-height: 1.88;
+  color: var(--color-text-secondary);
   margin-bottom: 1rem;
   text-wrap: pretty;
 
-  strong { color: var(--ed-text); }
+  strong { color: var(--color-text-primary); }
   em { font-style: italic; }
-  a { color: var(--ed-accent); border-bottom: 1px solid currentColor; }
+  a { color: var(--color-accent); border-bottom: 1px solid currentColor; }
 }
 
 .ed-article-ul,
 .ed-article-ol {
-  font-size: 0.88rem;
-  line-height: 1.75;
-  color: var(--ed-text-dim);
+  font-size: 0.9rem;
+  line-height: 1.78;
+  color: var(--color-text-secondary);
   margin: 0 0 1rem 1.25rem;
 
   li { margin-bottom: 0.4rem; }
@@ -144,10 +271,12 @@
 
 // Pattern box (highlight inside article body)
 .ed-pattern-box {
-  border: 1px solid var(--ed-border);
+  border: 1px solid var(--color-border-subtle);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 8px 8px 0;
   padding: 1.5rem;
   margin: 1.5rem 0;
-  background: var(--ed-bg2);
+  background: var(--color-surface-sunken);
   position: relative;
 }
 
@@ -155,20 +284,21 @@
   position: absolute;
   top: -0.55rem;
   left: 1rem;
-  background: var(--ed-bg2);
+  background: var(--color-surface-sunken);
   padding: 0 0.5rem;
   font-family: $font-mono;
   font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ed-accent);
+  color: var(--color-accent);
+  font-weight: 700;
 }
 
 .ed-pattern-title {
   font-family: $font-display;
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--ed-text);
+  color: var(--color-text-primary);
   margin-bottom: 0.6rem;
 }
 
@@ -178,67 +308,92 @@
   li {
     font-size: 0.82rem;
     line-height: 1.65;
-    color: var(--ed-text-dim);
+    color: var(--color-text-secondary);
     padding: 0.3rem 0;
-    border-bottom: 1px solid var(--ed-border);
+    border-bottom: 1px solid var(--color-border-subtle);
     display: flex;
     gap: 0.75rem;
 
     &:last-child { border-bottom: none; }
 
-    strong { color: var(--ed-text); }
+    strong { color: var(--color-text-primary); }
   }
 }
 
 // Code blocks
 .ed-code-wrap {
-  background: #05050a;
-  border: 1px solid var(--ed-border);
-  padding: 1.5rem;
+  background: #282c34; // Atom One Dark — misma base que highlight.js
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
   margin: 1.5rem 0;
-  overflow-x: auto;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
+
+  // Header de lenguaje estilo VS Code
+  &[data-lang]::before {
+    content: attr(data-lang);
+    display: block;
+    padding: 0.45rem 1rem;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(171, 178, 191, 0.6);
+  }
 
   pre {
+    margin: 0;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
     font-family: $font-mono;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     line-height: 1.7;
-    color: #a8b3c8;
+    color: #abb2bf;
   }
 
   code {
     font-family: $font-mono;
     font-size: inherit;
     color: inherit;
+    background: transparent;
+    padding: 0;
+    border: none;
   }
 
-  .code-kw   { color: #d4ff00; }
-  .code-type { color: #88c0d0; }
-  .code-str  { color: #a3be8c; }
-  .code-cm   { color: #4c5a6a; }
+  .code-kw   { color: #c678dd; } // keyword — púrpura VS Code
+  .code-type { color: #e5c07b; } // type — amarillo VS Code
+  .code-str  { color: #98c379; } // string — verde VS Code
+  .code-cm   { color: #5c6370; font-style: italic; } // comment — gris
 }
 
+// Inline code (fuera de bloques)
 code {
   font-family: $font-mono;
   font-size: 0.82em;
-  background: var(--ed-bg3);
-  padding: 0.1em 0.35em;
-  color: var(--ed-accent);
+  background: var(--color-surface-sunken);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: var(--color-accent);
+  border: 1px solid var(--color-border-subtle);
 }
 
 // Aside (lateral del artículo)
 .ed-aside-section {
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .ed-aside-label {
   font-family: $font-mono;
-  font-size: 0.58rem;
-  letter-spacing: 0.18em;
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ed-text-faint);
+  color: var(--color-text-tertiary);
+  font-weight: 700;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--ed-border);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .ed-aside-meta-item {
@@ -246,36 +401,37 @@ code {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--ed-border);
+  border-bottom: 1px solid var(--color-border-subtle);
   font-size: 0.78rem;
 
   &:last-child { border-bottom: none; }
 
   &__key {
-    color: var(--ed-text-faint);
+    color: var(--color-text-tertiary);
     font-family: $font-mono;
     font-size: 0.62rem;
   }
 
-  &__val { color: var(--ed-text); }
+  &__val { color: var(--color-text-primary); }
 }
 
 .ed-related-item {
   padding: 0.75rem 0;
-  border-bottom: 1px solid var(--ed-border);
+  border-bottom: 1px solid var(--color-border-subtle);
   cursor: pointer;
   text-decoration: none;
   display: block;
   color: inherit;
+  transition: background 0.15s ease;
 
-  &:hover .ed-related-title { color: var(--ed-accent); }
+  &:hover .ed-related-title { color: var(--color-accent); }
 }
 
 .ed-related-title {
   font-family: $font-display;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 700;
-  color: var(--ed-text);
+  color: var(--color-text-primary);
   margin-bottom: 0.25rem;
   transition: color 0.15s;
   line-height: 1.3;
@@ -284,7 +440,7 @@ code {
 .ed-related-cat {
   font-family: $font-mono;
   font-size: 0.58rem;
-  color: var(--ed-text-faint);
+  color: var(--color-text-tertiary);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -297,22 +453,22 @@ code {
 
 .ed-legacy-prose {
   // Tipografía de lectura cómoda
-  font-size: 1.0625rem;           // ~17px base para lectura larga
-  line-height: 1.85;
-  color: var(--ed-text-dim);
-  max-width: 68ch;                // longitud de línea óptima
+  font-size: 1.0625rem;
+  line-height: 1.88;
+  color: var(--color-text-secondary);
+  max-width: 68ch;
   font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 
-  & > * + * { margin-top: 1.25em; } // ritmo vertical uniforme
+  & > * + * { margin-top: 1.25em; }
 
   .article-body { display: block; }
 
   .article-section {
     margin: 0 0 3.5rem;
     padding-bottom: 2.25rem;
-    border-bottom: 1px solid var(--ed-border);
+    border-bottom: 1px solid var(--color-border-subtle);
 
     &:last-child {
       border-bottom: none;
@@ -325,7 +481,7 @@ code {
     font-family: $font-display;
     font-size: clamp(1.4rem, 2.2vw, 1.75rem);
     font-weight: 700;
-    color: var(--ed-text);
+    color: var(--color-text-primary);
     letter-spacing: -0.015em;
     line-height: 1.25;
     margin: 2.75rem 0 1.25rem;
@@ -338,8 +494,9 @@ code {
       display: block;
       width: 2.5rem;
       height: 2px;
-      background: var(--ed-accent);
+      background: var(--color-accent);
       margin-bottom: 1.25rem;
+      border-radius: 999px;
     }
   }
 
@@ -347,26 +504,26 @@ code {
     font-family: $font-display;
     font-size: 1.2rem;
     font-weight: 700;
-    color: var(--ed-text);
+    color: var(--color-text-primary);
     line-height: 1.35;
     margin: 2.25rem 0 1rem;
   }
 
   p {
     font-size: 1.0625rem;
-    line-height: 1.85;
-    color: var(--ed-text-dim);
-    margin: 0 0 1.5rem;           // separación clara entre párrafos
+    line-height: 1.88;
+    color: var(--color-text-secondary);
+    margin: 0 0 1.5rem;
     text-wrap: pretty;
     hyphens: auto;
     overflow-wrap: break-word;
 
-    & + p { margin-top: 1.5rem; } // doble seguridad si adjacent-sibling
+    & + p { margin-top: 1.5rem; }
 
-    strong { color: var(--ed-text); font-weight: 600; }
+    strong { color: var(--color-text-primary); font-weight: 600; }
     em { font-style: italic; }
     a {
-      color: var(--ed-accent);
+      color: var(--color-accent);
       border-bottom: 1px solid currentColor;
       transition: opacity 0.15s;
       &:hover { opacity: 0.75; }
@@ -376,14 +533,14 @@ code {
   ul, ol {
     margin: 0 0 1.75rem 1.5rem;
     padding: 0;
-    color: var(--ed-text-dim);
+    color: var(--color-text-secondary);
 
     li {
       font-size: 1.0313rem;
       line-height: 1.8;
       margin-bottom: 0.75rem;
 
-      strong { color: var(--ed-text); font-weight: 600; }
+      strong { color: var(--color-text-primary); font-weight: 600; }
     }
   }
 
@@ -400,7 +557,7 @@ code {
         position: absolute;
         left: 0.35rem;
         top: -0.1rem;
-        color: var(--ed-accent);
+        color: var(--color-accent);
         font-weight: 700;
         font-size: 1.2rem;
         line-height: 1;
@@ -413,17 +570,19 @@ code {
   .info-box,
   .tip-box,
   .benefit-box {
-    border: 1px solid var(--ed-border-strong);
+    border: 1px solid var(--color-border-strong);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 0 8px 8px 0;
     padding: 1.5rem 1.75rem;
     margin: 1.5rem 0;
-    background: var(--ed-bg2);
+    background: var(--color-surface-sunken);
     position: relative;
 
     h3 {
       font-family: $font-display;
       font-size: 1rem;
       font-weight: 700;
-      color: var(--ed-text);
+      color: var(--color-text-primary);
       margin: 0 0 0.75rem;
     }
 
@@ -448,7 +607,8 @@ code {
   // Warnings / advertencias
   .warning-box {
     border-left: 3px solid $color-warning;
-    background: var(--ed-bg2);
+    background: var(--color-surface-sunken);
+    border-radius: 0 8px 8px 0;
     padding: 1.25rem 1.5rem;
     margin: 1.5rem 0;
 
@@ -458,22 +618,24 @@ code {
     }
   }
 
-  // Bloques de código
+  // Bloques de código — mismo look VS Code que .ed-code-wrap
   .code-block {
-    background: #0f0f14;
-    border: 1px solid var(--ed-border-strong);
-    padding: 1.5rem;
+    background: #282c34;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
     margin: 1.5rem 0;
-    overflow-x: auto;
-    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
 
     pre {
       font-family: $font-mono;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       line-height: 1.7;
-      color: #d4d4d4;
+      color: #abb2bf;
       margin: 0;
+      padding: 1.25rem 1.5rem;
       white-space: pre;
+      overflow-x: auto;
     }
 
     code {
@@ -482,6 +644,7 @@ code {
       color: inherit;
       background: transparent;
       padding: 0;
+      border: none;
     }
   }
 
@@ -494,19 +657,19 @@ code {
     li {
       padding: 0.75rem 0;
       padding-left: 0;
-      border-bottom: 1px solid var(--ed-border);
+      border-bottom: 1px solid var(--color-border-subtle);
 
       &::before { display: none; }
 
       &:last-child { border-bottom: none; }
 
       a {
-        color: var(--ed-text);
+        color: var(--color-text-primary);
         font-family: $font-display;
         font-weight: 500;
         border-bottom: none;
 
-        &:hover { color: var(--ed-accent); }
+        &:hover { color: var(--color-accent); }
       }
     }
   }
@@ -525,18 +688,19 @@ code {
     font-size: 0.6rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--ed-text-dim);
-    background: var(--ed-bg2);
+    color: var(--color-text-secondary);
+    background: var(--color-surface-sunken);
     padding: 0.3rem 0.6rem;
     margin: 0.2rem 0.3rem 0.2rem 0;
-    border: 1px solid var(--ed-border);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 999px;
   }
 
   // Navegación inferior del artículo legado
   .article-navigation {
     margin-top: 2rem;
     padding-top: 1.5rem;
-    border-top: 1px solid var(--ed-border);
+    border-top: 1px solid var(--color-border-subtle);
 
     .btn {
       display: inline-block;
@@ -545,13 +709,14 @@ code {
       letter-spacing: 0.12em;
       text-transform: uppercase;
       padding: 0.75rem 1.25rem;
-      border: 1px solid var(--ed-border-strong);
-      color: var(--ed-text);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 999px;
+      color: var(--color-text-primary);
       transition: all 0.15s;
 
       &:hover {
-        border-color: var(--ed-accent);
-        color: var(--ed-accent);
+        border-color: var(--color-accent);
+        color: var(--color-accent);
       }
     }
   }
@@ -568,10 +733,11 @@ code {
   li code {
     font-family: $font-mono;
     font-size: 0.82em;
-    background: var(--ed-bg3);
-    padding: 0.1em 0.35em;
-    color: var(--ed-accent);
-    border-radius: 2px;
+    background: var(--color-surface-sunken);
+    padding: 0.15em 0.4em;
+    color: var(--color-accent);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
   }
 
   // ============================================
@@ -581,7 +747,7 @@ code {
     font-family: $font-display;
     font-size: clamp(1.7rem, 2.6vw, 2.1rem);
     font-weight: 700;
-    color: var(--ed-text);
+    color: var(--color-text-primary);
     letter-spacing: -0.02em;
     line-height: 1.2;
     margin: 0 0 1.5rem;
@@ -591,7 +757,7 @@ code {
     font-family: $font-display;
     font-size: 1rem;
     font-weight: 700;
-    color: var(--ed-text);
+    color: var(--color-text-primary);
     margin: 2rem 0 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -600,9 +766,10 @@ code {
   blockquote {
     margin: 2rem 0;
     padding: 1rem 0 1rem 1.5rem;
-    border-left: 3px solid var(--ed-accent);
-    background: var(--ed-bg2);
-    color: var(--ed-text);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 0 8px 8px 0;
+    background: var(--color-surface-sunken);
+    color: var(--color-text-primary);
     font-style: italic;
     font-family: $font-display;
     font-size: 1.1rem;
@@ -615,29 +782,357 @@ code {
   hr {
     border: none;
     height: 1px;
-    background: var(--ed-border);
+    background: var(--color-border-subtle);
     margin: 2.5rem auto;
     width: 40%;
   }
 
   // Bloques de código generados por Markdown (```lang```)
+  // highlight.js agrega clase .hljs — los estilos base del tema se inyectan vía CDN.
+  // Aquí solo definimos el *contenedor* (forma, sombra, scroll).
+  pre,
   pre.ed-md-code {
-    background: #0f0f14;
-    border: 1px solid var(--ed-border-strong);
-    padding: 1.25rem 1.5rem;
+    background: #282c34;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
     margin: 1.5rem 0;
-    overflow-x: auto;
-    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
 
     code {
+      display: block;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
       font-family: $font-mono;
       font-size: 0.8rem;
       line-height: 1.7;
-      color: #d4d4d4;
+      color: #abb2bf;
       background: transparent;
-      padding: 0;
       white-space: pre;
-      display: block;
+      // highlight.js sobrescribe color token a token — no bloquear
     }
+  }
+}
+
+// ============================================
+// Reactions / interacciones del lector
+// ============================================
+.ed-article-react {
+  margin-top: 2.5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.ed-react-author {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+
+  &__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-family: $font-mono;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      opacity: 0.85;
+      box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.25);
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    font-weight: 700;
+  }
+
+  &__name {
+    font-family: $font-display;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+
+    &:hover { color: var(--color-accent); }
+  }
+}
+
+.ed-react-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+
+  &--guest {
+    justify-content: center;
+    padding: 0.5rem 0;
+  }
+}
+
+.ed-react-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-sunken);
+  }
+
+  &.is-active {
+    color: var(--color-on-accent);
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    box-shadow: 0 2px 8px rgba(var(--color-accent-rgb), 0.3);
+  }
+}
+
+.ed-react-count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+// ============================================
+// Feedback editorial (notas del equipo)
+// ============================================
+.ed-article-feedback {
+  margin-top: 2.5rem;
+
+  h3 {
+    font-family: $font-display;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+}
+
+.ed-feedback-item {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-subtle);
+  border-left: 3px solid var(--color-accent);
+  margin-bottom: 0.75rem;
+
+  p {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+    margin: 0.5rem 0 0;
+  }
+}
+
+.ed-feedback-meta {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+}
+
+// ============================================
+// Comentarios
+// ============================================
+.ed-article-comments {
+  margin-top: 3rem;
+
+  h3 {
+    font-family: $font-display;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--color-border-subtle);
+    letter-spacing: -0.01em;
+  }
+}
+
+.ed-comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+
+  textarea {
+    width: 100%;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    background: var(--color-surface-raised);
+    padding: 0.85rem 1rem;
+    font-family: $font-body;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+    resize: vertical;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &::placeholder { color: var(--color-text-tertiary); }
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.12);
+    }
+  }
+}
+
+.ed-comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ed-comment {
+  padding: 1.1rem 1.25rem;
+  border-radius: 8px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  transition: border-color 0.15s ease;
+
+  &:hover { border-color: var(--color-border-strong); }
+
+  p {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+    margin: 0.5rem 0 0;
+  }
+}
+
+.ed-comment-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  color: var(--color-text-tertiary);
+
+  strong {
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+}
+
+// ============================================
+// Aside — tarjeta lateral del artículo
+// ============================================
+.ed-aside-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.ed-aside-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: 0.65rem;
+  font-weight: 700;
+}
+
+.ed-aside-author {
+  display: block;
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+  transition: color 0.15s ease;
+
+  &:hover { color: var(--color-accent); }
+}
+
+// Newsletter widget en el aside de artículos
+.ed-aside-newsletter {
+  border-left: 3px solid var(--color-accent);
+
+  &__text {
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin: 0 0 0.9rem;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.82rem;
+    font-family: $font-mono;
+    background: var(--color-surface-sunken);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 6px;
+    color: var(--color-text-primary);
+    transition: border-color 0.15s ease;
+    box-sizing: border-box;
+
+    &::placeholder { color: var(--color-text-tertiary); }
+    &:focus {
+      outline: none;
+      border-color: var(--color-accent);
+    }
+  }
+
+  &__btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.68rem;
+    padding: 0.5rem 0.75rem;
   }
 }
