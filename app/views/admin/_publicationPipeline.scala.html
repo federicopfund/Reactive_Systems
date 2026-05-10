@@ -7,65 +7,130 @@
   showInternalNotes: Boolean = true
 )
 
-@* ============================================================
- *  Widget: pipeline editorial
- *  - Visible para todo backoffice + autor (showInternalNotes=false)
- *  - Marca etapas pasadas, actual, futuras
- *  - Banner indica quién es el dueño actual de la pieza
- * ============================================================ *@
-
 @visibleStages = @{ allStages.filter(_.active).sortBy(_.orderIndex) }
 @currentIdx    = @{ currentStageCode.flatMap(c => visibleStages.indexWhere(_.code == c) match { case -1 => None; case i => Some(i) }) }
+@autorCodes    = @{ Set("pitch", "in_draft") }
+@autorStages   = @{ visibleStages.filter(s => autorCodes.contains(s.code)) }
+@revStages     = @{ visibleStages.filter(s => !autorCodes.contains(s.code)) }
 
-<section class="ed-pipeline" aria-label="Estado editorial de la publicación">
-  <header class="ed-pipeline__head">
-    <span class="ed-pipeline__eyebrow">Pipeline editorial</span>
+@nodeState(stage: models.EditorialStage) = @{
+  val idx = visibleStages.indexOf(stage)
+  currentIdx match {
+    case Some(ci) if idx < ci  => "done"
+    case Some(ci) if idx == ci => "active"
+    case _                     => "pending"
+  }
+}
+
+@histEntry(stage: models.EditorialStage) = @{
+  timeline.find(_.stageCode == stage.code)
+}
+
+<section class="ed-bpm">
+
+  <header class="ed-bpm__header">
+    <span class="ed-bpm__eyebrow">Business Process</span>
     @currentStageCode.map { code =>
-      <span class="ed-pipeline__current">
-        Etapa actual:
-        <strong>@visibleStages.find(_.code == code).map(_.label).getOrElse(code)</strong>
-        ·
-        <em>Espera acción de @utils.EditorialStagePolicy.ownerLabelFor(code)</em>
-      </span>
+      <div class="ed-bpm__status">
+        <span class="ed-bpm__status-label">Etapa actual:</span>
+        <strong class="ed-bpm__status-name">@visibleStages.find(_.code == code).map(_.label).getOrElse(code)</strong>
+        <span class="ed-bpm__status-sep">·</span>
+        <em class="ed-bpm__status-owner">@utils.EditorialStagePolicy.ownerLabelFor(code)</em>
+      </div>
     }
   </header>
 
-  <ol class="ed-pipeline__rail">
-    @for((stage, idx) <- visibleStages.zipWithIndex) {
-      @defining(currentIdx.exists(_ > idx)) { isPast =>
-      @defining(currentIdx.contains(idx))   { isCurrent =>
-        <li class="ed-pipeline__step @if(isPast){is-past} @if(isCurrent){is-current}"
-            title="@stage.description.getOrElse("")">
-          <span class="ed-pipeline__step-dot" aria-hidden="true">
-            @if(isPast){✓} else if(isCurrent){●} else{○}
-          </span>
-          <span class="ed-pipeline__step-label">@stage.label</span>
-        </li>
-      }}
-    }
-  </ol>
+  <div class="ed-bpm__canvas">
+
+    @* ── Lane: Autor ─────────────────────────────────── *@
+    <div class="ed-bpm__lane">
+      <div class="ed-bpm__lane-label">
+        <span class="ed-bpm__lane-icon">✍</span>
+        <span>Autor</span>
+      </div>
+      <div class="ed-bpm__lane-track">
+        @for((stage, li) <- autorStages.zipWithIndex) {
+          @defining(nodeState(stage)) { st =>
+            <div class="bpm-node bpm-node--@st">
+              <div class="bpm-node__dot">
+                @if(st == "done") {
+                  <span class="bpm-node__check">✓</span>
+                } else if(st == "active") {
+                  <span class="bpm-node__pulse"></span>
+                }
+              </div>
+              <div class="bpm-node__label">@stage.label</div>
+              @histEntry(stage).map { e =>
+                <div class="bpm-node__meta">@e.history.enteredAt.toString.take(10)</div>
+              }
+            </div>
+            @if(li < autorStages.size - 1) {
+              <div class="bpm-conn"></div>
+            }
+          }
+        }
+      </div>
+    </div>
+
+    <div class="ed-bpm__divider"></div>
+
+    @* ── Lane: Editorial ──────────────────────────────── *@
+    <div class="ed-bpm__lane">
+      <div class="ed-bpm__lane-label">
+        <span class="ed-bpm__lane-icon">⚙</span>
+        <span>Editorial</span>
+      </div>
+      <div class="ed-bpm__lane-track">
+        @for((stage, li) <- revStages.zipWithIndex) {
+          @defining(nodeState(stage)) { st =>
+            <div class="bpm-node bpm-node--@st">
+              <div class="bpm-node__dot">
+                @if(st == "done") {
+                  <span class="bpm-node__check">✓</span>
+                } else if(st == "active") {
+                  <span class="bpm-node__pulse"></span>
+                }
+              </div>
+              <div class="bpm-node__label">@stage.label</div>
+              @histEntry(stage).map { e =>
+                <div class="bpm-node__meta">@e.history.enteredAt.toString.take(10)</div>
+              }
+            </div>
+            @if(li < revStages.size - 1) {
+              <div class="bpm-conn"></div>
+            }
+          }
+        }
+      </div>
+    </div>
+
+  </div>
 
   @if(timeline.nonEmpty) {
-    <details class="ed-pipeline__timeline">
-      <summary>Historial de transiciones (@timeline.size)</summary>
-      <ul class="ed-pipeline__timeline-list">
-        @timeline.reverse.map { entry =>
-          <li class="ed-pipeline__timeline-item">
-            <div class="ed-pipeline__timeline-meta">
-              <strong>@entry.stageLabel</strong>
-              · @entry.history.enteredAt.toString.take(16).replace("T"," ")
-              @entry.enteredByUsername.map { u => · por <em>@@@u</em> }
-              @if(entry.history.exitedAt.isEmpty){ <span class="ed-pipeline__chip">actual</span> }
-            </div>
-            @entry.history.reason.map { r => <p class="ed-pipeline__timeline-reason">@r</p> }
-            @if(showInternalNotes) {
-              @entry.history.internalNotes.map { n =>
-                <p class="ed-pipeline__timeline-notes"><span>Notas internas:</span> @n</p>
+    <details class="ed-bpm__history">
+      <summary class="ed-bpm__history-toggle">▶ Historial de transiciones (@timeline.size)</summary>
+      <ol class="ed-bpm__history-list">
+        @for(entry <- timeline.reverse) {
+          <li class="ed-bpm__history-item @if(entry.history.exitedAt.isEmpty){ed-bpm__history-item--current}">
+            <div class="ed-bpm__history-dot"></div>
+            <div class="ed-bpm__history-body">
+              <div class="ed-bpm__history-head">
+                <strong>@entry.stageLabel</strong>
+                <span>@entry.history.enteredAt.toString.take(16).replace("T"," ")</span>
+                @entry.enteredByUsername.map { u => <span>· <em>@@@u</em></span> }
+                @if(entry.history.exitedAt.isEmpty){ <span class="ed-bpm__chip">actual</span> }
+              </div>
+              @entry.history.reason.map { r => <p class="ed-bpm__history-reason">↳ @r</p> }
+              @if(showInternalNotes) {
+                @entry.history.internalNotes.map { n =>
+                  <p class="ed-bpm__history-notes"><span>Notas:</span> @n</p>
+                }
               }
-            }
+            </div>
           </li>
         }
-      </ul>
+      </ol>
     </details>
   }
+
 </section>
