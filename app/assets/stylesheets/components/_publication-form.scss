@@ -1,8 +1,7 @@
 // ============================================
 // Publication Editor Pro
 // Two-column writers' room: lienzo + metadata sticky.
-// Conecta con public/javascripts/publicationForm.js
-// (autosave, contadores, preview, toolbar, chips, fullscreen).
+// Reskin: Magazine Digital.
 // ============================================
 
 // ──────────────────────────────────────────────
@@ -11,10 +10,10 @@
 .ed-editor-shell {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  padding: 2rem clamp(1rem, 3vw, 2.5rem) 5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .ed-editor-topbar {
@@ -23,25 +22,42 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 1.25rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0 0 1.5rem;
+  border-bottom: 2px solid var(--color-border-subtle);
+  position: relative;
+
+  // Barra de acento izquierda estilo magazine
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 1.5rem;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--color-accent), transparent);
+    border-radius: 999px;
+  }
+
+  padding-left: 1.25rem;
 
   &__left { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
   &__right { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 
   &__eyebrow {
     font-family: $font-mono;
-    font-size: 0.6rem;
+    font-size: 0.58rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--color-text-secondary);
+    color: var(--color-accent);
+    font-weight: 700;
   }
 
   &__title {
     font-family: $font-display;
-    font-size: clamp(1.5rem, 2.5vw, 2.1rem);
-    font-weight: 800;
-    line-height: 1.05;
+    font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
     color: var(--color-text-primary);
     margin: 0;
   }
@@ -91,14 +107,20 @@
 // Bloques del lienzo
 // ──────────────────────────────────────────────
 .ed-editor-block {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 1.25rem 1.4rem 1.4rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  padding: 1.5rem 1.6rem 1.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 2px 0 rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--color-border-strong);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
 
   &__head {
     display: flex;
@@ -110,11 +132,11 @@
 
   &__label {
     font-family: $font-mono;
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--color-text-secondary);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   &__hint {
@@ -417,19 +439,32 @@
   }
   code {
     font-family: $font-mono;
-    background: var(--color-surface-muted, rgba(0,0,0,0.04));
-    padding: 0.1em 0.35em;
-    border-radius: 3px;
+    background: var(--color-surface-sunken);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
     font-size: 0.82em;
+    color: var(--color-accent);
+    border: 1px solid var(--color-border-subtle);
     word-break: break-word;
   }
   pre {
-    background: var(--color-surface-muted, rgba(0,0,0,0.04));
-    padding: 0.8rem 0.9rem;
-    border-radius: 4px;
-    overflow-x: auto;
-    font-size: 0.78rem;
-    code { background: none; padding: 0; }
+    background: #282c34;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    margin: 0.9em 0;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+
+    code {
+      display: block;
+      padding: 0.9rem 1rem;
+      overflow-x: auto;
+      background: transparent;
+      color: #abb2bf;
+      font-size: 0.78rem;
+      line-height: 1.65;
+      border: none;
+    }
   }
   ul, ol {
     padding-left: 1.5em;

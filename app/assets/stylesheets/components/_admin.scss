@@ -282,6 +282,12 @@ body.ed-admin-body-root {
   .ed-bo__nav-label {
     padding: 0 1.25rem;
   }
+
+  // Cuando es <details>: ocultar marker nativo y permitir cursor pointer.
+  &[open] > .ed-bo__nav-chevron,
+  > summary { list-style: none; }
+  > summary::-webkit-details-marker { display: none; }
+  > summary::marker { display: none; }
 }
 
 .ed-bo__nav-label {
@@ -291,6 +297,38 @@ body.ed-admin-body-root {
   text-transform: uppercase;
   color: $bo-text-4;
   padding: 0 1.25rem 0.5rem;
+
+  // Cuando se usa como <summary> dentro de <details>.
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+
+  &:hover { color: $bo-text-2; }
+  &:focus-visible {
+    color: $bo-accent;
+    outline: 2px solid $bo-accent;
+    outline-offset: -2px;
+    border-radius: 2px;
+  }
+}
+
+.ed-bo__nav-chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  transition: transform 0.15s ease;
+  transform: rotate(-90deg); // colapsado → apunta a la derecha
+  opacity: 0.7;
+}
+
+.ed-bo__nav-group[open] > .ed-bo__nav-label .ed-bo__nav-chevron {
+  transform: rotate(0); // abierto → apunta hacia abajo
 }
 
 .ed-bo__nav-item {
@@ -1230,139 +1268,323 @@ body.ed-admin-body-root .ed-admin-shell {
 /* ============================================================
  * Editorial pipeline widget (admin + autor)
  * ============================================================ */
-.ed-pipeline {
-  background: #f7f3e7;
-  border: 1px solid rgba(120, 110, 90, 0.18);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
+// ============================================================
+// BPM — Business Process Map editorial
+// ============================================================
+
+$bpm-done:    #4a9e6b;
+$bpm-active:  #c1440e;
+$bpm-line:    rgba(255,255,255,0.1);
+$bpm-bg:      #0d0e13;
+$bpm-dot-sz:  34px;
+
+.ed-bpm {
+  background: $bpm-bg;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem 1rem;
   margin-bottom: 1.25rem;
+}
 
-  &__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.75rem;
-    margin-bottom: 0.85rem;
+.ed-bpm__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid $bpm-line;
+}
+
+.ed-bpm__eyebrow {
+  font-family: $bo-mono;
+  font-size: 0.55rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  font-weight: 700;
+}
+
+.ed-bpm__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: $bo-mono;
+  font-size: 0.72rem;
+}
+
+.ed-bpm__status-label { color: rgba(255,255,255,0.35); }
+.ed-bpm__status-name  { color: #f5f0e8; font-weight: 700; }
+.ed-bpm__status-sep   { color: rgba(255,255,255,0.2); }
+.ed-bpm__status-owner { color: $bpm-active; font-style: italic; font-family: $bo-sans; font-size: 0.7rem; }
+
+.ed-bpm__canvas { display: flex; flex-direction: column; gap: 0; }
+
+.ed-bpm__divider { height: 1px; background: $bpm-line; margin: 0.5rem 0; }
+
+.ed-bpm__lane {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+.ed-bpm__lane-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 56px;
+  flex-shrink: 0;
+  font-family: $bo-mono;
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  font-weight: 700;
+  text-align: center;
+  padding-right: 0.75rem;
+  border-right: 1px solid $bpm-line;
+  min-height: 60px;
+}
+
+.ed-bpm__lane-icon {
+  font-size: 0.95rem;
+  opacity: 0.4;
+  display: block;
+}
+
+.ed-bpm__lane-track {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+
+  &::-webkit-scrollbar { height: 3px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+}
+
+// ── Nodo BPM ───────────────────────────────────────────────
+.bpm-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  width: 76px;
+  text-align: center;
+
+  &--done {
+    .bpm-node__dot   { background: rgba($bpm-done, 0.15); border-color: $bpm-done; }
+    .bpm-node__check { color: $bpm-done; }
+    .bpm-node__label { color: rgba(255,255,255,0.45); }
+    .bpm-node__meta  { color: rgba(255,255,255,0.25); }
   }
 
-  &__eyebrow {
-    font-family: var(--font-mono, monospace);
-    font-size: 0.6rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: #5a5448;
-  }
-
-  &__current {
-    font-size: 0.8rem;
-    color: #3a3428;
-
-    em { color: #6b8f71; font-style: normal; }
-  }
-
-  &__rail {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    counter-reset: stage;
-  }
-
-  &__step {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
-    background: #ece6d3;
-    border: 1px solid transparent;
-    color: #8a8270;
-    font-size: 0.72rem;
-    line-height: 1;
-
-    &.is-past {
-      background: #e6efe7;
-      color: #3f6849;
-      border-color: rgba(63, 104, 73, 0.25);
+  &--active {
+    .bpm-node__dot {
+      background: rgba($bpm-active, 0.15);
+      border-color: $bpm-active;
+      box-shadow: 0 0 0 4px rgba($bpm-active, 0.12), 0 0 16px rgba($bpm-active, 0.25);
     }
-
-    &.is-current {
-      background: #fff7d9;
-      color: #6b5b00;
-      border-color: rgba(180, 150, 0, 0.45);
-      font-weight: 600;
-      box-shadow: 0 0 0 2px rgba(180, 150, 0, 0.12);
-    }
+    .bpm-node__label { color: #f5f0e8; font-weight: 700; }
+    .bpm-node__meta  { color: rgba(255,255,255,0.4); }
   }
 
-  &__step-dot {
-    font-size: 0.85rem;
-    line-height: 1;
+  &--pending {
+    opacity: 0.38;
+    .bpm-node__dot   { background: transparent; border-color: rgba(255,255,255,0.2); }
+    .bpm-node__label { color: rgba(255,255,255,0.35); }
   }
+}
 
-  &__timeline {
-    margin-top: 1rem;
-    border-top: 1px dashed rgba(120, 110, 90, 0.25);
-    padding-top: 0.75rem;
+.bpm-node__dot {
+  width: $bpm-dot-sz;
+  height: $bpm-dot-sz;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
 
-    summary {
-      cursor: pointer;
-      font-family: var(--font-mono, monospace);
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #5a5448;
-    }
+.bpm-node__check {
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bpm-node__pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid $bpm-active;
+  animation: bpm-pulse 1.8s ease-out infinite;
+}
+
+@keyframes bpm-pulse {
+  0%   { opacity: 0.9; transform: scale(1); }
+  70%  { opacity: 0;   transform: scale(1.7); }
+  100% { opacity: 0;   transform: scale(1.7); }
+}
+
+.bpm-node__label {
+  font-family: $bo-mono;
+  font-size: 0.56rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.bpm-node__meta {
+  font-family: $bo-mono;
+  font-size: 0.52rem;
+  line-height: 1.2;
+  opacity: 0.7;
+}
+
+// ── Conector entre nodos ────────────────────────────────────
+.bpm-conn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 2px;
+  background: $bpm-line;
+  margin-top: calc(#{$bpm-dot-sz} / 2 - 1px);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: -3px;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid $bpm-line;
   }
+}
 
-  &__timeline-list {
-    list-style: none;
-    margin: 0.6rem 0 0;
-    padding: 0;
-    display: grid;
-    gap: 0.6rem;
+// ── Historia colapsable ─────────────────────────────────────
+.ed-bpm__history {
+  margin-top: 1rem;
+  border-top: 1px dashed rgba(255,255,255,0.07);
+  padding-top: 0.65rem;
+}
+
+.ed-bpm__history-toggle {
+  cursor: pointer;
+  font-family: $bo-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  list-style: none;
+  user-select: none;
+
+  &::-webkit-details-marker { display: none; }
+  &:hover { color: rgba(255,255,255,0.5); }
+}
+
+.ed-bpm__history-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: $bpm-line;
   }
+}
 
-  &__timeline-item {
-    background: #fdfaee;
-    border-left: 3px solid rgba(120, 110, 90, 0.35);
-    padding: 0.5rem 0.75rem;
-    border-radius: 4px;
-    font-size: 0.78rem;
-    color: #3a3428;
+.ed-bpm__history-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+
+  &--current .ed-bpm__history-dot {
+    background: $bpm-active;
+    box-shadow: 0 0 0 3px rgba($bpm-active, 0.18);
   }
+}
 
-  &__timeline-meta {
-    color: #5a5448;
-    font-size: 0.72rem;
-    margin-bottom: 0.25rem;
-  }
+.ed-bpm__history-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+  margin-top: 3px;
+  position: relative;
+  z-index: 1;
+}
 
-  &__timeline-reason {
-    margin: 0.25rem 0 0;
-    color: #3a3428;
-  }
+.ed-bpm__history-body {
+  flex: 1;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+}
 
-  &__timeline-notes {
-    margin: 0.25rem 0 0;
-    color: #6b5b00;
-    font-style: italic;
+.ed-bpm__history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: $bo-mono;
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
 
-    span { font-weight: 600; font-style: normal; }
-  }
+  strong { color: #f5f0e8; font-weight: 700; }
+  em     { color: $bpm-active; font-style: normal; }
+}
 
-  &__chip {
-    display: inline-block;
-    margin-left: 0.4rem;
-    padding: 0.05rem 0.4rem;
-    background: #fff7d9;
-    color: #6b5b00;
-    border-radius: 999px;
-    font-size: 0.65rem;
-    font-weight: 600;
-  }
+.ed-bpm__history-reason {
+  font-size: 0.67rem;
+  color: rgba(255,255,255,0.4);
+  margin: 0.3rem 0 0;
+  line-height: 1.45;
+}
+
+.ed-bpm__history-notes {
+  font-size: 0.64rem;
+  color: rgba(180,150,0,0.65);
+  margin: 0.2rem 0 0;
+  font-style: italic;
+  line-height: 1.4;
+  span { font-weight: 700; font-style: normal; }
+}
+
+.ed-bpm__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.42rem;
+  background: rgba($bpm-active, 0.15);
+  color: $bpm-active;
+  border-radius: 999px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* Stage chip (lista admin) */

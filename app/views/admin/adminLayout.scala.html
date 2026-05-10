@@ -120,11 +120,18 @@
 
     <div class="ed-bo__layout">
 
-      @* ============= SIDEBAR ============= *@
+      @* ============= SIDEBAR =============
+         Cada sección es un <details> colapsable. Por defecto abren las
+         secciones; el JS al pie del layout persiste el estado en
+         localStorage y fuerza abrir el grupo que contiene el item activo.
+      *@
       <aside class="ed-bo__sidebar" aria-label="Navegación del backoffice">
 
-        <div class="ed-bo__nav-group">
-          <span class="ed-bo__nav-label">General</span>
+        <details class="ed-bo__nav-group" data-section="general" open>
+          <summary class="ed-bo__nav-label">
+            <span class="ed-bo__nav-label-text">General</span>
+            <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+          </summary>
           @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.DashboardView)) {
             <a class="ed-bo__nav-item @isActive("dashboard")" href="@routes.AdminController.dashboard(0, None)">
               <span class="ed-bo__nav-dot"></span>Resumen
@@ -135,11 +142,14 @@
               <span class="ed-bo__nav-dot"></span>Estadísticas
             </a>
           }
-        </div>
+        </details>
 
         @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport) || utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage) || utils.RolePolicy.can(role, utils.Capabilities.Cap.SeasonsManage)) {
-          <div class="ed-bo__nav-group">
-            <span class="ed-bo__nav-label">Editorial</span>
+          <details class="ed-bo__nav-group" data-section="editorial" open>
+            <summary class="ed-bo__nav-label">
+              <span class="ed-bo__nav-label-text">Editorial</span>
+              <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+            </summary>
             @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview)) {
               <a class="ed-bo__nav-item @isActive("review")" href="@routes.AdminController.pendingPublications()">
                 <span class="ed-bo__nav-dot"></span>Cola de revisión
@@ -158,30 +168,39 @@
                 <span class="ed-bo__nav-dot"></span>Temporadas
               </a>
             }
-          </div>
+          </details>
         }
 
         @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.EventsView)) {
-          <div class="ed-bo__nav-group">
-            <span class="ed-bo__nav-label">Eventos</span>
+          <details class="ed-bo__nav-group" data-section="eventos" open>
+            <summary class="ed-bo__nav-label">
+              <span class="ed-bo__nav-label-text">Eventos</span>
+              <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+            </summary>
             <a class="ed-bo__nav-item @isActive("events")" href="@routes.AdminEventController.list(None, 0)">
               <span class="ed-bo__nav-dot"></span>Agenda editorial
             </a>
-          </div>
+          </details>
         }
 
         @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.CollectionsCurate)) {
-          <div class="ed-bo__nav-group">
-            <span class="ed-bo__nav-label">Curaduría</span>
+          <details class="ed-bo__nav-group" data-section="curaduria" open>
+            <summary class="ed-bo__nav-label">
+              <span class="ed-bo__nav-label-text">Curaduría</span>
+              <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+            </summary>
             <a class="ed-bo__nav-item @isActive("collections")" href="@routes.AdminCollectionController.list(None)">
               <span class="ed-bo__nav-dot"></span>Colecciones
             </a>
-          </div>
+          </details>
         }
 
         @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ObservabilityView)) {
-          <div class="ed-bo__nav-group">
-            <span class="ed-bo__nav-label">Observabilidad</span>
+          <details class="ed-bo__nav-group" data-section="observabilidad" open>
+            <summary class="ed-bo__nav-label">
+              <span class="ed-bo__nav-label-text">Observabilidad</span>
+              <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+            </summary>
             <a class="ed-bo__nav-item @isActive("agents")" href="@routes.AdminAgentsController.dashboard()">
               <span class="ed-bo__nav-dot"></span>Agentes &amp; Guardians
             </a>
@@ -190,12 +209,15 @@
                 <span class="ed-bo__nav-dot"></span>Configuración de agentes
               </a>
             }
-          </div>
+          </details>
         }
 
         @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView) || utils.RolePolicy.can(role, utils.Capabilities.Cap.NewsletterView)) {
-          <div class="ed-bo__nav-group">
-            <span class="ed-bo__nav-label">Comunidad</span>
+          <details class="ed-bo__nav-group" data-section="comunidad" open>
+            <summary class="ed-bo__nav-label">
+              <span class="ed-bo__nav-label-text">Comunidad</span>
+              <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+            </summary>
             @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView)) {
               <a class="ed-bo__nav-item @isActive("contacts")" href="@routes.AdminController.dashboard(0, None)#contacts">
                 <span class="ed-bo__nav-dot"></span>Contactos
@@ -206,29 +228,35 @@
                 <span class="ed-bo__nav-dot"></span>Newsletter
               </a>
             }
-          </div>
+          </details>
         }
 
         @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.GovernanceManageAdmins)) {
-          <div class="ed-bo__nav-group">
-            <span class="ed-bo__nav-label">Gobernanza</span>
+          <details class="ed-bo__nav-group" data-section="gobernanza" open>
+            <summary class="ed-bo__nav-label">
+              <span class="ed-bo__nav-label-text">Gobernanza</span>
+              <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+            </summary>
             <a class="ed-bo__nav-item @isActive("admins")" href="@routes.AdminController.adminManagement()">
               <span class="ed-bo__nav-dot"></span>Administradores
             </a>
-          </div>
+          </details>
         }
 
         @* Mensajería: disponible para todo backoffice. Reusa la bandeja
            del usuario; cada admin es también un actor del sistema. *@
-        <div class="ed-bo__nav-group">
-          <span class="ed-bo__nav-label">Comunicación</span>
+        <details class="ed-bo__nav-group" data-section="comunicacion" open>
+          <summary class="ed-bo__nav-label">
+            <span class="ed-bo__nav-label-text">Comunicación</span>
+            <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+          </summary>
           <a class="ed-bo__nav-item @isActive("messages")" href="@routes.UserPublicationController.inbox()">
             <span class="ed-bo__nav-dot"></span>Mensajes
           </a>
           <a class="ed-bo__nav-item @isActive("notifications")" href="@routes.UserPublicationController.notifications()">
             <span class="ed-bo__nav-dot"></span>Notificaciones
           </a>
-        </div>
+        </details>
 
         <div class="ed-bo__sidebar-foot">
           <span>v1.0 · @java.time.Year.now()</span>
@@ -247,5 +275,29 @@
   </div>
 
   <script src="@routes.Assets.versioned("javascripts/theme.js")"></script>
+  <script>
+    // Sidebar admin: persistencia de grupos colapsables.
+    (function () {
+      var KEY = 'ed-bo-nav-collapsed';
+      var stored = {};
+      try { stored = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { stored = {}; }
+
+      var groups = document.querySelectorAll('.ed-bo__sidebar .ed-bo__nav-group[data-section]');
+      groups.forEach(function (g) {
+        var key = g.getAttribute('data-section');
+        // Si el grupo contiene el item activo, forzar abierto.
+        var hasActive = g.querySelector('.ed-bo__nav-item.is-active');
+        if (hasActive) {
+          g.open = true;
+        } else if (Object.prototype.hasOwnProperty.call(stored, key)) {
+          g.open = !stored[key]; // stored[key] = true → colapsado
+        }
+        g.addEventListener('toggle', function () {
+          stored[key] = !g.open;
+          try { localStorage.setItem(KEY, JSON.stringify(stored)); } catch (e) { /* ignore */ }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

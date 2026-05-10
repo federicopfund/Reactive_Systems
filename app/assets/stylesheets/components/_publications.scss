@@ -1,6 +1,6 @@
 // ============================================
 // Publications — Listado, búsqueda, categorías
-// Issue #17-F: toolbar sticky con header + categorías.
+// Reskin: Magazine Digital — sombras, colores, elevación.
 // ============================================
 
 .ed-pub-toolbar {
@@ -9,13 +9,17 @@
   z-index: 5;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border-subtle);
-  transition: box-shadow $duration-fast $ease-out;
+  transition: box-shadow 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 
-  &.is-stuck { box-shadow: $shadow-sm; }
+  &.is-stuck {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 0 var(--color-border-subtle);
+  }
 }
 
 .ed-pub-header {
-  padding: 3rem 3.5rem 1.25rem;
+  padding: 2.5rem 3.5rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -25,33 +29,46 @@
 
 .ed-pub-count {
   font-family: $font-mono;
-  font-size: 0.6rem;
-  color: var(--ed-text-faint);
-  letter-spacing: 0.1em;
-  margin-bottom: 0.75rem;
+  font-size: 0.58rem;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
 }
 
 .ed-pub-title {
   font-family: $font-display;
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
   font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  color: var(--ed-text);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
 
-  em { font-style: italic; }
+  em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
 }
 
-// ── Filtro de categorías: navegación tipo "section nav"
-//    Estilo editorial formal: línea base continua, cada categoría
-//    es una pestaña tipográfica. La activa lleva un subrayado grueso
-//    en negro (no accent verde-lima — demasiado pop para este chrome).
+// ── Filtro de categorías: scrollable pill nav — magazine style
 .ed-cat-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0;
+  gap: 0.4rem;
   margin: 0;
-  padding: 0 3.5rem;
+  padding: 0.75rem 3.5rem 1rem;
   background: transparent;
   border: none;
   overflow-x: auto;
@@ -63,91 +80,122 @@
 
 .ed-cat-pill {
   font-family: $font-mono;
-  font-size: 0.66rem;
-  letter-spacing: 0.18em;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 600;
-  padding: 1rem 1.65rem 0.95rem;
-  color: var(--ed-text-faint);
+  padding: 0.45rem 1.1rem;
+  color: var(--color-text-secondary);
   cursor: pointer;
   background: transparent;
-  border: none;
-  border-radius: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
   text-decoration: none;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  min-width: 0;
-  transition: color 0.18s ease;
-
-  // Subrayado de la pestaña — invisible por defecto, aparece en hover/active
-  &::after {
-    content: "";
-    position: absolute;
-    left: 1.65rem;
-    right: 1.65rem;
-    bottom: -1px;
-    height: 2px;
-    background: transparent;
-    transition: background 0.18s ease;
-  }
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
-    color: var(--ed-text);
-    background: transparent;
-    &::after { background: var(--ed-border); }
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-raised);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
 
   &:focus-visible {
-    outline: none;
-    color: var(--ed-text);
-    &::after { background: var(--ed-text); }
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    color: var(--color-text-primary);
   }
 
-  // Estado seleccionado: subrayado grueso en negro, peso refuerza
   &.active {
-    color: var(--ed-text);
+    color: var(--color-on-accent);
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    box-shadow: 0 2px 8px rgba(var(--color-accent-rgb), 0.35);
     font-weight: 700;
-    background: transparent;
-
-    &::after {
-      background: var(--ed-text);
-      height: 3px;
-      bottom: -2px;
-    }
   }
 }
 
 .ed-articles-grid {
   display: grid;
-  // Issue #17-E: densidad inteligente, sin media queries manuales.
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 0;
+  padding: 2rem 2rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 1rem;
+  }
 }
 
 .ed-article-card {
-  padding: 2rem;
-  border-right: 1px solid var(--ed-border);
-  border-bottom: 1px solid var(--ed-border);
+  padding: 2rem 2rem 1.75rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  margin: 0.6rem;
   cursor: pointer;
-  transition: background 0.15s;
   text-decoration: none;
   color: inherit;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--color-surface-raised);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
 
-  // Issue #17-E: borde derecho gestionado por el contenedor (auto-fill
-  // genera un número variable de columnas, así que dejamos el borde
-  // siempre puesto y la última de cada fila lo hereda; la transición a
-  // pantalla completa elimina el sobrante vía :nth-of-type útil).
-  &:hover { background: var(--ed-bg2); }
+  // Barra de acento superior — tono magazine
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-accent), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-color: var(--color-border-strong);
+
+    &::before { opacity: 1; }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
 
   &--featured {
     grid-column: span 2;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    padding: 2.5rem;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+
+    &::before { display: none; }
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
+    }
+
+    @media (max-width: 900px) {
+      grid-column: span 1;
+      grid-template-columns: 1fr;
+    }
   }
 }
 
@@ -160,36 +208,43 @@
 
 .ed-article-cat {
   font-family: $font-mono;
-  font-size: 0.58rem;
-  letter-spacing: 0.15em;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ed-accent);
-  padding: 0.25rem 0.5rem;
-  border: 1px solid rgba(212, 255, 0, 0.25);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid rgba(var(--color-accent-rgb), 0.2);
 }
 
 .ed-article-date {
   font-family: $font-mono;
-  font-size: 0.6rem;
-  color: var(--ed-text-faint);
+  font-size: 0.58rem;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.04em;
 }
 
 .ed-article-title {
   font-family: $font-display;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 800;
   line-height: 1.25;
-  color: var(--ed-text);
+  color: var(--color-text-primary);
   margin-bottom: 0.75rem;
   text-wrap: pretty;
+  letter-spacing: -0.01em;
 }
 
 .ed-article-excerpt {
-  font-size: 0.8rem;
-  line-height: 1.7;
-  color: var(--ed-text-dim);
+  font-family: $font-body;
+  font-size: 0.82rem;
+  line-height: 1.72;
+  color: var(--color-text-secondary);
   margin-bottom: 1.25rem;
   text-wrap: pretty;
+  flex-grow: 1;
 }
 
 .ed-article-tags {
@@ -197,9 +252,10 @@
   flex-wrap: wrap;
   align-items: flex-start;
   align-self: start;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
+  gap: 0.35rem;
+  margin-bottom: 1.1rem;
 }
+
 
 .ed-article-tag {
   display: inline-flex;
@@ -207,29 +263,29 @@
   flex: 0 0 auto;
   align-self: flex-start;
   font-family: $font-mono;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 500;
   line-height: 1;
-  color: var(--ed-text-dim);
-  padding: 0.32rem 0.6rem;
-  background: transparent;
-  border: 1px solid var(--ed-border);
+  color: var(--color-text-secondary);
+  padding: 0.28rem 0.55rem;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 999px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 
   &::before {
     content: '#';
-    margin-right: 0.25rem;
-    color: var(--ed-text-faint);
-    opacity: 0.7;
+    margin-right: 0.2rem;
+    color: var(--color-text-tertiary);
+    opacity: 0.8;
   }
 
   &:hover {
-    color: var(--ed-accent);
-    border-color: var(--ed-accent);
-    background: var(--color-accent-soft, rgba(255, 255, 255, 0.04));
+    color: var(--color-accent);
+    border-color: rgba(var(--color-accent-rgb), 0.3);
+    background: var(--color-accent-soft);
   }
 }
 
@@ -241,62 +297,95 @@ a.ed-article-tag {
 .ed-article-link {
   font-family: $font-mono;
   font-size: 0.62rem;
-  color: var(--ed-accent);
-  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  display: flex;
+  font-weight: 700;
+  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+  width: 100%;
 
-  &::after { content: '→'; }
+  &::after {
+    content: '→';
+    transition: transform 0.18s ease;
+  }
+
+  .ed-article-card:hover & {
+    &::after { transform: translateX(4px); }
+  }
 }
 
 .ed-featured-image {
-  background: var(--ed-bg3);
-  border: 1px solid var(--ed-border);
+  background: var(--color-surface-sunken);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-start;
   font-family: $font-mono;
-  font-size: 0.65rem;
-  color: var(--ed-text-faint);
+  font-size: 0.6rem;
+  color: var(--color-text-tertiary);
   letter-spacing: 0.1em;
-  min-height: 180px;
+  min-height: 280px;
   position: relative;
   overflow: hidden;
 
+  // Fondo abstracto tipo cover art
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 8px,
-      rgba(242, 237, 214, 0.03) 8px,
-      rgba(242, 237, 214, 0.03) 9px
-    );
+    background:
+      linear-gradient(135deg, var(--color-accent-soft) 0%, transparent 60%),
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 12px,
+        rgba(var(--color-accent-rgb), 0.04) 12px,
+        rgba(var(--color-accent-rgb), 0.04) 13px
+      );
+  }
+
+  // Gradiente inferior — separa el texto del fondo
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to top, rgba(var(--color-accent-rgb), 0.12), transparent);
   }
 }
 
 .ed-featured-image-label {
   position: relative;
   z-index: 1;
-  text-align: center;
-  line-height: 2;
+  padding: 1.5rem;
+  text-align: left;
+  line-height: 1.8;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  font-weight: 700;
 }
 
 .ed-featured-content {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding: 2.5rem;
+  background: var(--color-surface-raised);
 }
 
 // Empty state
 .ed-pub-empty {
   padding: 4rem 3.5rem;
   text-align: center;
-  color: var(--ed-text-faint);
+  color: var(--color-text-tertiary);
   font-family: $font-mono;
   font-size: 0.85rem;
   letter-spacing: 0.05em;
@@ -312,32 +401,50 @@ a.ed-article-tag {
   }
 }
 
-// ── Acceso secundario: archivo de temporadas (en la toolbar de Artículos)
+// ── Byline del autor en las tarjetas
+.ed-article-byline {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+
+  &::before {
+    content: '— ';
+    color: var(--color-accent);
+  }
+}
+
+// ── Acceso secundario: archivo de temporadas
 .ed-pub-archive-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.45rem 1rem;
   font-family: $font-mono;
-  font-size: 0.7rem;
+  font-size: 0.64rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ed-text-dim);
+  font-weight: 600;
+  color: var(--color-text-secondary);
   text-decoration: none;
   border: 1px solid var(--color-border-subtle);
-  border-radius: 2px;
-  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 
   &__icon {
-    color: var(--ed-accent);
-    font-size: 0.85rem;
+    color: var(--color-accent);
+    font-size: 0.9rem;
   }
 
   &:hover,
   &:focus-visible {
-    color: var(--ed-text);
-    border-color: var(--ed-accent);
-    background: var(--ed-bg2);
+    color: var(--color-text-primary);
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+    box-shadow: 0 2px 10px rgba(var(--color-accent-rgb), 0.2);
+    outline: none;
   }
 }
 

@@ -93,21 +93,43 @@
 
       @* Piezas editoriales (DB) *@
       @editorialArticles.zipWithIndex.map { case (a, idx) =>
-        <a class="ed-article-card @if(idx == 0 && dynamicPublications.isEmpty){ed-article-card--featured}" href="@routes.HomeController.publicacion(a.slug)">
-          <div class="ed-article-meta">
-            <span class="ed-article-cat">@a.categoryLabel</span>
-            <span class="ed-article-date">@a.publishedLabel</span>
-          </div>
-          <h2 class="ed-article-title">@a.title</h2>
-          <p class="ed-article-excerpt">@a.excerpt.getOrElse("")</p>
-          @if(a.tags.nonEmpty) {
-            <div class="ed-article-tags">
-              @a.tags.take(3).map { tag =>
-                <span class="ed-article-tag">@tag</span>
-              }
+        <a class="ed-article-card @if(idx == 0){ed-article-card--featured}" href="@routes.HomeController.publicacion(a.slug)">
+          @if(idx == 0) {
+            <div class="ed-featured-image">
+              <span class="ed-featured-image-label">PIEZA<br/>EDITORIAL</span>
             </div>
+            <div class="ed-featured-content">
+              <div class="ed-article-meta">
+                <span class="ed-article-cat">@a.categoryLabel</span>
+                <span class="ed-article-date">@a.publishedLabel</span>
+              </div>
+              <h2 class="ed-article-title">@a.title</h2>
+              <p class="ed-article-excerpt">@a.excerpt.getOrElse("")</p>
+              @if(a.tags.nonEmpty) {
+                <div class="ed-article-tags">
+                  @a.tags.take(4).map { tag =>
+                    <span class="ed-article-tag">@tag</span>
+                  }
+                </div>
+              }
+              <span class="ed-article-link">Leer pieza editorial</span>
+            </div>
+          } else {
+            <div class="ed-article-meta">
+              <span class="ed-article-cat">@a.categoryLabel</span>
+              <span class="ed-article-date">@a.publishedLabel</span>
+            </div>
+            <h2 class="ed-article-title">@a.title</h2>
+            <p class="ed-article-excerpt">@a.excerpt.getOrElse("")</p>
+            @if(a.tags.nonEmpty) {
+              <div class="ed-article-tags">
+                @a.tags.take(3).map { tag =>
+                  <span class="ed-article-tag">@tag</span>
+                }
+              </div>
+            }
+            <span class="ed-article-link">Leer pieza editorial</span>
           }
-          <span class="ed-article-link">Leer pieza editorial</span>
         </a>
       }
 
@@ -116,7 +138,7 @@
         @if(i == 0 && editorialArticles.isEmpty) {
           <a class="ed-article-card ed-article-card--featured" href="@routes.HomeController.publicacion(pwa.publication.slug)">
             <div class="ed-featured-image">
-              <span class="ed-featured-image-label">PIEZA<br/>DESTACADA</span>
+              <span class="ed-featured-image-label">DESTACADA<br/>@pwa.authorFullName</span>
             </div>
             <div class="ed-featured-content">
               <div class="ed-article-meta">
@@ -124,7 +146,7 @@
                 <span class="ed-article-date">@pwa.publication.publishedAt.map(_.toString.take(10)).getOrElse(pwa.publication.createdAt.toString.take(10))</span>
               </div>
               <h2 class="ed-article-title">@pwa.publication.title</h2>
-              <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(220))</p>
+              <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(280))</p>
               @pwa.publication.tags.map { t =>
                 <div class="ed-article-tags">
                   @t.split(",").map(_.trim).filter(_.nonEmpty).take(4).map { tag =>
@@ -132,7 +154,7 @@
                   }
                 </div>
               }
-              <span class="ed-article-link">Leer pieza</span>
+              <span class="ed-article-link">Leer pieza completa</span>
             </div>
           </a>
         } else {
@@ -142,7 +164,7 @@
               <span class="ed-article-date">@pwa.publication.publishedAt.map(_.toString.take(10)).getOrElse(pwa.publication.createdAt.toString.take(10))</span>
             </div>
             <h2 class="ed-article-title">@pwa.publication.title</h2>
-            <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(160))</p>
+            <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(180))</p>
             @pwa.publication.tags.map { t =>
               <div class="ed-article-tags">
                 @t.split(",").map(_.trim).filter(_.nonEmpty).take(3).map { tag =>
@@ -150,6 +172,7 @@
                 }
               </div>
             }
+            <div class="ed-article-byline">@pwa.authorFullName</div>
             <span class="ed-article-link">Leer</span>
           </a>
         }

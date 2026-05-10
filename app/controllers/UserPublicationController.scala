@@ -228,6 +228,12 @@ class UserPublicationController @Inject()(
           },
           formData => {
             val slug = generateSlug(formData.title)
+            // Si estaba aprobada, al editar vuelve a draft hasta que el autor envíe la nueva versión
+            val newStatus = if (existingPub.status == PublicationStatus.Approved.toString)
+              PublicationStatus.Draft.toString
+            else
+              existingPub.status
+
             val updatedPub = existingPub.copy(
               title = formData.title,
               slug = slug,
@@ -236,13 +242,18 @@ class UserPublicationController @Inject()(
               coverImage = formData.coverImage,
               category = formData.category,
               tags = formData.tags,
+              status = newStatus,
               updatedAt = Instant.now()
             )
             
             publicationRepo.update(updatedPub).map { success =>
               if (success) {
+                val msg = if (newStatus == PublicationStatus.Draft.toString)
+                  "Publicación actualizada. Enviala para revisión cuando esté lista."
+                else
+                  "Publicación actualizada exitosamente"
                 Redirect(routes.UserPublicationController.dashboard())
-                  .flashing("success" -> "Publicación actualizada exitosamente")
+                  .flashing("success" -> msg)
               } else {
                 InternalServerError("Error al actualizar la publicación")
               }
@@ -262,6 +273,8 @@ class UserPublicationController @Inject()(
   def submitForReview(id: Long) = userAction.async { implicit request: AuthRequest[AnyContent] =>
     publicationRepo.findById(id).flatMap {
       case Some(publication) if publication.userId == request.userId =>
+        val isRevision = publication.status == PublicationStatus.Draft.toString &&
+          publication.updatedAt != publication.createdAt
         // Stage 1: Auto-moderate via ModerationEngine (Ask)
         moderationAdapter.moderate(
           contentId = id,
@@ -282,16 +295,21 @@ class UserPublicationController @Inject()(
                 analyticsAdapter.trackEvent("publication.submitted", Some(request.userId), Map(
                   "publicationId" -> id.toString,
                   "verdict" -> verdict,
-                  "score" -> score.toString
+                  "score" -> score.toString,
+                  "isRevision" -> isRevision.toString
                 ))
                 // Notify via NotificationEngine
                 notificationAdapter.notify(
                   userId = request.userId,
                   userEmail = None,
                   notificationType = "publication_submitted",
-                  title = if (verdict == "auto_rejected") "Publicación rechazada" else "Publicación enviada",
+                  title = if (verdict == "auto_rejected") "Publicación rechazada"
+                          else if (isRevision) "Nueva versión enviada"
+                          else "Publicación enviada",
                   message = if (verdict == "auto_rejected")
                     s"Tu publicación '${publication.title}' no pasó la moderación: ${flags.mkString(", ")}"
+                  else if (isRevision)
+                    s"La nueva versión de '${publication.title}' fue enviada al equipo editorial para su revisión."
                   else
                     s"Tu publicación '${publication.title}' fue enviada para revisión.",
                   publicationId = Some(id)
@@ -302,6 +320,9 @@ class UserPublicationController @Inject()(
                 if (verdict == "auto_rejected") {
                   Redirect(routes.UserPublicationController.dashboard())
                     .flashing("error" -> s"Publicación rechazada automáticamente: ${flags.mkString(", ")}")
+                } else if (isRevision) {
+                  Redirect(routes.UserPublicationController.dashboard())
+                    .flashing("success" -> s"Nueva versión enviada al equipo editorial para revisión.")
                 } else {
                   Redirect(routes.UserPublicationController.dashboard())
                     .flashing("success" -> s"Publicación enviada para revisión (moderación: $verdict)")

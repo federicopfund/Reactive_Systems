@@ -37,6 +37,9 @@
   <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
   <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/print.css")" media="print">
 
+  @* Highlight.js — VS Code Dark+ theme para syntax highlighting en bloques de código *@
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" media="all">
+
   @* Bootstrap inline anti-FOUC: aplica el tema antes del primer paint.
      Soporta tres modos: 'crema' | 'noche' | 'auto'. *@
   <script>
@@ -74,5 +77,28 @@
   <script defer src="@routes.Assets.versioned("javascripts/formValidation.js")"></script>
   <script defer src="@routes.Assets.versioned("javascripts/animations.js")"></script>
   <script defer src="@routes.Assets.versioned("javascripts/prefetch.js")"></script>
+
+  @* Highlight.js — syntax highlighting estilo VS Code *@
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/scala.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof hljs === 'undefined') return;
+      hljs.configure({ ignoreUnescapedHTML: true });
+      // Resaltar todos los code blocks en artículos y en el preview del editor
+      document.querySelectorAll(
+        '.ed-legacy-prose pre code, .ed-article-content pre code, pre.ed-md-code code, .ed-editor-preview-pane pre code'
+      ).forEach(function (block) {
+        hljs.highlightElement(block);
+      });
+    });
+  </script>
 </body>
 </html>

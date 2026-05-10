@@ -117,15 +117,28 @@
   text-transform: uppercase;
   padding: 0.25rem 0.6rem;
   border: 1px solid;
+  border-radius: 4px;
   flex-shrink: 0;
 
   &--pending,
   &--en-revision   { color: $color-warning; border-color: rgba(245, 158, 11, 0.3); }
   &--approved,
-  &--publicado     { color: var(--ed-accent); border-color: rgba(212, 255, 0, 0.3); }
+  &--publicado     { color: var(--color-accent); border-color: rgba(var(--color-accent-rgb), 0.3); }
   &--draft,
-  &--borrador      { color: var(--ed-text-faint); border-color: var(--ed-border-strong); }
+  &--borrador      { color: var(--color-text-tertiary); border-color: var(--color-border-subtle); }
   &--rejected      { color: $color-danger; border-color: rgba(239, 68, 68, 0.3); }
+  &--info          { color: var(--color-text-tertiary); border-color: var(--color-border-subtle); font-style: italic; }
+}
+
+.ed-link-btn--accent {
+  color: var(--color-accent);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
+  font-weight: 700;
+
+  &:hover {
+    background: rgba(var(--color-accent-rgb), 0.08);
+    border-color: var(--color-accent);
+  }
 }
 
 // Profile card
@@ -170,6 +183,143 @@
     font-size: 0.7rem;
     color: var(--ed-text-faint);
     margin-top: 0.25rem;
+  }
+}
+
+// ============================================
+// Perfil público — ed-public-profile
+// ============================================
+.ed-public-profile {
+  padding: 3rem 3.5rem;
+
+  @media (max-width: 700px) { padding: 1.5rem 1rem; }
+}
+
+.ed-profile-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: 2rem;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  &__avatar {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-family: $font-display;
+    font-size: 1.8rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.2);
+  }
+
+  &__eyebrow {
+    font-family: $font-mono;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 0.4rem;
+    font-weight: 700;
+  }
+
+  &__name {
+    font-family: $font-display;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--color-text-primary);
+    line-height: 1.05;
+    margin: 0 0 0.35rem;
+  }
+
+  &__handle {
+    font-family: $font-mono;
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.04em;
+    margin-bottom: 0.9rem;
+  }
+
+  &__bio {
+    font-family: $font-body;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.65;
+    margin: 0 0 0.75rem;
+    max-width: 55ch;
+  }
+
+  &__site {
+    font-family: $font-mono;
+    font-size: 0.72rem;
+    color: var(--color-accent);
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    transition: opacity 0.15s ease;
+
+    &:hover { opacity: 0.75; }
+  }
+}
+
+.ed-profile-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ed-profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  border-right: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-raised);
+  gap: 0.3rem;
+
+  &:last-child { border-right: none; }
+
+  @media (max-width: 600px) {
+    &:nth-child(2) { border-right: none; }
+    &:nth-child(3) { border-top: 1px solid var(--color-border-subtle); }
+    &:nth-child(4) { border-top: 1px solid var(--color-border-subtle); border-right: none; }
+  }
+
+  &__num {
+    font-family: $font-display;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--color-accent);
+    line-height: 1;
+  }
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    font-weight: 700;
   }
 }
 
