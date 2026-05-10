@@ -13,7 +13,7 @@ import repositories.{
   ContactRepository, ReactionRepository, CommentRepository, BookmarkRepository,
   NewsletterRepository, PublicationCategoryRepository, ManifestoPillarRepository,
   LegalDocumentRepository, CollectionRepository, EditorialArticleRepository,
-  EditorialIdentityRepository, EditorialSeasonRepository
+  EditorialIdentityRepository, EditorialSeasonRepository, UserRepository
 }
 import core.{Contact, ContactSubmitted, ContactError}
 import actions.{OptionalAuthAction, OptionalAuthRequest}
@@ -40,6 +40,7 @@ class HomeController @Inject()(
   editorialArticleRepo: EditorialArticleRepository,
   identityRepo: EditorialIdentityRepository,
   seasonRepo: EditorialSeasonRepository,
+  userRepo: UserRepository,
   optionalAuth: OptionalAuthAction
 )(implicit ec: ExecutionContext) extends BaseController with I18nSupport with Logging {
 
@@ -123,10 +124,11 @@ class HomeController @Inject()(
           userReactions <- userId.map(uid => reactionRepo.getUserReactions(pubId, uid)).getOrElse(Future.successful(Set.empty[String]))
           comments <- commentRepo.findByPublicationId(pubId)
           isBookmarked <- userId.map(uid => bookmarkRepo.isBookmarked(uid, pubId)).getOrElse(Future.successful(false))
+          authorUsername <- userRepo.findById(publication.userId).map(_.map(_.username).getOrElse("desconocido"))
         } yield {
           Ok(views.html.user.publicationPreview(
-            publication, 
-            request.userInfo.map(_._2).getOrElse("Invitado"), 
+            publication,
+            authorUsername,
             List.empty,
             reactions,
             userReactions,

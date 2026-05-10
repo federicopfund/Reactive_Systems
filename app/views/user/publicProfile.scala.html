@@ -1,27 +1,43 @@
 @(user: models.User, pubs: List[models.Publication], badges: List[models.UserBadge], totalReactions: Int, totalViews: Int)(implicit request: RequestHeader, messages: Messages)
 
 @main(user.fullName + " · @" + user.username) {
-  <section class="ed-dashboard">
-    <header class="ed-dash-header">
-      <div class="ed-dash-eyebrow">Perfil público</div>
-      <h1 class="ed-dash-title">@user.fullName</h1>
-      <p class="ed-dash-sub">@@@user.username @if(user.location.nonEmpty){· @user.location}</p>
+  <section class="ed-dashboard ed-public-profile">
+
+    <header class="ed-profile-hero">
+      <div class="ed-profile-hero__avatar" aria-hidden="true">
+        @user.fullName.headOption.map(_.toUpper).getOrElse(user.username.head.toUpper)
+      </div>
+      <div class="ed-profile-hero__info">
+        <div class="ed-profile-hero__eyebrow">Perfil público</div>
+        <h1 class="ed-profile-hero__name">@user.fullName</h1>
+        <div class="ed-profile-hero__handle">@@@user.username@if(user.location.nonEmpty){ · @user.location}</div>
+        @if(user.bio.nonEmpty) {
+          <p class="ed-profile-hero__bio">@user.bio</p>
+        }
+        @if(user.website.nonEmpty) {
+          <a href="@user.website" class="ed-profile-hero__site" target="_blank" rel="noopener noreferrer">↗ @user.website</a>
+        }
+      </div>
     </header>
 
-    <article class="ed-profile-card">
-      @if(user.bio.nonEmpty) {
-        <p class="ed-profile-bio-text">@user.bio</p>
-      }
-      <div class="ed-profile-stats">
-        <div><strong>@pubs.size</strong> publicaciones</div>
-        <div><strong>@totalReactions</strong> reacciones</div>
-        <div><strong>@totalViews</strong> vistas</div>
-        <div><strong>@badges.size</strong> insignias</div>
+    <div class="ed-profile-stats">
+      <div class="ed-profile-stat">
+        <span class="ed-profile-stat__num">@pubs.size</span>
+        <span class="ed-profile-stat__label">Publicaciones</span>
       </div>
-      @if(user.website.nonEmpty) {
-        <div class="ed-profile-row"><span>Sitio</span><a href="@user.website" target="_blank" rel="noopener">@user.website</a></div>
-      }
-    </article>
+      <div class="ed-profile-stat">
+        <span class="ed-profile-stat__num">@totalReactions</span>
+        <span class="ed-profile-stat__label">Reacciones</span>
+      </div>
+      <div class="ed-profile-stat">
+        <span class="ed-profile-stat__num">@totalViews</span>
+        <span class="ed-profile-stat__label">Vistas</span>
+      </div>
+      <div class="ed-profile-stat">
+        <span class="ed-profile-stat__num">@badges.size</span>
+        <span class="ed-profile-stat__label">Insignias</span>
+      </div>
+    </div>
 
     @if(badges.nonEmpty) {
       <section class="ed-dash-section">

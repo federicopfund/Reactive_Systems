@@ -90,7 +90,22 @@
                 }
                 <a href="@routes.UserPublicationController.viewPublication(pid)" class="ed-link-btn">Ver</a>
                 <a href="@routes.UserPublicationController.publicationHistory(pid)" class="ed-link-btn" title="Hilo de trazabilidad editorial">Hilo</a>
-                <a href="@routes.UserPublicationController.editPublicationForm(pid)" class="ed-link-btn">Editar</a>
+                @if(p.status != "pending") {
+                  <a href="@routes.UserPublicationController.editPublicationForm(pid)" class="ed-link-btn">Editar</a>
+                }
+                @if(p.status == "draft") {
+                  <form method="POST" action="@routes.UserPublicationController.submitForReview(pid)" style="display:inline">
+                    @helper.CSRF.formField
+                    @if(p.updatedAt != p.createdAt) {
+                      <button type="submit" class="ed-link-btn ed-link-btn--accent" title="Enviar nueva versión al equipo editorial">Enviar nueva versión</button>
+                    } else {
+                      <button type="submit" class="ed-link-btn ed-link-btn--accent">Enviar para revisión</button>
+                    }
+                  </form>
+                }
+                @if(p.status == "pending") {
+                  <span class="ed-sub-badge ed-sub-badge--info">En revisión — no editable</span>
+                }
               }
             </div>
           }

@@ -39,6 +39,16 @@
       }
 
       <section class="ed-article-react">
+        <div class="ed-react-author">
+          <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-react-author__avatar" aria-hidden="true">
+            @username.take(2).toUpperCase
+          </a>
+          <div class="ed-react-author__info">
+            <span class="ed-react-author__label">Escrito por</span>
+            <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-react-author__name">@@@username</a>
+          </div>
+        </div>
+
         @if(isAuthenticated) {
           @publication.id.map { pid =>
             <div class="ed-react-row">
@@ -118,6 +128,23 @@
       <div class="ed-aside-card">
         <div class="ed-aside-eyebrow">Compartir</div>
         <button class="ed-link-btn" onclick="navigator.clipboard.writeText(window.location.href)">Copiar enlace</button>
+      </div>
+
+      <div class="ed-aside-card ed-aside-newsletter">
+        <div class="ed-aside-eyebrow">Novedades</div>
+        <p class="ed-aside-newsletter__text">Recibí una notificación cada vez que se publique una nueva pieza.</p>
+        @if(isAuthenticated) {
+          <form method="POST" action="@routes.UserPublicationController.subscribeNewsletter()" class="ed-aside-newsletter__form">
+            @helper.CSRF.formField
+            <button type="submit" class="ed-btn-primary ed-aside-newsletter__btn">Suscribirme</button>
+          </form>
+        } else {
+          <form method="POST" action="@routes.HomeController.subscribeNewsletter()" class="ed-aside-newsletter__form">
+            @helper.CSRF.formField
+            <input type="email" name="email" placeholder="tu@@email.com" required class="ed-aside-newsletter__input">
+            <button type="submit" class="ed-btn-primary ed-aside-newsletter__btn">Suscribirme</button>
+          </form>
+        }
       </div>
     </aside>
   </article>
