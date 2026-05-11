@@ -1,0 +1,16 @@
+@(href: String, label: String, iconGlyph: String = "")(implicit request: RequestHeader)
+
+@isActive = @{
+  val p = request.path
+  if (href == "/") p == "/" else p == href || p.startsWith(href + "/")
+}
+
+<a href="@href"
+   class="ed-nav-item @if(isActive){is-active}"
+   @if(isActive){aria-current="page"}>
+  @if(iconGlyph.nonEmpty) {
+    <span class="ed-nav-icon" aria-hidden="true">@iconGlyph</span>
+  }
+  <span class="ed-nav-dot" aria-hidden="true"></span>
+  @label
+</a>
