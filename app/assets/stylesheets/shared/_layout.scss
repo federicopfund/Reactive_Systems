@@ -1,0 +1,76 @@
+// ============================================
+// Layout — Shell editorial (sidebar + main)
+// ============================================
+
+.ed-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.ed-main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--ed-bg);
+  color: var(--ed-text);
+  // Issue #17-H: scroll suave + offset para sticky headers.
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  // Issue #17-D: container query reference para .ed-hero y similares.
+  container-type: inline-size;
+  container-name: ed-main;
+}
+
+.ed-section {
+  @include section-padding;
+  border-bottom: 1px solid var(--ed-border);
+}
+
+.ed-section--alt {
+  background: var(--ed-bg2);
+}
+
+.ed-divider {
+  height: 1px;
+  background: var(--ed-border);
+  border: none;
+}
+
+.ed-vdivider {
+  background: var(--ed-border);
+  width: 1px;
+}
+
+.ed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ed-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
+.ed-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+.ed-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+
+.ed-section-label {
+  @include mono-eyebrow();
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ed-border);
+  }
+}
+
+// Container neutro (para páginas legales / artículos estáticos)
+.ed-container {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2.5rem $content-padding-x;
+}
