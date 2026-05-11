@@ -1,8 +1,8 @@
-@(username: String, msgWithUsers: models.PrivateMessageWithUsers)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(username: String, msgWithUsers: domains.messaging.models.PrivateMessageWithUsers)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @main("Mensaje · " + msgWithUsers.message.subject) {
   <section class="ed-dashboard">
-    <a href="@routes.UserPublicationController.inbox("received")" class="ed-back-link">← Volver a la bandeja</a>
+    <a href="@controllers.user.routes.UserPublicationController.inbox("received")" class="ed-back-link">← Volver a la bandeja</a>
 
     @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
     @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
@@ -28,7 +28,7 @@
     @if(msgWithUsers.message.receiverId == request.session.get("userId").map(_.toLong).getOrElse(0L)) {
       <details class="ed-msg-compose" open>
         <summary class="ed-msg-compose__summary">Responder a @msgWithUsers.senderFullName</summary>
-        <form method="POST" action="@routes.UserPublicationController.sendDirectMessage()" class="ed-msg-compose__body">
+        <form method="POST" action="@controllers.user.routes.UserPublicationController.sendDirectMessage()" class="ed-msg-compose__body">
           @helper.CSRF.formField
           <input type="hidden" name="receiverUsername" value="@msgWithUsers.senderUsername">
           <div class="ed-msg-compose__row">

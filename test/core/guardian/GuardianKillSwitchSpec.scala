@@ -1,10 +1,12 @@
-package core.guardian
+package infrastructure.guardian
 
 import akka.actor.testkit.typed.scaladsl.{LoggingTestKit, ScalaTestWithActorTestKit, TestProbe}
-import core._
+import domains.contact.engines._
+import shared.moderation.{ModerationCommand, ModerationResponse, ModerateContent, ModerationResult}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import services.AgentSettingsLookup
+import domains.publications.engines.{PipelineCommand, ProcessNewPublication, PipelineResponse, PipelineError}
+import domains.admin.services.AgentSettingsLookup
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._

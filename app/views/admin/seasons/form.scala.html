@@ -1,13 +1,13 @@
-@(existing: Option[models.EditorialSeason],
+@(existing: Option[domains.editorial.models.EditorialSeason],
   formErrors: Map[String, String],
   formData: Map[String, String],
-  assigned: List[models.PublicationWithAuthor] = Nil,
-  assignable: List[models.PublicationWithAuthor] = Nil)(implicit request: RequestHeader)
+  assigned: List[domains.publications.models.PublicationWithAuthor] = Nil,
+  assignable: List[domains.publications.models.PublicationWithAuthor] = Nil)(implicit request: RequestHeader)
 
 @isEdit = @{ existing.isDefined }
 @actionUrl = @{
-  existing.flatMap(_.id).map(id => routes.AdminSeasonController.update(id))
-    .getOrElse(routes.AdminSeasonController.create())
+  existing.flatMap(_.id).map(id => controllers.admin.routes.AdminSeasonController.update(id))
+    .getOrElse(controllers.admin.routes.AdminSeasonController.create())
 }
 
 @v(field: String) = @{ formData.getOrElse(field, "") }
@@ -20,7 +20,7 @@
   if (formErrors.contains(field)) "ed-bo__input is-error" else "ed-bo__input"
 }
 
-@admin.adminLayout(if(isEdit) "Editar temporada" else "Nueva temporada", "seasons") {
+@views.html.admin.adminLayout(if(isEdit) "Editar temporada" else "Nueva temporada", "seasons") {
 
   <div class="ed-bo__page-head">
     <div>
@@ -28,7 +28,7 @@
       <p class="ed-bo__page-lead">Define el marco editorial: nombre, fechas, opening essay y las publicaciones que conforman su colección.</p>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-ghost" href="@routes.AdminSeasonController.list()">Volver</a>
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminSeasonController.list()">Volver</a>
     </div>
   </div>
 
@@ -97,7 +97,7 @@
 
         <div class="ed-bo__form-actions">
           <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios} else {Crear temporada}</button>
-          <a class="ed-btn-ghost" href="@routes.AdminSeasonController.list()">Cancelar</a>
+          <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminSeasonController.list()">Cancelar</a>
         </div>
       </form>
     </section>
@@ -123,7 +123,7 @@
                 </div>
                 <div class="ed-bo__item-actions">
                   <form method="POST"
-                        action="@routes.AdminSeasonController.unassignPublication(sid, pwa.publication.id.get)"
+                        action="@controllers.admin.routes.AdminSeasonController.unassignPublication(sid, pwa.publication.id.get)"
                         style="display:inline">
                     @helper.CSRF.formField
                     <button class="ed-bo__link ed-bo__link--danger" type="submit"
@@ -140,7 +140,7 @@
           <p class="ed-bo__muted">No hay publicaciones aprobadas disponibles para asignar.</p>
         } else {
           <form method="POST"
-                action="@routes.AdminSeasonController.assignPublication(sid, 0)"
+                action="@controllers.admin.routes.AdminSeasonController.assignPublication(sid, 0)"
                 class="ed-bo__items-add"
                 id="ed-season-assign-form">
             @helper.CSRF.formField

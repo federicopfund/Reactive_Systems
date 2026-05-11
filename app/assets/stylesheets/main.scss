@@ -1,80 +1,90 @@
-// ============================================
-// Main SCSS — Editorial Reactiva
+// ============================================================
+// main.scss — Editorial Reactiva
 // Punto de entrada único.
 //
-// Orden de capas (Issue #16):
-//   0. Tokens (primitivos + maps semánticos)
-//   1. Variables legacy + mixins (consumen tokens)
-//   2. Animations (consume mixins)
-//   3. Base (emite CSS vars semánticas en :root y por tema)
-//   4. Componentes
-//   5. Responsive overrides
-//   6. Backoffice (al final, pisa estilos públicos vía body.ed-admin-body-root)
-// ============================================
+// Capas en orden de cascada:
+//   0. Tokens (primitivos + mapas semánticos)
+//   1. Variables legacy + mixins
+//   2. Animaciones
+//   3. Base (emite CSS custom props en :root / temas)
+//   4. Tags — átomos colocalizados con views/tags/
+//   5. Shared — diseño transversal
+//   6. Sections — secciones de la portada
+//   7. Dominio público (publications, seasons, collections, editorial, events, legal)
+//   8. Auth — flujos de autenticación
+//   9. User — flujos del usuario autenticado
+//  10. Responsive overrides (siempre antes de admin)
+//  11. Admin/Backoffice — ÚLTIMO, pisa públicos vía body.ed-admin-body-root
+// ============================================================
 
-// 0. Tokens
+// 0. Tokens + 1. Variables + helpers
 @import 'tokens';
-
-// 1. Configuración legacy + helpers
 @import 'variables';
 @import 'mixins';
 
-// 2. Animations
+// 2. Animaciones
 @import 'animations';
 
 // 3. Base
 @import 'base';
 
-// 4. Layout / utilidades
-@import 'components/typography';
-@import 'components/layout';
+// 4. Tags — átomos (co-localizados con views/tags/)
+@import 'tags/status-pill';
+@import 'tags/badge';
+@import 'tags/sub-badge';
+@import 'tags/category-pill';
+@import 'tags/nav-item';
+@import 'tags/kpi-card';
+@import 'tags/avatar';
 
-// 5. Componentes — navegación
-@import 'components/navbar';   // sidebar editorial
-@import 'components/footer';
-@import 'components/theme-toggle';
-@import 'components/mobile-topbar';
-@import 'components/breadcrumbs';
+// 5. Shared — layout y diseño de sistema transversal
+@import 'shared/typography';
+@import 'shared/layout';
+@import 'shared/navbar';
+@import 'shared/footer';
+@import 'shared/theme-toggle';
+@import 'shared/mobile-topbar';
+@import 'shared/breadcrumbs';
+@import 'shared/buttons';
+@import 'shared/forms';
+@import 'shared/alerts';
+@import 'shared/states';
+@import 'shared/skeleton';
+@import 'shared/toast';
 
-// 6. Componentes — UI core
-@import 'components/buttons';
-@import 'components/forms';
-@import 'components/cards';
-@import 'components/alerts';
+// 6. Sections — secciones de la portada / landing
+@import 'sections/hero';
+@import 'sections/sections';
+@import 'sections/cards';
+@import 'sections/contact';
 
-// 7. Componentes — secciones de página
-@import 'components/hero';
-@import 'components/sections';
-@import 'components/publications';
-@import 'components/articles';
-@import 'components/portfolio';
-@import 'components/collections-public';
-@import 'components/collections-admin';
-@import 'components/agents-dashboard';
-@import 'components/agent-settings';
-@import 'components/events';
-@import 'components/seasons';
+// 7. Dominio público
+@import 'publications/list';
+@import 'publications/article';
+@import 'seasons/pages';
+@import 'collections/portfolio';
+@import 'collections/detail';
+@import 'editorial/about';
+@import 'events/index';
+@import 'legal/document';
 
-// 8. Componentes — flujos de usuario
-@import 'components/auth';
-@import 'components/dashboard';
-@import 'components/verification';
-@import 'components/publication-form';
-@import 'components/publication-editor';
-@import 'components/legal';
-@import 'components/about';
-@import 'components/graph-popup';
-@import 'components/messages';
-@import 'components/notifications';
-@import 'components/contact';
+// 8. Auth
+@import 'auth/pages';
+@import 'auth/verify';
 
-// 8b. Componentes transversales (Issue #18)
-@import 'components/states';
-@import 'components/skeleton';
-@import 'components/toast';
+// 9. User — flujos del usuario autenticado
+@import 'user/dashboard';
+@import 'user/publication-form';
+@import 'user/publication-editor';
+@import 'user/messages';
+@import 'user/notifications';
+@import 'user/graph-popup';
 
-// 9. Responsive (overrides públicos)
-@import 'components/responsive';
+// 10. Responsive overrides (públicos)
+@import 'shared/responsive';
 
-// 10. Backoffice — DEBE ir al final.
-@import 'components/admin';
+// 11. Admin/Backoffice — DEBE ir al final
+@import 'admin/admin';
+@import 'admin/agents-dashboard';
+@import 'admin/agent-settings';
+@import 'admin/collections-admin';

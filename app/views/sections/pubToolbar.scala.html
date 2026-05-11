@@ -1,0 +1,49 @@
+@(totalCount: Int,
+  categories: Seq[domains.publications.models.PublicationCategory],
+  searchQuery: String,
+  searchCategory: Option[String],
+  currentSeason: Option[domains.editorial.models.EditorialSeason])
+
+@currentCategoryActive(c: domains.publications.models.PublicationCategory) = @{ searchCategory.contains(c.name) }
+@allActive = @{ searchCategory.isEmpty || searchCategory.exists(_.trim.isEmpty) }
+@seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
+
+<div class="ed-pub-toolbar">
+  <header class="ed-pub-header">
+    <div>
+      <div class="ed-pub-count">@totalCount publicaciones · @seasonName.map(name => "Temporada: " + name).getOrElse("Flujo editorial continuo")</div>
+      <h1 class="ed-pub-title">Artículos <em>@seasonName.map(_ => "de la temporada").getOrElse("publicados")</em></h1>
+    </div>
+    @defining(currentSeason.map(s => controllers.web.routes.HomeController.temporada(s.code)).getOrElse(controllers.web.routes.HomeController.temporadas())) { journeyHref =>
+      <a href="@journeyHref" class="ed-pub-archive-link">
+        <span class="ed-pub-archive-link__icon" aria-hidden="true">◷</span>
+        journey editorial
+      </a>
+    }
+    <form action="@controllers.web.routes.HomeController.searchPublicaciones()" method="GET"
+          class="ed-search-wrap" data-pub-search-form>
+      <span class="ed-search-icon">⌕</span>
+      <input type="text" name="q" value="@searchQuery"
+             placeholder="Buscar por título, contenido o tags…"
+             autocomplete="off"
+             data-pub-search-input>
+      @if(searchCategory.isDefined && searchCategory.exists(_.nonEmpty)) {
+        <input type="hidden" name="category" value="@searchCategory.get">
+      }
+      @if(searchQuery.nonEmpty) {
+        <a href="@controllers.web.routes.HomeController.publicaciones()" class="ed-search-clear" title="Limpiar">×</a>
+      }
+    </form>
+  </header>
+
+  <nav class="ed-cat-row" aria-label="Filtro por categoría">
+    <a href="@controllers.web.routes.HomeController.publicaciones()"
+       class="ed-cat-pill @if(allActive){active}"
+       @if(allActive){aria-current="page"}>Todas</a>
+    @categories.map { c =>
+      <a href="@controllers.web.routes.HomeController.searchPublicaciones(searchQuery, Some(c.name))"
+         class="ed-cat-pill @if(currentCategoryActive(c)){active}"
+         @if(currentCategoryActive(c)){aria-current="page"}>@c.name</a>
+    }
+  </nav>
+</div>

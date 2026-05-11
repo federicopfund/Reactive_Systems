@@ -1,6 +1,6 @@
-@(form: Form[controllers.ContactUpdateForm], contact: models.ContactRecord)(implicit request: RequestHeader)
+@(form: Form[controllers.admin.ContactUpdateForm], contact: domains.contact.models.ContactRecord)(implicit request: RequestHeader)
 
-@admin.adminLayout("Editar contacto · " + contact.name, "contacts") {
+@views.html.admin.adminLayout("Editar contacto · " + contact.name, "contacts") {
 
   <header class="ed-admin-head">
     <div>
@@ -8,10 +8,10 @@
       <h1 class="ed-admin-title">@contact.name</h1>
     </div>
     <div class="ed-admin-actions">
-      @contact.id.map { id => <a href="@routes.AdminController.viewContact(id)" class="ed-link-btn">← Detalle</a> }
-      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">Bandeja</a>
+      @contact.id.map { id => <a href="@controllers.admin.routes.AdminController.viewContact(id)" class="ed-link-btn">← Detalle</a> }
+      <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-link-btn">Bandeja</a>
       @contact.id.map { id =>
-        <form method="POST" action="@routes.AdminController.deleteContact(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este contacto?');">
+        <form method="POST" action="@controllers.admin.routes.AdminController.deleteContact(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este contacto?');">
           @helper.CSRF.formField
           <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>
         </form>
@@ -21,7 +21,7 @@
 
   @form.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
 
-  <form method="POST" action="@routes.AdminController.updateContact(contact.id.getOrElse(0L))" class="ed-form">
+  <form method="POST" action="@controllers.admin.routes.AdminController.updateContact(contact.id.getOrElse(0L))" class="ed-form">
     @helper.CSRF.formField
     <input type="hidden" name="id" value="@contact.id.getOrElse(0L)">
 
@@ -54,7 +54,7 @@
     </div>
 
     <div class="ed-form-actions">
-      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">Cancelar</a>
+      <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-link-btn">Cancelar</a>
       <button type="submit" class="ed-link-btn ed-link-btn--accent">Guardar cambios</button>
     </div>
   </form>

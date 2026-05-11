@@ -1,0 +1,30 @@
+@(pillars: Seq[domains.editorial.models.ManifestoPillar])
+
+@*
+  Sección Pilares — DB-driven desde manifesto_pillars.
+  Fragmento: sections/pillars.scala.html
+  Parámetros:
+    - pillars   Pilares del manifiesto (desde HomeController)
+*@
+
+<section class="ed-pillars-section">
+  <div class="ed-section-label">I — Los Cuatro Pilares</div>
+  <div class="ed-pillars-grid">
+    @pillars.zipWithIndex.map { case (p, idx) =>
+      @defining(Seq("I","II","III","IV","V","VI").lift(idx).getOrElse((idx+1).toString)) { roman =>
+        <div class="ed-pillar" data-roman="@roman">
+          <div class="ed-pillar-num">@p.romanNumeral</div>
+          <div class="ed-pillar-name">@p.name</div>
+          <p class="ed-pillar-desc">@p.description</p>
+          @if(p.tags.nonEmpty) {
+            <div class="ed-pillar-tags">
+              @for(tag <- p.tags) {
+                <span class="ed-pillar-tag">@tag</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</section>

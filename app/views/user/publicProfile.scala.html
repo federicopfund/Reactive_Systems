@@ -1,24 +1,9 @@
-@(user: models.User, pubs: List[models.Publication], badges: List[models.UserBadge], totalReactions: Int, totalViews: Int)(implicit request: RequestHeader, messages: Messages)
+@(user: domains.identity.models.User, pubs: List[domains.publications.models.Publication], badges: List[domains.gamification.models.UserBadge], totalReactions: Int, totalViews: Int)(implicit request: RequestHeader, messages: Messages)
 
 @main(user.fullName + " · @" + user.username) {
   <section class="ed-dashboard ed-public-profile">
 
-    <header class="ed-profile-hero">
-      <div class="ed-profile-hero__avatar" aria-hidden="true">
-        @user.fullName.headOption.map(_.toUpper).getOrElse(user.username.head.toUpper)
-      </div>
-      <div class="ed-profile-hero__info">
-        <div class="ed-profile-hero__eyebrow">Perfil público</div>
-        <h1 class="ed-profile-hero__name">@user.fullName</h1>
-        <div class="ed-profile-hero__handle">@@@user.username@if(user.location.nonEmpty){ · @user.location}</div>
-        @if(user.bio.nonEmpty) {
-          <p class="ed-profile-hero__bio">@user.bio</p>
-        }
-        @if(user.website.nonEmpty) {
-          <a href="@user.website" class="ed-profile-hero__site" target="_blank" rel="noopener noreferrer">↗ @user.website</a>
-        }
-      </div>
-    </header>
+    @partials.profileHero(user)
 
     <div class="ed-profile-stats">
       <div class="ed-profile-stat">
@@ -42,19 +27,7 @@
     @if(badges.nonEmpty) {
       <section class="ed-dash-section">
         <h2 class="ed-dash-section__title">Insignias</h2>
-        <div class="ed-badge-grid">
-          @badges.map { b =>
-            @models.BadgeDefinition.get(b.badgeKey).map { def0 =>
-              <div class="ed-badge">
-                <span class="ed-badge__icon">@def0.icon</span>
-                <div>
-                  <div class="ed-badge__name">@def0.name</div>
-                  <div class="ed-badge__desc">@def0.description</div>
-                </div>
-              </div>
-            }
-          }
-        </div>
+        @partials.badgeGrid(badges)
       </section>
     }
 
@@ -65,7 +38,7 @@
       } else {
         <div class="ed-articles-grid">
           @pubs.map { p =>
-            <a class="ed-article-card" href="@routes.HomeController.publicacion(p.slug)">
+            <a class="ed-article-card" href="@controllers.web.routes.HomeController.publicacion(p.slug)">
               <div class="ed-article-meta">
                 <span class="ed-article-cat">@p.category</span>
                 <span class="ed-article-date">@p.publishedAt.map(_.toString.take(10)).getOrElse("")</span>
@@ -82,7 +55,7 @@
     @if(request.session.get("userId").exists(_.toLong != user.id.getOrElse(-1L))) {
       <section class="ed-dash-section">
         <h2 class="ed-dash-section__title">Enviar mensaje</h2>
-        <form method="POST" action="@routes.UserPublicationController.sendDirectMessage()" class="ed-form">
+        <form method="POST" action="@controllers.user.routes.UserPublicationController.sendDirectMessage()" class="ed-form">
           @helper.CSRF.formField
           <input type="hidden" name="receiverId" value="@user.id.getOrElse(0L)">
           <div class="ed-field"><label>Asunto</label><input type="text" name="subject" required></div>
@@ -91,5 +64,6 @@
         </form>
       </section>
     }
+
   </section>
 }

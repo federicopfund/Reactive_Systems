@@ -1,0 +1,33 @@
+@(communityPublications: List[domains.publications.models.PublicationWithAuthor])(implicit request: RequestHeader)
+
+@*
+  Sección Recientes — últimas publicaciones de la comunidad.
+  Fragmento: sections/recentPublications.scala.html
+  Conditionally rendered: si la lista está vacía, no se muestra nada.
+  Parámetros:
+    - communityPublications   Máx. 3 publicaciones (se usa .take(3) internamente)
+*@
+
+@if(communityPublications.nonEmpty) {
+  <section class="ed-recents">
+    <div class="ed-recents-header">
+      <div class="ed-section-label" style="margin-bottom:0;">III — Recién publicado</div>
+      <a href="@controllers.web.routes.HomeController.publicaciones()" class="ed-recent-link">Ver todo</a>
+    </div>
+    <div class="ed-recents-grid">
+      @communityPublications.take(3).map { pwa =>
+        <a class="ed-recent-card" href="@controllers.web.routes.HomeController.publicacion(pwa.publication.slug)">
+          <div class="ed-recent-eyebrow">@pwa.publication.category</div>
+          <div class="ed-recent-title">@pwa.publication.title</div>
+          <p class="ed-recent-excerpt">
+            @pwa.publication.content.take(140)@if(pwa.publication.content.length > 140){…}
+          </p>
+          <div class="ed-recent-footer">
+            <span>@pwa.authorFullName</span>
+            <span class="ed-recent-link">Leer</span>
+          </div>
+        </a>
+      }
+    </div>
+  </section>
+}

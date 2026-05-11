@@ -1,0 +1,64 @@
+@(isAuthenticated: Boolean)(implicit request: RequestHeader)
+
+@*
+  Sección Conversión — guest registration o CTA para usuario autenticado.
+  Fragmento: sections/conversion.scala.html
+  Parámetros:
+    - isAuthenticated   true si hay sesión activa (request.session.get("userId").isDefined)
+
+  Guest: muestra beneficios + mini-form de registro (GET → registerPage).
+  Auth:  muestra CTA de nueva propuesta + acceso a Mi espacio.
+*@
+
+@if(!isAuthenticated) {
+  <section class="ed-guest" id="guest">
+    <div class="ed-guest-main">
+      <div class="ed-guest-label">Convocatoria abierta</div>
+      <h2 class="ed-guest-headline">
+        Únete a la temporada y <em>publica tu pieza.</em>
+      </h2>
+      <p class="ed-guest-body">
+        La comunidad reactiva crece con autores y editores que piensan los sistemas
+        como organismos vivos. Crea tu cuenta gratuita y comienza a participar.
+      </p>
+      <ul class="ed-guest-benefits">
+        <li><strong>Publica</strong> ensayos, tutoriales y casos de estudio</li>
+        <li><strong>Recibe feedback</strong> editorial estructurado</li>
+        <li><strong>Construye trayectoria</strong> con tu perfil público</li>
+      </ul>
+    </div>
+    <aside class="ed-guest-aside">
+      <h3 class="ed-guest-form-title">Crea tu cuenta</h3>
+      <p class="ed-guest-form-sub">Te toma menos de un minuto. Sin tarjetas, sin spam.</p>
+      <form action="@controllers.auth.routes.AuthController.registerPage()" method="GET" class="ed-form">
+        <div class="ed-field">
+          <label>Nombre</label>
+          <input type="text" name="fullName" placeholder="Tu nombre">
+        </div>
+        <div class="ed-field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="tu@@correo.com">
+        </div>
+        <button type="submit" class="ed-btn-primary ed-btn-block">Comenzar</button>
+      </form>
+      <div class="ed-auth-form__footer" style="margin-top:1rem;">
+        ¿Ya tienes cuenta? <a href="@controllers.auth.routes.AuthController.loginPage()">Inicia sesión</a>
+      </div>
+    </aside>
+  </section>
+} else {
+  <section class="ed-cta">
+    <div>
+      <div class="ed-cta-label">Tu próxima propuesta</div>
+      <h2 class="ed-cta-headline">El proceso editorial está abierto.</h2>
+      <p class="ed-cta-body">
+        Comienza una nueva pieza, recibe feedback editorial y suma tu trabajo
+        a la colección.
+      </p>
+    </div>
+    <div class="ed-cta-actions">
+      <a href="@controllers.user.routes.UserPublicationController.newPublicationForm()" class="ed-btn-primary ed-btn-lg">Nueva propuesta</a>
+      <a href="@controllers.user.routes.UserPublicationController.dashboard()" class="ed-btn-secondary ed-btn-lg">Mi espacio</a>
+    </div>
+  </section>
+}

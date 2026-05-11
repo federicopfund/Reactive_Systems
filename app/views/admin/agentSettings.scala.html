@@ -1,16 +1,16 @@
-@(grouped:   Seq[(models.AgentSettingCategory, Seq[models.AgentSettingDef])],
-  overrides: Map[String, models.AgentSetting],
-  audit:     Seq[models.AgentSettingAudit],
+@(grouped:   Seq[(domains.admin.models.AgentSettingCategory, Seq[domains.admin.models.AgentSettingDef])],
+  overrides: Map[String, domains.admin.models.AgentSetting],
+  audit:     Seq[domains.admin.models.AgentSettingAudit],
   canManage: Boolean,
   username:  String)(implicit request: RequestHeader)
 
-@import models.AgentSettingType
+@import domains.admin.models.AgentSettingType
 @import helper.CSRF
 
-@effective(d: models.AgentSettingDef) = @{ overrides.get(d.key).map(_.valueText).getOrElse(d.defaultValue) }
-@isOverride(d: models.AgentSettingDef) = @{ overrides.contains(d.key) }
+@effective(d: domains.admin.models.AgentSettingDef) = @{ overrides.get(d.key).map(_.valueText).getOrElse(d.defaultValue) }
+@isOverride(d: domains.admin.models.AgentSettingDef) = @{ overrides.contains(d.key) }
 
-@admin.adminLayout("Configuración de agentes", "agent-settings") {
+@views.html.admin.adminLayout("Configuración de agentes", "agent-settings") {
 
   <header class="ed-bo__page-head">
     <div>
@@ -22,14 +22,14 @@
       </p>
     </div>
     <div class="ed-agents__global">
-      <a class="ed-bo__chip" href="@routes.AdminAgentsController.dashboard()">← Volver al dashboard</a>
+      <a class="ed-bo__chip" href="@controllers.admin.routes.AdminAgentsController.dashboard()">← Volver al dashboard</a>
     </div>
   </header>
 
   @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
   @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
 
-  <form method="POST" action="@routes.AdminAgentSettingsController.save()" class="ed-agent-settings__form">
+  <form method="POST" action="@controllers.admin.routes.AdminAgentSettingsController.save()" class="ed-agent-settings__form">
     @CSRF.formField
 
     @for((cat, defs) <- grouped) {
@@ -96,7 +96,7 @@
 
               @if(isOverride(d) && canManage) {
                 <button type="submit"
-                        formaction="@routes.AdminAgentSettingsController.resetOne(d.key)"
+                        formaction="@controllers.admin.routes.AdminAgentSettingsController.resetOne(d.key)"
                         formmethod="POST"
                         class="ed-agent-settings__reset"
                         title="Restablecer al default">↺ default</button>

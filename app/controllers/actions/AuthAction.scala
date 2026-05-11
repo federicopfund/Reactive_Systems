@@ -2,6 +2,7 @@ package controllers.actions
 
 import javax.inject.Inject
 import play.api.mvc._
+import infrastructure.support.{RolePolicy, Capabilities}
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -35,7 +36,7 @@ class AuthAction @Inject()(
         // Redirigir a login con URL de retorno
         val redirectUrl = request.uri
         Future.successful(
-          Results.Redirect(controllers.routes.AuthController.loginPage())
+          Results.Redirect(controllers.auth.routes.AuthController.loginPage())
             .flashing(
               "error" -> "Debes iniciar sesión para acceder a este recurso",
               "redirectUrl" -> redirectUrl
@@ -92,7 +93,7 @@ class UserAction @Inject()(
         val username = request.session.get("username").getOrElse("Usuario")
         val role = request.session.get("userRole").getOrElse("user")
         
-        if (role == "user" || utils.RolePolicy.isBackoffice(role)) {
+        if (role == "user" || RolePolicy.isBackoffice(role)) {
           block(AuthRequest(userId, username, role, request))
         } else {
           Future.successful(
@@ -102,7 +103,7 @@ class UserAction @Inject()(
         
       case None =>
         Future.successful(
-          Results.Redirect(controllers.routes.AuthController.loginPage())
+          Results.Redirect(controllers.auth.routes.AuthController.loginPage())
             .flashing("error" -> "Debes iniciar sesión para acceder")
         )
     }
@@ -130,7 +131,7 @@ class AdminOnlyAction @Inject()(
         val username = request.session.get("username").getOrElse("Admin")
         val role = request.session.get("userRole").getOrElse("user")
 
-        if (utils.RolePolicy.isBackoffice(role)) {
+        if (RolePolicy.isBackoffice(role)) {
           block(AuthRequest(userId, username, role, request))
         } else {
           Future.successful(
@@ -140,7 +141,7 @@ class AdminOnlyAction @Inject()(
         
       case None =>
         Future.successful(
-          Results.Redirect(controllers.routes.AdminController.loginPage())
+          Results.Redirect(controllers.admin.routes.AdminController.loginPage())
             .flashing("error" -> "Debes iniciar sesión como administrador")
         )
     }
@@ -175,7 +176,7 @@ class SuperAdminOnlyAction @Inject()(
         
       case None =>
         Future.successful(
-          Results.Redirect(controllers.routes.AdminController.loginPage())
+          Results.Redirect(controllers.admin.routes.AdminController.loginPage())
             .flashing("error" -> "Debes iniciar sesión como administrador")
         )
     }
@@ -188,7 +189,7 @@ class SuperAdminOnlyAction @Inject()(
  * Uso típico desde un endpoint que ya pasó por `adminAction`:
  *
  *   def deletePublication(id: Long) = adminAction.async { implicit request =>
- *     CapabilityCheck.require(request, utils.Capabilities.Cap.PublicationsDelete) {
+ *     CapabilityCheck.require(request, Capabilities.Cap.PublicationsDelete) {
  *       publicationRepo.delete(id).map(_ => Redirect(...))
  *     }
  *   }
@@ -196,12 +197,12 @@ class SuperAdminOnlyAction @Inject()(
 object CapabilityCheck {
   def require[A](
     request: AuthRequest[A],
-    cap: utils.Capabilities.Cap
+    cap: Capabilities.Cap
   )(block: => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
-    if (utils.RolePolicy.can(request.role, cap)) block
+    if (RolePolicy.can(request.role, cap)) block
     else Future.successful(
       Results.Forbidden(
-        s"Tu rol (${utils.RolePolicy.labelFor(request.role)}) no tiene la capacidad: ${cap.label}"
+        s"Tu rol (${RolePolicy.labelFor(request.role)}) no tiene la capacidad: ${cap.label}"
       )
     )
   }

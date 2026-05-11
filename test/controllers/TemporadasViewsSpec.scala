@@ -1,11 +1,12 @@
-package controllers
+package controllers.web
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.i18n.{Lang, MessagesImpl}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.stubMessagesApi
-import models.{EditorialSeason, Publication, PublicationWithAuthor}
+import domains.editorial.models.EditorialSeason
+import domains.publications.models.{Publication, PublicationWithAuthor}
 import java.time.{Instant, LocalDate}
 
 class TemporadasViewsSpec extends AnyWordSpec with Matchers {
@@ -26,7 +27,7 @@ class TemporadasViewsSpec extends AnyWordSpec with Matchers {
         createdAt = Instant.now()
       )
 
-      val html = views.html.temporadas(Seq(season)).body
+      val html = views.html.seasons.list(Seq(season)).body
       html should include("/temporadas/2026-q2")
       html should include("Temporada 2026 Q2")
     }
@@ -55,7 +56,7 @@ class TemporadasViewsSpec extends AnyWordSpec with Matchers {
         authorFullName = "Ana Gómez"
       )
 
-      val html = views.html.temporadaDetail(season, List(publication)).body
+      val html = views.html.seasons.detail(season, List(publication)).body
       html should include("Índice de piezas asociadas (1)")
       html should include("/publicaciones/mensajeria-reactiva")
       html should include("Mensajería reactiva")

@@ -1,0 +1,29 @@
+@(subscribed: Boolean, userEmail: String)(implicit request: RequestHeader)
+
+<aside class="ed-newsletter-card" aria-label="Suscripción al newsletter">
+  <div class="ed-newsletter-card__icon" aria-hidden="true">📰</div>
+  <div class="ed-newsletter-card__body">
+    <div class="ed-newsletter-card__title">Novedades de la comunidad</div>
+    @if(subscribed) {
+      <p class="ed-newsletter-card__text">
+        Estás suscrito con <strong>@userEmail</strong>. Recibirás aviso cuando
+        se publique una nueva pieza en la portada.
+      </p>
+    } else {
+      <p class="ed-newsletter-card__text">
+        Suscríbete para recibir una notificación cada vez que un autor
+        publique una pieza nueva en la comunidad.
+      </p>
+    }
+  </div>
+  <form method="POST"
+        action="@if(subscribed){@controllers.user.routes.UserPublicationController.unsubscribeNewsletter()}else{@controllers.user.routes.UserPublicationController.subscribeNewsletter()}"
+        class="ed-newsletter-card__form">
+    @helper.CSRF.formField
+    @if(subscribed) {
+      <button type="submit" class="ed-btn-ghost">Darme de baja</button>
+    } else {
+      <button type="submit" class="ed-btn-primary">Suscribirme</button>
+    }
+  </form>
+</aside>

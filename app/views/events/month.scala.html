@@ -1,6 +1,6 @@
 @(yearMonth: java.time.YearMonth,
-  monthEvents: Seq[models.CommunityEvent],
-  upcoming: Seq[models.CommunityEvent],
+  monthEvents: Seq[domains.events.models.CommunityEvent],
+  upcoming: Seq[domains.events.models.CommunityEvent],
   prev: java.time.YearMonth,
   next: java.time.YearMonth,
   userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)

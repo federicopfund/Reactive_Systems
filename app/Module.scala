@@ -1,11 +1,24 @@
 import akka.actor.typed.ActorSystem
 import com.google.inject.{AbstractModule, Provides, Singleton}
 import com.typesafe.config.ConfigFactory
-import core.guardian._
+import infrastructure.guardian._
 import javax.inject.Inject
 import play.api.inject.ApplicationLifecycle
-import repositories._
-import services._
+// domain repositories
+import domains.contact.repositories.ContactRepository
+import domains.messaging.repositories.{PrivateMessageRepository, UserNotificationRepository}
+import domains.publications.repositories.PublicationRepository
+import domains.gamification.repositories.BadgeRepository
+// domain + shared services
+import domains.identity.services.EmailService
+import domains.admin.services.AgentSettingsService
+import domains.publications.services.{ReactivePublicationAdapter, ReactivePipelineAdapter}
+import domains.gamification.services.ReactiveGamificationAdapter
+import domains.messaging.services.{ReactiveMessageAdapter, ReactiveNotificationAdapter}
+import domains.contact.services.ReactiveContactAdapter
+import shared.analytics.ReactiveAnalyticsAdapter
+import shared.moderation.ReactiveModerationAdapter
+import shared.eventbus.ReactiveEventBusAdapter
 
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.concurrent.duration._

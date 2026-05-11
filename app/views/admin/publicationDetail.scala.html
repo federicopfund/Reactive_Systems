@@ -1,14 +1,14 @@
 @(
-  publication: models.Publication,
-  feedbacks: List[models.PublicationFeedbackWithAdmin],
-  stages: Seq[models.EditorialStage],
-  timeline: Seq[models.PublicationStageHistoryWithStage],
+  publication: domains.publications.models.Publication,
+  feedbacks: List[domains.publications.models.PublicationFeedbackWithAdmin],
+  stages: Seq[domains.editorial.models.EditorialStage],
+  timeline: Seq[domains.publications.models.PublicationStageHistoryWithStage],
   currentStageCode: Option[String],
-  nextStages: Seq[models.EditorialStage],
+  nextStages: Seq[domains.editorial.models.EditorialStage],
   role: String
 )(implicit request: RequestHeader)
 
-@admin.adminLayout("Revisión: " + publication.title, "review") {
+@views.html.admin.adminLayout("Revisión: " + publication.title, "review") {
 
   <header class="ed-admin-head">
     <div>
@@ -19,21 +19,21 @@
       </div>
     </div>
     <div class="ed-admin-actions">
-      <a href="@routes.AdminController.pendingPublications()" class="ed-link-btn">← Cola</a>
-      <a href="@routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo</a>
+      <a href="@controllers.admin.routes.AdminController.pendingPublications()" class="ed-link-btn">← Cola</a>
+      <a href="@controllers.admin.routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo</a>
     </div>
   </header>
 
   @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
   @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
 
-  @admin._publicationPipeline(publication, stages, timeline, currentStageCode, role, showInternalNotes = true)
+  @views.html.admin._publicationPipeline(publication, stages, timeline, currentStageCode, role, showInternalNotes = true)
 
   <div class="ed-rev-detail">
 
     <article class="ed-rev-detail__main">
       @publication.excerpt.map { e => <p class="ed-article-lede" style="font-style:italic;color:#a09880;">@e</p> }
-      <div class="ed-article-content ed-legacy-prose">@Html(utils.Markdown.render(publication.content))</div>
+      <div class="ed-article-content ed-legacy-prose">@Html(infrastructure.support.Markdown.render(publication.content))</div>
       @publication.tags.map { t =>
         <div class="ed-article-tags" style="margin-top:1.5rem;">
           @t.split(",").map(_.trim).filter(_.nonEmpty).map { tag => <span class="ed-article-tag">@tag</span> }
@@ -49,7 +49,7 @@
           <div class="ed-aside-action ed-aside-action--transition">
             <h3 class="ed-aside-action__title">Mover etapa</h3>
             @nextStages.map { next =>
-              <form method="POST" action="@routes.AdminController.transitionStage(pid)" class="ed-transition-form">
+              <form method="POST" action="@controllers.admin.routes.AdminController.transitionStage(pid)" class="ed-transition-form">
                 @helper.CSRF.formField
                 <input type="hidden" name="toStage" value="@next.code">
                 <input type="text" name="reason" placeholder="Motivo (opcional, visible al autor)" maxlength="200">
@@ -62,26 +62,26 @@
           @currentStageCode.map { code =>
             <div class="ed-aside-readonly">
               <strong>Solo lectura.</strong> Esta pieza espera acción de
-              <em>@utils.EditorialStagePolicy.ownerLabelFor(code)</em>.
-              Tu rol (<em>@utils.RolePolicy.labelFor(role)</em>) no puede mover la etapa actual.
+              <em>@domains.publications.policies.EditorialStagePolicy.ownerLabelFor(code)</em>.
+              Tu rol (<em>@infrastructure.support.RolePolicy.labelFor(role)</em>) no puede mover la etapa actual.
             </div>
           }
         }
 
         @* --- Acciones rápidas (legacy compat) --- *@
-        <form method="POST" action="@routes.AdminController.approvePublication(pid)" class="ed-aside-action">
+        <form method="POST" action="@controllers.admin.routes.AdminController.approvePublication(pid)" class="ed-aside-action">
           @helper.CSRF.formField
           <button class="ed-aside-action-btn ed-aside-action-btn--approve">Aprobar publicación</button>
         </form>
 
-        <form method="POST" action="@routes.AdminController.rejectPublication(pid)" class="ed-aside-action">
+        <form method="POST" action="@controllers.admin.routes.AdminController.rejectPublication(pid)" class="ed-aside-action">
           @helper.CSRF.formField
           <textarea name="rejectionReason" rows="3" placeholder="Motivo del rechazo (opcional)"></textarea>
           <button class="ed-aside-action-btn ed-aside-action-btn--reject">Rechazar</button>
         </form>
 
         @* --- Notas internas (saveAdminNotes) --- *@
-        <form method="POST" action="@routes.AdminController.saveAdminNotes(pid)" class="ed-aside-action">
+        <form method="POST" action="@controllers.admin.routes.AdminController.saveAdminNotes(pid)" class="ed-aside-action">
           @helper.CSRF.formField
           <h3 style="font-family:var(--font-mono,monospace);font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:#5a5448;margin-bottom:0.5rem;">Notas internas</h3>
           <textarea name="adminNotes" rows="4" placeholder="Notas privadas del equipo editorial…">@publication.adminNotes.getOrElse("")</textarea>
@@ -89,7 +89,7 @@
         </form>
 
         @* --- Feedback estructurado al autor --- *@
-        <form method="POST" action="@routes.AdminController.addFeedback(pid)" class="ed-aside-action">
+        <form method="POST" action="@controllers.admin.routes.AdminController.addFeedback(pid)" class="ed-aside-action">
           @helper.CSRF.formField
           <h3 style="font-family:var(--font-mono,monospace);font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:#d4ff00;margin-bottom:0.5rem;">Enviar feedback al autor</h3>
           <select name="feedbackType" required style="width:100%;background:#141420;border:1px solid rgba(242,237,214,0.15);color:#f2edd6;padding:0.5rem;margin-bottom:0.5rem;">
@@ -107,7 +107,7 @@
         </form>
 
         @* --- Eliminar definitivamente (deletePublication) --- *@
-        <form method="POST" action="@routes.AdminController.deletePublication(pid)" class="ed-aside-action" onsubmit="return confirm('¿Eliminar definitivamente esta publicación?');">
+        <form method="POST" action="@controllers.admin.routes.AdminController.deletePublication(pid)" class="ed-aside-action" onsubmit="return confirm('¿Eliminar definitivamente esta publicación?');">
           @helper.CSRF.formField
           <button class="ed-aside-action-btn ed-aside-action-btn--delete">Eliminar publicación</button>
         </form>
@@ -120,20 +120,20 @@
           @feedbacks.map { fb =>
             <div class="ed-feedback-item">
               <div class="ed-feedback-meta">
-                @models.FeedbackType.label(fb.feedback.feedbackType) · @@@fb.adminUsername ·
+                @domains.publications.models.FeedbackType.label(fb.feedback.feedbackType) · @@@fb.adminUsername ·
                 @if(fb.feedback.sentToUser){ <span style="color:#6b8f71;">enviado</span> } else { <span style="color:#f59e0b;">borrador</span> }
               </div>
               <p>@fb.feedback.message</p>
               <div style="display:flex;gap:0.4rem;">
                 @fb.feedback.id.map { fid =>
                   @if(!fb.feedback.sentToUser) {
-                    <form method="POST" action="@routes.AdminController.sendFeedbackToUser(fid)" class="ed-inline-form">
+                    <form method="POST" action="@controllers.admin.routes.AdminController.sendFeedbackToUser(fid)" class="ed-inline-form">
                       @helper.CSRF.formField
                       <input type="hidden" name="publicationId" value="@publication.id.getOrElse(0L)">
                       <button class="ed-link-btn ed-link-btn--accent">Enviar al autor</button>
                     </form>
                   }
-                  <form method="POST" action="@routes.AdminController.deleteFeedback(fid)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este feedback?');">
+                  <form method="POST" action="@controllers.admin.routes.AdminController.deleteFeedback(fid)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este feedback?');">
                     @helper.CSRF.formField
                     <input type="hidden" name="publicationId" value="@publication.id.getOrElse(0L)">
                     <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>

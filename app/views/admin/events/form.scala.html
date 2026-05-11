@@ -1,13 +1,13 @@
-@(existing: Option[models.CommunityEvent],
+@(existing: Option[domains.events.models.CommunityEvent],
   formErrors: Map[String, String],
   formData: Map[String, String])(implicit request: RequestHeader)
 
-@import models.EventEnums
+@import domains.events.models.EventEnums
 
 @isEdit = @{ existing.isDefined }
 @actionUrl = @{
-  existing.flatMap(_.id).map(id => routes.AdminEventController.update(id))
-    .getOrElse(routes.AdminEventController.create())
+  existing.flatMap(_.id).map(id => controllers.admin.routes.AdminEventController.update(id))
+    .getOrElse(controllers.admin.routes.AdminEventController.create())
 }
 
 @err(field: String) = @{
@@ -18,7 +18,7 @@
 
 @v(field: String) = @{ formData.getOrElse(field, "") }
 
-@admin.adminLayout(if(isEdit) "Editar evento" else "Nuevo evento", "events") {
+@views.html.admin.adminLayout(if(isEdit) "Editar evento" else "Nuevo evento", "events") {
 
   <div class="ed-bo__page-head">
     <div>
@@ -26,7 +26,7 @@
       <p class="ed-bo__page-lead">Los campos marcados con * son obligatorios.</p>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-ghost" href="@routes.AdminEventController.list(None, 0)">Volver</a>
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminEventController.list(None, 0)">Volver</a>
     </div>
   </div>
 
@@ -167,7 +167,7 @@
 
     <div class="ed-bo__form-actions">
       <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios} else {Crear borrador}</button>
-      <a class="ed-btn-ghost" href="@routes.AdminEventController.list(None, 0)">Cancelar</a>
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminEventController.list(None, 0)">Cancelar</a>
     </div>
   </form>
 }

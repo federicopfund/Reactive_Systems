@@ -1,11 +1,11 @@
-@(publications: List[models.PublicationWithAuthor], stages: Seq[models.EditorialStage])(implicit request: RequestHeader)
+@(publications: List[domains.publications.models.PublicationWithAuthor], stages: Seq[domains.editorial.models.EditorialStage])(implicit request: RequestHeader)
 
-@stageLabel(pwa: models.PublicationWithAuthor) = @{
+@stageLabel(pwa: domains.publications.models.PublicationWithAuthor) = @{
   pwa.publication.currentStageId.flatMap(sid => stages.find(_.id.contains(sid)).map(_.label))
     .getOrElse(pwa.publication.status)
 }
 
-@admin.adminLayout("Cola de revisión", "review") {
+@views.html.admin.adminLayout("Cola de revisión", "review") {
 
   <header class="ed-admin-head">
     <div>
@@ -14,8 +14,8 @@
       <p class="ed-dash-sub">@publications.size pieza(s) esperan resolución.</p>
     </div>
     <div class="ed-admin-actions">
-      <a href="@routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo completo</a>
-      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+      <a href="@controllers.admin.routes.AdminController.allPublications(None)" class="ed-link-btn">Catálogo completo</a>
+      <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
     </div>
   </header>
 
@@ -35,12 +35,12 @@
           </div>
           <div class="ed-revision-row__actions">
             @pwa.publication.id.map { id =>
-              <a class="ed-rev-btn ed-rev-btn--view" href="@routes.AdminController.reviewPublicationDetail(id)">Revisar</a>
-              <form method="POST" action="@routes.AdminController.approvePublication(id)" class="ed-inline-form">
+              <a class="ed-rev-btn ed-rev-btn--view" href="@controllers.admin.routes.AdminController.reviewPublicationDetail(id)">Revisar</a>
+              <form method="POST" action="@controllers.admin.routes.AdminController.approvePublication(id)" class="ed-inline-form">
                 @helper.CSRF.formField
                 <button class="ed-rev-btn ed-rev-btn--approve">Aprobar</button>
               </form>
-              <form method="POST" action="@routes.AdminController.rejectPublication(id)" class="ed-inline-form" onsubmit="var r=prompt('Motivo del rechazo (opcional)');if(r===null)return false;this.elements['rejectionReason'].value=r;return true;">
+              <form method="POST" action="@controllers.admin.routes.AdminController.rejectPublication(id)" class="ed-inline-form" onsubmit="var r=prompt('Motivo del rechazo (opcional)');if(r===null)return false;this.elements['rejectionReason'].value=r;return true;">
                 @helper.CSRF.formField
                 <input type="hidden" name="rejectionReason" value="">
                 <button class="ed-rev-btn ed-rev-btn--reject">Rechazar</button>

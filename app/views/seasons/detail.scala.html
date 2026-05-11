@@ -1,0 +1,76 @@
+@(season: domains.editorial.models.EditorialSeason, publications: List[domains.publications.models.PublicationWithAuthor])(implicit request: RequestHeader)
+
+@import java.util.Locale
+@import java.time.format.DateTimeFormatter
+
+@dateFmt = @{ DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "AR")) }
+@dateLabel(d: Option[java.time.LocalDate], fallback: String) = @{ d.map(_.format(dateFmt)).getOrElse(fallback) }
+
+@main(season.name, fullBleed = false) {
+  <section class="ed-season-hero">
+    <p class="ed-season-hero__back">
+      <a href="@controllers.web.routes.HomeController.publicaciones()">← Volver a Artículos</a>
+    </p>
+
+    <div class="ed-season-hero__eyebrow">
+      <span class="ed-season-hero__dot @if(season.isCurrent){is-active}"></span>
+      @if(season.isCurrent) { Temporada vigente } else { Temporada del archivo }
+      · <code>@season.code</code>
+    </div>
+
+    <h1 class="ed-season-hero__title">@season.name</h1>
+
+    @season.tagline.map { tag =>
+      <p class="ed-season-hero__tagline">@tag</p>
+    }
+
+    <dl class="ed-season-hero__meta">
+      <div>
+        <dt>Inicio</dt>
+        <dd>@dateLabel(season.startsOn, "Sin definir")</dd>
+      </div>
+      <div>
+        <dt>Cierre</dt>
+        <dd>@dateLabel(season.endsOn, "Sin definir")</dd>
+      </div>
+      <div>
+        <dt>Piezas</dt>
+        <dd>@{"%02d".format(publications.size)}</dd>
+      </div>
+      <div>
+        <dt>Estado</dt>
+        <dd>@if(season.isCurrent){En curso} else {Cerrada}</dd>
+      </div>
+    </dl>
+  </section>
+
+  @season.description.map { desc =>
+    <section class="ed-section ed-season-block">
+      <h2 class="ed-season-block__label">Sobre la temporada</h2>
+      <p class="ed-season-block__body">@desc</p>
+    </section>
+  }
+
+  @season.openingEssay.map { essay =>
+    <section class="ed-section ed-season-block ed-season-block--essay">
+      <h2 class="ed-season-block__label">Ensayo de apertura</h2>
+      <div class="ed-season-block__body">@Html(essay)</div>
+    </section>
+  }
+
+  <section class="ed-section">
+    <h2 class="ed-season-block__label">Índice de piezas asociadas (@publications.size)</h2>
+    @if(publications.isEmpty) {
+      <p>Esta temporada todavía no tiene publicaciones asociadas.</p>
+    } else {
+      <ol class="ed-season-index">
+        @for(item <- publications) {
+          <li>
+            <a href="@controllers.web.routes.HomeController.publicacion(item.publication.slug)">@item.publication.title</a>
+            <span class="ed-season-index__author"> · @item.authorFullName</span>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+}

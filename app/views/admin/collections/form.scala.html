@@ -1,17 +1,17 @@
-@(existing: Option[models.Collection],
+@(existing: Option[domains.collections.models.Collection],
   formErrors: Map[String, String],
   formData: Map[String, String])(implicit request: RequestHeader)
 
-@import models.CollectionAccent
+@import domains.collections.models.CollectionAccent
 
 @isEdit = @{ existing.isDefined }
 @actionUrl = @{ existing.flatMap(_.id) match {
-  case Some(id) => routes.AdminCollectionController.update(id)
-  case None     => routes.AdminCollectionController.create()
+  case Some(id) => controllers.admin.routes.AdminCollectionController.update(id)
+  case None     => controllers.admin.routes.AdminCollectionController.create()
 }}
 @title = @{ if(isEdit) s"Editar colección · ${existing.get.name}" else "Nueva colección" }
 
-@admin.adminLayout(title, "collections") {
+@views.html.admin.adminLayout(title, "collections") {
 
   <div class="ed-bo__page-head">
     <div>
@@ -19,7 +19,7 @@
       <p class="ed-bo__page-lead">Editás los metadatos. Las piezas se gestionan desde el detalle.</p>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-ghost" href="@routes.AdminCollectionController.list(None)">← Volver</a>
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminCollectionController.list(None)">← Volver</a>
     </div>
   </div>
 
@@ -85,7 +85,7 @@
 
     <div class="ed-bo__form-actions">
       <button class="ed-btn-primary" type="submit">@if(isEdit){Guardar cambios}else{Crear colección}</button>
-      <a class="ed-btn-ghost" href="@routes.AdminCollectionController.list(None)">Cancelar</a>
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminCollectionController.list(None)">Cancelar</a>
     </div>
   </form>
 }

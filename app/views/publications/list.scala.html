@@ -1,0 +1,424 @@
+@(dynamicPublications: List[domains.publications.models.PublicationWithAuthor],
+  editorialArticles: Seq[domains.publications.models.EditorialArticle],
+  categories: Seq[domains.publications.models.PublicationCategory],
+  searchQuery: String = "",
+  searchCategory: Option[String] = None,
+  currentSeason: Option[domains.editorial.models.EditorialSeason] = None)(implicit request: RequestHeader, messages: Messages)
+
+@*
+  Listado de publicaciones — Editorial Reactiva.
+  Mezcla piezas editoriales (DB, equipo) y publicaciones de usuarios (DB, workflow).
+  Categorías y filtros vienen del catálogo `publication_categories`.
+*@
+
+@totalCount = @{ dynamicPublications.size + editorialArticles.size }
+@seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
+@seasonEmptyBody = @{
+  seasonName match {
+    case Some(name) => s"Sé de los primeros en proponer un artículo para la temporada $name del Manifiesto Reactivo."
+    case None       => "Sé de los primeros en proponer un artículo para la próxima temporada del Manifiesto Reactivo."
+  }
+}
+
+@main("Publicaciones") {
+
+  @request.flash.get("success").map { msg => <div class="ed-section"><div class="ed-flash ed-flash--success">@msg</div></div> }
+  @request.flash.get("error").map   { msg => <div class="ed-section"><div class="ed-flash ed-flash--error">@msg</div></div> }
+
+  @sections.pubToolbar(totalCount, categories, searchQuery, searchCategory, currentSeason)
+
+  @if(totalCount == 0) {
+    @if(searchQuery.nonEmpty || searchCategory.isDefined) {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "search",
+        title = "Sin resultados",
+        body = "No encontramos publicaciones con esos filtros. Prueba con otros términos o explora todas las publicaciones.",
+        ctaLabel = Some("Ver todas"),
+        ctaHref = Some(controllers.web.routes.HomeController.publicaciones().url)
+      )
+    } else {
+      @partials.emptyState(
+        variant = "empty",
+        icon = "feather",
+        title = "Aún no hay piezas publicadas",
+        body = seasonEmptyBody,
+        ctaLabel = Some("Proponer publicación"),
+        ctaHref = Some(controllers.user.routes.UserPublicationController.dashboard().url),
+        secondaryLabel = Some("Suscribirme"),
+        secondaryHref = Some("/#contact")
+      )
+    }
+  } else {
+    <div class="ed-articles-grid">
+
+      @* Piezas editoriales (DB) *@
+      @editorialArticles.zipWithIndex.map { case (a, idx) =>
+        <a class="ed-article-card @if(idx == 0){ed-article-card--featured}" href="@controllers.web.routes.HomeController.publicacion(a.slug)">
+          @if(idx == 0) {
+            <div class="ed-featured-image">
+              <span class="ed-featured-image-label">PIEZA<br/>EDITORIAL</span>
+            </div>
+            <div class="ed-featured-content">
+              <div class="ed-article-meta">
+                <span class="ed-article-cat">@a.categoryLabel</span>
+                <span class="ed-article-date">@a.publishedLabel</span>
+              </div>
+              <h2 class="ed-article-title">@a.title</h2>
+              <p class="ed-article-excerpt">@a.excerpt.getOrElse("")</p>
+              @if(a.tags.nonEmpty) {
+                <div class="ed-article-tags">
+                  @a.tags.take(4).map { tag => <span class="ed-article-tag">@tag</span> }
+                </div>
+              }
+              <span class="ed-article-link">Leer pieza editorial</span>
+            </div>
+          } else {
+            <div class="ed-article-meta">
+              <span class="ed-article-cat">@a.categoryLabel</span>
+              <span class="ed-article-date">@a.publishedLabel</span>
+            </div>
+            <h2 class="ed-article-title">@a.title</h2>
+            <p class="ed-article-excerpt">@a.excerpt.getOrElse("")</p>
+            @if(a.tags.nonEmpty) {
+              <div class="ed-article-tags">
+                @a.tags.take(3).map { tag => <span class="ed-article-tag">@tag</span> }
+              </div>
+            }
+            <span class="ed-article-link">Leer pieza editorial</span>
+          }
+        </a>
+      }
+
+      @* Publicaciones de usuarios (workflow) *@
+      @dynamicPublications.zipWithIndex.map { case (pwa, i) =>
+        @if(i == 0 && editorialArticles.isEmpty) {
+          <a class="ed-article-card ed-article-card--featured" href="@controllers.web.routes.HomeController.publicacion(pwa.publication.slug)">
+            <div class="ed-featured-image">
+              <span class="ed-featured-image-label">DESTACADA<br/>@pwa.authorFullName</span>
+            </div>
+            <div class="ed-featured-content">
+              <div class="ed-article-meta">
+                <span class="ed-article-cat">@pwa.publication.category</span>
+                <span class="ed-article-date">@pwa.publication.publishedAt.map(_.toString.take(10)).getOrElse(pwa.publication.createdAt.toString.take(10))</span>
+              </div>
+              <h2 class="ed-article-title">@pwa.publication.title</h2>
+              <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(280))</p>
+              @pwa.publication.tags.map { t =>
+                <div class="ed-article-tags">
+                  @t.split(",").map(_.trim).filter(_.nonEmpty).take(4).map { tag =>
+                    <span class="ed-article-tag">@tag</span>
+                  }
+                </div>
+              }
+              <span class="ed-article-link">Leer pieza completa</span>
+            </div>
+          </a>
+        } else {
+          <a class="ed-article-card" href="@controllers.web.routes.HomeController.publicacion(pwa.publication.slug)">
+            <div class="ed-article-meta">
+              <span class="ed-article-cat">@pwa.publication.category</span>
+              <span class="ed-article-date">@pwa.publication.publishedAt.map(_.toString.take(10)).getOrElse(pwa.publication.createdAt.toString.take(10))</span>
+            </div>
+            <h2 class="ed-article-title">@pwa.publication.title</h2>
+            <p class="ed-article-excerpt">@pwa.publication.excerpt.getOrElse(pwa.publication.content.take(180))</p>
+            @pwa.publication.tags.map { t =>
+              <div class="ed-article-tags">
+                @t.split(",").map(_.trim).filter(_.nonEmpty).take(3).map { tag =>
+                  <span class="ed-article-tag">@tag</span>
+                }
+              </div>
+            }
+            <div class="ed-article-byline">@pwa.authorFullName</div>
+            <span class="ed-article-link">Leer</span>
+          </a>
+        }
+      }
+    </div>
+  }
+
+  <div class="ed-search-status" data-pub-search-status hidden>
+    <span class="ed-search-status__count" data-pub-search-count>0</span>
+    <span class="ed-search-status__label" data-pub-search-label>resultados</span>
+    <button type="button" class="ed-search-status__clear" data-pub-search-clear-btn>Limpiar (Esc)</button>
+  </div>
+
+  <footer class="ed-page-footer">
+    <div>© 2025 Manifiesto Reactivo</div>
+    <div class="ed-page-footer__links">
+      <a href="@controllers.web.routes.HomeController.politicaPrivacidad()">Privacidad</a>
+      <a href="@controllers.web.routes.HomeController.terminosDeUso()">Términos</a>
+    </div>
+  </footer>
+
+  <div class="ed-search-empty" data-pub-search-empty hidden>
+    <p>No hay publicaciones que coincidan con <strong data-pub-search-term></strong>.</p>
+    <p class="ed-search-empty__hint">Probá con otros términos o presioná Enter para buscar también en el contenido completo.</p>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var form    = document.querySelector('[data-pub-search-form]');
+      var input   = document.querySelector('[data-pub-search-input]');
+      var grid    = document.querySelector('.ed-articles-grid');
+      var empty   = document.querySelector('[data-pub-search-empty]');
+      var term    = document.querySelector('[data-pub-search-term]');
+      var status  = document.querySelector('[data-pub-search-status]');
+      var count   = document.querySelector('[data-pub-search-count]');
+      var label   = document.querySelector('[data-pub-search-label]');
+      var clearBt = document.querySelector('[data-pub-search-clear-btn]');
+      if (!input || !grid) return;
+
+      // ─────────────────────────────────────────────────────────
+      // Helpers de foco/caret — preservar la posición del cursor
+      // del input frente a CUALQUIER mutación DOM (highlights,
+      // status bar, replaceState). Si por algún motivo el navegador
+      // mueve el foco o resetea selectionStart, lo restauramos.
+      // ─────────────────────────────────────────────────────────
+      var caret = { start: 0, end: 0, hadFocus: false };
+
+      function captureCaret() {
+        if (document.activeElement === input) {
+          caret.hadFocus = true;
+          // selectionStart puede ser null en inputs no-text; protegemos.
+          try {
+            caret.start = input.selectionStart != null ? input.selectionStart : input.value.length;
+            caret.end   = input.selectionEnd   != null ? input.selectionEnd   : caret.start;
+          } catch (_) { /* ignore */ }
+        } else {
+          caret.hadFocus = false;
+        }
+      }
+
+      function restoreCaret() {
+        if (!caret.hadFocus) return;
+        if (document.activeElement !== input) {
+          // Re-focus sin scroll-into-view (evita saltos de scroll en el input).
+          try { input.focus({ preventScroll: true }); }
+          catch (_) { input.focus(); }
+        }
+        try { input.setSelectionRange(caret.start, caret.end); }
+        catch (_) { /* ignore */ }
+      }
+
+      // Envuelve cualquier callback para que no pueda afectar al cursor.
+      function preserveFocus(fn) {
+        return function () {
+          captureCaret();
+          fn.apply(null, arguments);
+          restoreCaret();
+        };
+      }
+      // De esa forma escribir nunca se interrumpe por reflows pesados.
+      // ─────────────────────────────────────────────────────────
+      var state = { q: '', visible: 0, lastHighlighted: null };
+
+      var resetUrl = (form && form.action) ? form.action.replace(/\/buscar.*$/, '') : null;
+      if (!resetUrl) resetUrl = window.location.pathname.replace(/\/buscar.*$/, '');
+      var serverHadQuery = !!(new URL(window.location.href).searchParams.get('q'));
+
+      var cards = Array.prototype.slice.call(grid.querySelectorAll('.ed-article-card'));
+      var TOTAL = cards.length;
+
+      function normalize(s) {
+        return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+
+      cards.forEach(function (card) {
+        var titleEl   = card.querySelector('.ed-article-title');
+        var excerptEl = card.querySelector('.ed-article-excerpt');
+        var tagsTxt   = Array.prototype.map.call(
+          card.querySelectorAll('.ed-article-tag'),
+          function (t) { return t.textContent || ''; }
+        ).join(' ');
+        var catTxt = (card.querySelector('.ed-article-cat') || {}).textContent || '';
+
+        card._search = {
+          titleEl: titleEl,
+          excerptEl: excerptEl,
+          titleText: titleEl ? titleEl.textContent : '',
+          excerptText: excerptEl ? excerptEl.textContent : '',
+          index: normalize(
+            (titleEl ? titleEl.textContent : '') + ' ' +
+            (excerptEl ? excerptEl.textContent : '') + ' ' +
+            tagsTxt + ' ' + catTxt
+          )
+        };
+      });
+
+      // ── 1. Toggle visibilidad — sin tocar contenido ─────────
+      function applyVisibility(rawQuery) {
+        var q = normalize(rawQuery);
+        var visible = 0;
+        for (var i = 0; i < cards.length; i++) {
+          var s = cards[i]._search;
+          var match = q === '' || s.index.indexOf(q) !== -1;
+          // Usamos classList, no `hidden`, para evitar repaint del atributo.
+          if (match) {
+            cards[i].classList.remove('is-search-out');
+            visible++;
+          } else {
+            cards[i].classList.add('is-search-out');
+          }
+        }
+        state.q = rawQuery;
+        state.visible = visible;
+        return visible;
+      }
+
+      // ── 2. Status bar (contador) — debounced 200ms ──────────
+      function renderStatus() {
+        if (!status) return;
+        if (state.q.trim() === '') {
+          status.style.visibility = 'hidden';
+          if (empty) empty.hidden = true;
+          return;
+        }
+        status.style.visibility = 'visible';
+        if (count) count.textContent = String(state.visible);
+        if (label) label.textContent = state.visible === 1
+          ? 'resultado de ' + TOTAL
+          : 'resultados de ' + TOTAL;
+        if (empty) empty.hidden = state.visible !== 0;
+        if (term)  term.textContent = '"' + state.q.trim() + '"';
+      }
+
+      // ── 3. Highlights + URL — debounced 500ms (idle) ────────
+      function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+      function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, function (c) {
+          return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+        });
+      }
+
+      function applyHighlights(rawQuery) {
+        // Si la query no cambió desde el último highlight, no hacemos nada.
+        if (state.lastHighlighted === rawQuery) return;
+        state.lastHighlighted = rawQuery;
+
+        var rx = rawQuery ? new RegExp('(' + escapeRegex(rawQuery) + ')', 'gi') : null;
+        for (var i = 0; i < cards.length; i++) {
+          var s = cards[i]._search;
+          if (!s.titleEl) continue;
+          if (!rx) {
+            // Limpiar marcas
+            if (s.titleEl.firstElementChild)   s.titleEl.textContent   = s.titleText;
+            if (s.excerptEl && s.excerptEl.firstElementChild) s.excerptEl.textContent = s.excerptText;
+            continue;
+          }
+          // Solo aplicamos highlight a cards visibles (perf).
+          if (cards[i].classList.contains('is-search-out')) continue;
+          s.titleEl.innerHTML = escapeHtml(s.titleText).replace(rx, '<mark class="ed-search-hl">$1</mark>');
+          if (s.excerptEl) {
+            s.excerptEl.innerHTML = escapeHtml(s.excerptText).replace(rx, '<mark class="ed-search-hl">$1</mark>');
+          }
+        }
+      }
+
+      function syncUrl(rawQuery) {
+        if (!('history' in window) || !history.replaceState) return;
+        var url = new URL(window.location.href);
+        if (rawQuery && rawQuery.trim()) url.searchParams.set('q', rawQuery.trim());
+        else url.searchParams.delete('q');
+        history.replaceState({ q: rawQuery || '' }, '', url.toString());
+      }
+
+      // ── Schedulers ──────────────────────────────────────────
+      // Filosofía: el handler `input` debe ser ~0ms para que el navegador
+      // pinte la tecla antes que el filtro. Encolamos el trabajo en
+      // requestAnimationFrame y aislamos las operaciones caras en idle.
+      var rafId      = null;
+      var statusId   = null;
+      var idleId     = null;
+      var pendingQ   = '';
+
+      function flushVisibility() {
+        rafId = null;
+        captureCaret();
+        applyVisibility(pendingQ);
+        restoreCaret();
+
+        if (statusId) clearTimeout(statusId);
+        statusId = setTimeout(preserveFocus(renderStatus), 180);
+
+        if (idleId) clearTimeout(idleId);
+        idleId = setTimeout(preserveFocus(function () {
+          applyHighlights(pendingQ);
+          syncUrl(pendingQ);
+        }), 500);
+      }
+
+      function onInput() {
+        // Captura el valor actual y devuelve el control al navegador
+        // de inmediato — sin tocar el DOM en este tick.
+        pendingQ = input.value;
+        if (rafId !== null) return; // ya hay un frame pendiente
+        rafId = requestAnimationFrame(flushVisibility);
+      }
+
+      input.addEventListener('input', onInput);
+
+      // Asegurar que al perder foco se aplique todo el estado pendiente.
+      input.addEventListener('blur', function () {
+        if (rafId !== null)    { cancelAnimationFrame(rafId); rafId = null; flushVisibility(); }
+        if (statusId !== null) { clearTimeout(statusId); statusId = null; renderStatus(); }
+        if (idleId !== null)   { clearTimeout(idleId);   idleId   = null; applyHighlights(input.value); syncUrl(input.value); }
+      });
+
+      function fullReset() {
+        if (serverHadQuery) { window.location.href = resetUrl; return; }
+        if (rafId !== null)    { cancelAnimationFrame(rafId); rafId = null; }
+        if (statusId !== null) { clearTimeout(statusId); statusId = null; }
+        if (idleId !== null)   { clearTimeout(idleId);   idleId   = null; }
+        pendingQ = '';
+        input.value = '';
+        applyVisibility('');
+        applyHighlights('');
+        renderStatus();
+        syncUrl('');
+        input.focus();
+      }
+
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { e.preventDefault(); fullReset(); }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === '/' &&
+            !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) {
+          e.preventDefault();
+          input.focus();
+          input.select();
+        }
+      });
+
+      if (clearBt) clearBt.addEventListener('click', fullReset);
+
+      window.addEventListener('popstate', function () {
+        var q = new URL(window.location.href).searchParams.get('q') || '';
+        input.value = q;
+        applyVisibility(q);
+        renderStatus();
+        applyHighlights(q);
+      });
+
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          if (input.value.trim() === '') { e.preventDefault(); fullReset(); }
+        });
+      }
+
+      // Bootstrap inicial
+      if (status) status.style.visibility = 'hidden';
+      var initial = input.value || (new URL(window.location.href).searchParams.get('q') || '');
+      if (initial) {
+        input.value = initial;
+        applyVisibility(initial);
+        renderStatus();
+        applyHighlights(initial);
+      }
+    })();
+  </script>
+}

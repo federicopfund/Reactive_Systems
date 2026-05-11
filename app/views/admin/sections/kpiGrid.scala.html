@@ -1,0 +1,10 @@
+@(msgMetrics: Map[String, Int])
+
+<section class="ed-kpi-grid">
+  @tags.kpiCard("Mensajes",           msgMetrics.getOrElse("total", 0))
+  @tags.kpiCard("Sin leer",           msgMetrics.getOrElse("unread", 0))
+  @tags.kpiCard("Últimos 7d",         msgMetrics.getOrElse("last7Days", 0))
+  @tags.kpiCard("Últimos 30d",        msgMetrics.getOrElse("last30Days", 0))
+  @tags.kpiCard("Tasa de lectura",    msgMetrics.getOrElse("readRate", 0))
+  @tags.kpiCard("Remitentes únicos",  msgMetrics.getOrElse("uniqueSenders", 0))
+</section>

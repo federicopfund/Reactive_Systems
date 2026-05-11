@@ -1,5 +1,5 @@
 @(username: String,
-  msgs: List[models.PrivateMessageWithUsers],
+  msgs: List[domains.messaging.models.PrivateMessageWithUsers],
   tab: String,
   unreadCount: Int,
   prefillTo: Option[String] = None,
@@ -25,7 +25,7 @@
     @* ── Composer: escribir mensaje nuevo ───────────────── *@
     <details class="ed-msg-compose" id="ed-msg-compose" @if(hasPrefill){open}>
       <summary class="ed-msg-compose__summary">Escribir mensaje</summary>
-      <form method="POST" action="@routes.UserPublicationController.sendDirectMessage()" class="ed-msg-compose__body">
+      <form method="POST" action="@controllers.user.routes.UserPublicationController.sendDirectMessage()" class="ed-msg-compose__body">
         @helper.CSRF.formField
         <div class="ed-msg-compose__row">
           <label for="rcv-username">Para (usuario)</label>
@@ -58,8 +58,8 @@
     }
 
     <nav class="ed-cat-row" role="tablist" aria-label="Filtro de bandeja">
-      <a class="ed-cat-pill @if(tab != "sent"){active}" href="@routes.UserPublicationController.inbox("received")">Recibidos</a>
-      <a class="ed-cat-pill @if(tab == "sent"){active}" href="@routes.UserPublicationController.inbox("sent")">Enviados</a>
+      <a class="ed-cat-pill @if(tab != "sent"){active}" href="@controllers.user.routes.UserPublicationController.inbox("received")">Recibidos</a>
+      <a class="ed-cat-pill @if(tab == "sent"){active}" href="@controllers.user.routes.UserPublicationController.inbox("sent")">Enviados</a>
     </nav>
 
     @if(msgs.isEmpty) {
@@ -69,14 +69,14 @@
         title = if(tab == "sent") "Aún no has enviado mensajes" else "Tu bandeja está tranquila",
         body = "Cuando intercambies mensajes con autores y editores aparecerán aquí. Empieza una conversación desde la página de un autor.",
         ctaLabel = Some("Explorar autores"),
-        ctaHref = Some(routes.HomeController.publicaciones().url)
+        ctaHref = Some(controllers.web.routes.HomeController.publicaciones().url)
       )
     } else {
       <ul class="ed-msg-list">
         @msgs.map { mu =>
           @defining(if(tab == "sent") (mu.receiverUsername, mu.receiverFullName) else (mu.senderUsername, mu.senderFullName)) { case (uname, fname) =>
             <li class="ed-msg-item @if(!mu.message.isRead && tab != "sent"){is-unread}">
-              <a href="@mu.message.id.map(routes.UserPublicationController.viewMessage(_))" class="ed-msg-link">
+              <a href="@mu.message.id.map(controllers.user.routes.UserPublicationController.viewMessage(_))" class="ed-msg-link">
                 <div class="ed-msg-head">
                   <strong>@fname</strong>
                   <span class="ed-msg-uname">@@@uname</span>

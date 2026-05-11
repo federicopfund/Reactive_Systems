@@ -1,0 +1,65 @@
+@(title: String, metaDescription: Option[String] = None)(content: Html)(implicit request: RequestHeader)
+
+@*
+  Layout standalone para flujos de autenticación.
+  Sin sidebar editorial, sin chrome navegacional. Máxima atención en la tarea.
+
+  Usado por: auth/login, auth/register, auth/verifyEmail, auth/userDashboard.
+  La estructura resultante es:
+    <html>
+      <head>  ← mismos assets que main.scala.html
+      <body.ed-auth-shell>
+        <main#ed-auth-main>
+          @content
+*@
+
+<!DOCTYPE html>
+<html lang="es" data-theme="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>@title — Manifiesto Reactivo</title>
+  <meta name="description" content="@metaDescription.getOrElse("Manifiesto Reactivo — edición digital sobre sistemas Reactivos.")">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="@title — Manifiesto Reactivo">
+  <meta property="og:site_name" content="Manifiesto Reactivo">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@@0,400;0,700;0,900;1,400&family=Lora:ital,wght@@0,400;1,400&family=IBM+Plex+Mono:wght@@400;500&display=swap" rel="stylesheet">
+
+  <link rel="preload" as="style" href="@routes.Assets.versioned("stylesheets/main.css")">
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/print.css")" media="print">
+
+  @* Bootstrap inline anti-FOUC: aplica el tema antes del primer paint *@
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ed-theme');
+        if (t !== 'crema' && t !== 'noche' && t !== 'auto') t = 'auto';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'auto');
+      }
+    })();
+  </script>
+</head>
+<body class="ed-auth-shell">
+  <a href="#ed-auth-main" class="ed-skip-link">Saltar al contenido principal</a>
+
+  <main id="ed-auth-main" tabindex="-1">
+    @content
+  </main>
+
+  @* Solo los scripts necesarios para autenticación *@
+  <script src="@routes.Assets.versioned("javascripts/theme.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/formValidation.js")"></script>
+  <script defer src="@routes.Assets.versioned("javascripts/toast.js")"></script>
+</body>
+</html>

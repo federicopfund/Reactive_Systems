@@ -1,4 +1,4 @@
-@(events: Seq[models.CommunityEvent],
+@(events: Seq[domains.events.models.CommunityEvent],
   page: Int,
   pageSize: Int,
   userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
@@ -13,8 +13,8 @@
         <p class="ed-events-agenda__lead">Lo que ya paso, ordenado por fecha descendente.</p>
       </div>
       <div class="ed-events-agenda__actions">
-        <a class="ed-btn-secondary" href="@routes.EventController.index()">Proximos</a>
-        <a class="ed-btn-secondary" href="@routes.EventController.timeline()">Cronograma</a>
+        <a class="ed-btn-secondary" href="@controllers.web.routes.EventController.index()">Proximos</a>
+        <a class="ed-btn-secondary" href="@controllers.web.routes.EventController.timeline()">Cronograma</a>
       </div>
     </header>
 
@@ -32,11 +32,11 @@
 
       <nav class="ed-pagination" aria-label="Paginacion">
         @if(page > 0) {
-          <a class="ed-btn-ghost" href="@routes.EventController.past(page - 1)">‹ Anterior</a>
+          <a class="ed-btn-ghost" href="@controllers.web.routes.EventController.past(page - 1)">‹ Anterior</a>
         }
         <span class="ed-pagination__current">Pagina @{page + 1}</span>
         @if(events.size == pageSize) {
-          <a class="ed-btn-ghost" href="@routes.EventController.past(page + 1)">Siguiente ›</a>
+          <a class="ed-btn-ghost" href="@controllers.web.routes.EventController.past(page + 1)">Siguiente ›</a>
         }
       </nav>
     }

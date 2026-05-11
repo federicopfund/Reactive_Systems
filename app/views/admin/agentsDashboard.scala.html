@@ -1,6 +1,6 @@
 @(username: String, role: String, pollingSec: Int)(implicit request: RequestHeader)
 
-@admin.adminLayout("Agentes y Guardians", "agents") {
+@views.html.admin.adminLayout("Agentes y Guardians", "agents") {
 
   <header class="ed-bo__page-head">
     <div>
@@ -42,7 +42,7 @@
 
   <script>
     (function () {
-      var endpoint = "@routes.AdminAgentsController.healthJson()";
+      var endpoint = "@controllers.admin.routes.AdminAgentsController.healthJson()";
       var grid     = document.getElementById('ed-agents-grid');
       var dot      = document.getElementById('ed-agents-global-dot');
       var text     = document.getElementById('ed-agents-global-text');

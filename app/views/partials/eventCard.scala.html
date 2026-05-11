@@ -1,11 +1,11 @@
-@(e: models.CommunityEvent, featured: Boolean = false)
+@(e: domains.events.models.CommunityEvent, featured: Boolean = false)
 
 @*
   Tarjeta de evento — usada en agenda mensual y listados.
 *@
 
 <a class="ed-event-card @if(featured){ed-event-card--featured} ed-event-card--accent-@e.accentToken"
-   href="@routes.EventController.detail(e.slug)"
+   href="@controllers.web.routes.EventController.detail(e.slug)"
    data-event-type="@e.eventType"
    data-event-modality="@e.modality">
 
@@ -13,9 +13,9 @@
 
   <div class="ed-event-card__body">
     <div class="ed-event-card__meta">
-      <span class="ed-event-card__type">@models.EventEnums.EventType.label(e.eventType)</span>
+      <span class="ed-event-card__type">@domains.events.models.EventEnums.EventType.label(e.eventType)</span>
       <span class="ed-event-card__dot" aria-hidden="true">·</span>
-      <span class="ed-event-card__modality">@models.EventEnums.Modality.label(e.modality)</span>
+      <span class="ed-event-card__modality">@domains.events.models.EventEnums.Modality.label(e.modality)</span>
       @if(e.isLive) {
         <span class="ed-event-card__live" aria-label="En vivo ahora">EN VIVO</span>
       }

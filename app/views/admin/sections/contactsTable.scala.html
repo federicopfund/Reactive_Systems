@@ -1,0 +1,63 @@
+@(contacts: Seq[domains.contact.models.ContactRecord],
+  currentPage: Int,
+  totalPages: Int,
+  searchQuery: Option[String])(implicit request: RequestHeader)
+
+<section class="ed-admin-card">
+  <header class="ed-admin-card__head">
+    <h2>Mensajes recibidos</h2>
+    <form method="GET" action="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-admin-search">
+      <input type="text" name="search" value="@searchQuery.getOrElse("")" placeholder="Buscar por nombre, email o mensaje…">
+      <button type="submit" class="ed-link-btn">Buscar</button>
+      @if(searchQuery.exists(_.nonEmpty)) {
+        <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-link-btn">Limpiar</a>
+      }
+    </form>
+    <a href="@controllers.admin.routes.AdminController.createContactPage()" class="ed-link-btn ed-link-btn--accent">+ Nuevo</a>
+  </header>
+
+  @if(contacts.isEmpty) {
+    <p class="ed-dash-empty">No hay contactos para mostrar.</p>
+  } else {
+    <table class="ed-admin-table">
+      <thead>
+        <tr>
+          <th>Nombre</th><th>Email</th><th>Mensaje</th>
+          <th>Estado</th><th>Recibido</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @contacts.map { c =>
+          <tr>
+            <td>@c.name</td>
+            <td>@c.email</td>
+            <td class="ed-truncate">@c.message.take(80)…</td>
+            <td>@tags.statusPill(c.status)</td>
+            <td>@c.createdAt.toString.take(10)</td>
+            <td>
+              @c.id.map { id =>
+                <a href="@controllers.admin.routes.AdminController.viewContact(id)" class="ed-link-btn">Ver</a>
+                <a href="@controllers.admin.routes.AdminController.editContactPage(id)" class="ed-link-btn">Editar</a>
+                <form method="POST" action="@controllers.admin.routes.AdminController.deleteContact(id)"
+                      class="ed-inline-form"
+                      onsubmit="return confirm('¿Eliminar este contacto?');">
+                  @helper.CSRF.formField
+                  <button type="submit" class="ed-link-btn ed-link-btn--danger">Eliminar</button>
+                </form>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if(totalPages > 1) {
+      <nav class="ed-pager">
+        @for(p <- 0 until totalPages) {
+          <a href="@controllers.admin.routes.AdminController.dashboard(p, searchQuery)"
+             class="ed-pager__page @if(p == currentPage){is-active}">@(p + 1)</a>
+        }
+      </nav>
+    }
+  }
+</section>

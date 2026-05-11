@@ -1,6 +1,6 @@
-@(loginForm: Form[controllers.UserLoginForm])(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(loginForm: Form[controllers.auth.UserLoginForm])(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@main("Iniciar sesión") {
+@layouts.authLayout("Iniciar sesión") {
   <section class="ed-auth-page">
     <aside class="ed-auth-side">
       <div class="ed-auth-side__eyebrow">Edición Reactiva</div>
@@ -21,7 +21,7 @@
       @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
       @loginForm.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
 
-      <form method="POST" action="@routes.AuthController.login()" class="ed-form">
+      <form method="POST" action="@controllers.auth.routes.AuthController.login()" class="ed-form">
         @helper.CSRF.formField
 
         <div class="ed-field">
@@ -43,7 +43,7 @@
 
       <div class="ed-auth-aux">
         ¿Aún no tienes cuenta?
-        <a href="@routes.AuthController.registerPage()">Crear una cuenta</a>
+        <a href="@controllers.auth.routes.AuthController.registerPage()">Crear una cuenta</a>
       </div>
     </div>
   </section>

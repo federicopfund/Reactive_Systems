@@ -1,7 +1,7 @@
 @(
-  publication: models.Publication,
-  allStages: Seq[models.EditorialStage],
-  timeline: Seq[models.PublicationStageHistoryWithStage],
+  publication: domains.publications.models.Publication,
+  allStages: Seq[domains.editorial.models.EditorialStage],
+  timeline: Seq[domains.publications.models.PublicationStageHistoryWithStage],
   currentStageCode: Option[String],
   role: String,
   showInternalNotes: Boolean = true
@@ -13,7 +13,7 @@
 @autorStages   = @{ visibleStages.filter(s => autorCodes.contains(s.code)) }
 @revStages     = @{ visibleStages.filter(s => !autorCodes.contains(s.code)) }
 
-@nodeState(stage: models.EditorialStage) = @{
+@nodeState(stage: domains.editorial.models.EditorialStage) = @{
   val idx = visibleStages.indexOf(stage)
   currentIdx match {
     case Some(ci) if idx < ci  => "done"
@@ -22,7 +22,7 @@
   }
 }
 
-@histEntry(stage: models.EditorialStage) = @{
+@histEntry(stage: domains.editorial.models.EditorialStage) = @{
   timeline.find(_.stageCode == stage.code)
 }
 
@@ -35,7 +35,7 @@
         <span class="ed-bpm__status-label">Etapa actual:</span>
         <strong class="ed-bpm__status-name">@visibleStages.find(_.code == code).map(_.label).getOrElse(code)</strong>
         <span class="ed-bpm__status-sep">·</span>
-        <em class="ed-bpm__status-owner">@utils.EditorialStagePolicy.ownerLabelFor(code)</em>
+        <em class="ed-bpm__status-owner">@domains.publications.policies.EditorialStagePolicy.ownerLabelFor(code)</em>
       </div>
     }
   </header>

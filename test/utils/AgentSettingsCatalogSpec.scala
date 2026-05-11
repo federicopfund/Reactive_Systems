@@ -1,6 +1,6 @@
-package utils
+package domains.admin.services
 
-import models.{AgentSettingCategory, AgentSettingType}
+import domains.admin.models.{AgentSettingCategory, AgentSettingType}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

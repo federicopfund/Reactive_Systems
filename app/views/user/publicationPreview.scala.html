@@ -1,4 +1,4 @@
-@(publication: models.Publication, username: String, feedbacks: List[models.PublicationFeedbackWithAdmin], reactions: Map[String, Int], userReactions: Set[String], comments: List[models.CommentWithAuthor], isBookmarked: Boolean, userId: Option[Long])(implicit request: RequestHeader, messages: Messages)
+@(publication: domains.publications.models.Publication, username: String, feedbacks: List[domains.publications.models.PublicationFeedbackWithAdmin], reactions: Map[String, Int], userReactions: Set[String], comments: List[domains.publications.models.CommentWithAuthor], isBookmarked: Boolean, userId: Option[Long])(implicit request: RequestHeader, messages: Messages)
 
 @isAuthenticated = @{ userId.isDefined }
 @reactionTypes = @{ List(("like","♥","Me gusta"), ("insight","✦","Aporta"), ("save","☆","Guardar")) }
@@ -10,7 +10,7 @@
         <div class="ed-article-eyebrow">@publication.category</div>
         <h1 class="ed-article-h1">@publication.title</h1>
         <div class="ed-article-meta-row">
-          <span>Por <a href="@routes.UserPublicationController.publicProfile(username)">@@@username</a></span>
+          <span>Por <a href="@controllers.user.routes.UserPublicationController.publicProfile(username)">@@@username</a></span>
           <span>·</span>
           <span>@publication.publishedAt.map(_.toString.take(10)).getOrElse(publication.createdAt.toString.take(10))</span>
           <span>·</span>
@@ -27,7 +27,7 @@
       @publication.excerpt.map { e => <p class="ed-article-lede">@e</p> }
 
       <div class="ed-article-content ed-legacy-prose">
-        @Html(utils.Markdown.render(publication.content))
+        @Html(infrastructure.support.Markdown.render(publication.content))
       </div>
 
       @publication.tags.map { t =>
@@ -40,12 +40,12 @@
 
       <section class="ed-article-react">
         <div class="ed-react-author">
-          <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-react-author__avatar" aria-hidden="true">
+          <a href="@controllers.user.routes.UserPublicationController.publicProfile(username)" class="ed-react-author__avatar" aria-hidden="true">
             @username.take(2).toUpperCase
           </a>
           <div class="ed-react-author__info">
             <span class="ed-react-author__label">Escrito por</span>
-            <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-react-author__name">@@@username</a>
+            <a href="@controllers.user.routes.UserPublicationController.publicProfile(username)" class="ed-react-author__name">@@@username</a>
           </div>
         </div>
 
@@ -53,7 +53,7 @@
           @publication.id.map { pid =>
             <div class="ed-react-row">
               @reactionTypes.map { case (key, icon, label) =>
-                <form method="POST" action="@routes.UserPublicationController.toggleReaction(pid)">
+                <form method="POST" action="@controllers.user.routes.UserPublicationController.toggleReaction(pid)">
                   @helper.CSRF.formField
                   <input type="hidden" name="reactionType" value="@key">
                   <button type="submit" class="ed-react-btn @if(userReactions.contains(key)){is-active}">
@@ -62,7 +62,7 @@
                   </button>
                 </form>
               }
-              <form method="POST" action="@routes.UserPublicationController.toggleBookmark(pid)" class="ed-bookmark-form">
+              <form method="POST" action="@controllers.user.routes.UserPublicationController.toggleBookmark(pid)" class="ed-bookmark-form">
                 @helper.CSRF.formField
                 <button type="submit" class="ed-react-btn @if(isBookmarked){is-active}">
                   <span>@if(isBookmarked){★}else{☆}</span> <span>@if(isBookmarked){Marcado}else{Marcar}</span>
@@ -72,7 +72,7 @@
           }
         } else {
           <div class="ed-react-row ed-react-row--guest">
-            <a href="@routes.AuthController.loginPage()" class="ed-link-btn">Inicia sesión para reaccionar y guardar</a>
+            <a href="@controllers.auth.routes.AuthController.loginPage()" class="ed-link-btn">Inicia sesión para reaccionar y guardar</a>
           </div>
         }
       </section>
@@ -82,7 +82,7 @@
           <h3>Notas editoriales</h3>
           @feedbacks.map { fb =>
             <div class="ed-feedback-item">
-              <div class="ed-feedback-meta">@models.FeedbackType.icon(fb.feedback.feedbackType) @models.FeedbackType.label(fb.feedback.feedbackType) · @fb.adminUsername</div>
+              <div class="ed-feedback-meta">@domains.publications.models.FeedbackType.icon(fb.feedback.feedbackType) @domains.publications.models.FeedbackType.label(fb.feedback.feedbackType) · @fb.adminUsername</div>
               <p>@fb.feedback.message</p>
             </div>
           }
@@ -93,7 +93,7 @@
         <h3>Conversación (@comments.size)</h3>
         @if(isAuthenticated) {
           @publication.id.map { pid =>
-            <form method="POST" action="@routes.UserPublicationController.addComment(pid)" class="ed-comment-form">
+            <form method="POST" action="@controllers.user.routes.UserPublicationController.addComment(pid)" class="ed-comment-form">
               @helper.CSRF.formField
               <textarea name="content" placeholder="Aporta a la conversación…" rows="3" required></textarea>
               <button type="submit" class="ed-btn-primary">Publicar comentario</button>
@@ -119,9 +119,9 @@
       @partials.collectionBackBar()
       <div class="ed-aside-card">
         <div class="ed-aside-eyebrow">Autor</div>
-        <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-aside-author">@@@username</a>
+        <a href="@controllers.user.routes.UserPublicationController.publicProfile(username)" class="ed-aside-author">@@@username</a>
         @if(isAuthenticated && userId.exists(_ != publication.userId)) {
-          <a href="@routes.UserPublicationController.publicProfile(username)" class="ed-link-btn">Ver perfil</a>
+          <a href="@controllers.user.routes.UserPublicationController.publicProfile(username)" class="ed-link-btn">Ver perfil</a>
         }
       </div>
 
@@ -134,12 +134,12 @@
         <div class="ed-aside-eyebrow">Novedades</div>
         <p class="ed-aside-newsletter__text">Recibí una notificación cada vez que se publique una nueva pieza.</p>
         @if(isAuthenticated) {
-          <form method="POST" action="@routes.UserPublicationController.subscribeNewsletter()" class="ed-aside-newsletter__form">
+          <form method="POST" action="@controllers.user.routes.UserPublicationController.subscribeNewsletter()" class="ed-aside-newsletter__form">
             @helper.CSRF.formField
             <button type="submit" class="ed-btn-primary ed-aside-newsletter__btn">Suscribirme</button>
           </form>
         } else {
-          <form method="POST" action="@routes.HomeController.subscribeNewsletter()" class="ed-aside-newsletter__form">
+          <form method="POST" action="@controllers.web.routes.HomeController.subscribeNewsletter()" class="ed-aside-newsletter__form">
             @helper.CSRF.formField
             <input type="email" name="email" placeholder="tu@@email.com" required class="ed-aside-newsletter__input">
             <button type="submit" class="ed-btn-primary ed-aside-newsletter__btn">Suscribirme</button>

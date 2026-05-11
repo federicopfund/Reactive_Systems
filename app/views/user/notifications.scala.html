@@ -1,6 +1,6 @@
 @(username: String,
-  notifs: List[models.UserNotification],
-  editorialContact: Option[models.User] = None)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+  notifs: List[domains.messaging.models.UserNotification],
+  editorialContact: Option[domains.identity.models.User] = None)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @*
  * Notificaciones del usuario — grafo de hilos.
@@ -15,7 +15,7 @@
  *@
 
 @grouped = @{
-  val acc = scala.collection.mutable.LinkedHashMap.empty[Either[Long, Long], List[models.UserNotification]]
+  val acc = scala.collection.mutable.LinkedHashMap.empty[Either[Long, Long], List[domains.messaging.models.UserNotification]]
   notifs.foreach { n =>
     val key: Either[Long, Long] = n.publicationId match {
       case Some(pid) => Left(pid)
@@ -30,11 +30,11 @@
 
 @formatTs(ts: java.time.Instant) = @{ ts.toString.take(16).replace("T", " ") }
 
-@nodeMarkup(n: models.UserNotification, isBranch: Boolean) = {
+@nodeMarkup(n: domains.messaging.models.UserNotification, isBranch: Boolean) = {
   <article class="ed-thread-graph__node @if(!n.isRead){is-unread} @if(isBranch){ed-thread-graph__node--branch}">
     <span class="ed-thread-graph__dot @if(!n.isRead){is-unread}" aria-hidden="true"></span>
     <header class="ed-thread-graph__node-head">
-      <span class="ed-thread-graph__icon" aria-hidden="true">@models.NotificationType.icon(n.notificationType)</span>
+      <span class="ed-thread-graph__icon" aria-hidden="true">@domains.messaging.models.NotificationType.icon(n.notificationType)</span>
       <span class="ed-thread-graph__type">@n.notificationType.replace("_", " ")</span>
       <time class="ed-thread-graph__time" datetime="@n.createdAt.toString">@formatTs(n.createdAt)</time>
     </header>
@@ -42,14 +42,14 @@
     <p class="ed-thread-graph__msg">@n.message</p>
     <div class="ed-thread-graph__actions">
       @n.publicationId.map { pid =>
-        <a href="@routes.UserPublicationController.viewPublication(pid)" class="ed-thread-graph__link">
+        <a href="@controllers.user.routes.UserPublicationController.viewPublication(pid)" class="ed-thread-graph__link">
           Ver pieza →
         </a>
       }
       @editorialContact.map { admin =>
         @defining("Re: " + n.title) { subj =>
           @defining("Hola equipo editorial,\n\nEn referencia a la notificación del " + formatTs(n.createdAt) + ":\n> " + n.title + "\n> " + n.message + "\n\n") { body =>
-            <a href="@routes.UserPublicationController.inbox("received")?to=@admin.username&subject=@java.net.URLEncoder.encode(subj, "UTF-8")&body=@java.net.URLEncoder.encode(body, "UTF-8")"
+            <a href="@controllers.user.routes.UserPublicationController.inbox("received")?to=@admin.username&subject=@java.net.URLEncoder.encode(subj, "UTF-8")&body=@java.net.URLEncoder.encode(body, "UTF-8")"
                class="ed-thread-graph__link ed-thread-graph__link--reply">
               Responder a la editorial ↙
             </a>
@@ -78,7 +78,7 @@
         title = "Sin notificaciones",
         body = "Aquí verás avisos cuando alguien comente tu publicación, te envíe un mensaje o cambien el estado editorial de una pieza.",
         ctaLabel = Some("Ver mis publicaciones"),
-        ctaHref = Some(routes.UserPublicationController.dashboard().url)
+        ctaHref = Some(controllers.user.routes.UserPublicationController.dashboard().url)
       )
     } else {
       <ol class="ed-thread-graph" aria-label="Hilo de notificaciones">

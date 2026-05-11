@@ -1,6 +1,6 @@
 @(email: String, userId: Long, errorMessage: Option[String] = None)(implicit request: RequestHeader, messages: Messages)
 
-@main("Verifica tu correo") {
+@layouts.authLayout("Verifica tu correo") {
   <section class="ed-verify-page">
     <div class="ed-verify-card">
       <div class="ed-verify-card__eyebrow">Paso final</div>
@@ -13,7 +13,7 @@
       @errorMessage.map { m => <div class="ed-flash ed-flash--error">@m</div> }
       @request.flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
 
-      <form method="POST" action="@routes.AuthController.verifyEmailCode()" class="ed-verify-form">
+      <form method="POST" action="@controllers.auth.routes.AuthController.verifyEmailCode()" class="ed-verify-form">
         @helper.CSRF.formField
         <input type="hidden" name="userId" value="@userId">
 
@@ -24,7 +24,7 @@
         <button type="submit" class="ed-btn-primary ed-btn-block">Verificar</button>
       </form>
 
-      <form method="POST" action="@routes.AuthController.resendVerificationCode(userId)" class="ed-verify-resend">
+      <form method="POST" action="@controllers.auth.routes.AuthController.resendVerificationCode(userId)" class="ed-verify-resend">
         @helper.CSRF.formField
         <button type="submit" class="ed-link-btn">Reenviar código</button>
       </form>

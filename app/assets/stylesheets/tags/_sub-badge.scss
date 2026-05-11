@@ -1,0 +1,28 @@
+// ============================================================
+// tags/_sub-badge.scss
+// Atom: estado de una publicación del usuario (submission status).
+// Template: views/tags/subBadge.scala.html
+// BEM: .ed-sub-badge  .ed-sub-badge--{variant}
+// ============================================================
+
+.ed-sub-badge {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid;
+  border-radius: 4px;
+  display: inline-block;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  &--pending,
+  &--en-revision   { color: var(--color-warning); border-color: rgba(245, 158, 11, 0.3); }
+  &--approved,
+  &--publicado     { color: var(--color-accent); border-color: rgba(var(--color-accent-rgb), 0.3); }
+  &--draft,
+  &--borrador      { color: var(--color-text-tertiary); border-color: var(--color-border-subtle); }
+  &--rejected      { color: var(--color-danger); border-color: rgba(239, 68, 68, 0.3); }
+  &--info          { color: var(--color-text-tertiary); border-color: var(--color-border-subtle); font-style: italic; }
+}

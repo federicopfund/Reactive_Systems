@@ -1,9 +1,9 @@
-@(rows: Seq[models.CollectionWithCount],
+@(rows: Seq[domains.collections.models.CollectionWithCount],
   statusFilter: Option[String])(implicit request: RequestHeader)
 
-@import models.CollectionStatus
+@import domains.collections.models.CollectionStatus
 
-@admin.adminLayout("Colecciones", "collections") {
+@views.html.admin.adminLayout("Colecciones", "collections") {
 
   <div class="ed-bo__page-head">
     <div>
@@ -11,7 +11,7 @@
       <p class="ed-bo__page-lead">@rows.size coleccion(es). Curaduria, revisión y publicación.</p>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-primary" href="@routes.AdminCollectionController.newForm()">+ Nueva colección</a>
+      <a class="ed-btn-primary" href="@controllers.admin.routes.AdminCollectionController.newForm()">+ Nueva colección</a>
     </div>
   </div>
 
@@ -19,11 +19,11 @@
   @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
 
   <nav class="ed-bo__filters" aria-label="Filtro por estado">
-    <a class="ed-bo__chip @if(statusFilter.isEmpty){is-active}" href="@routes.AdminCollectionController.list(None)">
+    <a class="ed-bo__chip @if(statusFilter.isEmpty){is-active}" href="@controllers.admin.routes.AdminCollectionController.list(None)">
       Todas
     </a>
     @for(s <- CollectionStatus.all) {
-      <a class="ed-bo__chip @if(statusFilter.contains(s)){is-active}" href="@routes.AdminCollectionController.list(Some(s))">
+      <a class="ed-bo__chip @if(statusFilter.contains(s)){is-active}" href="@controllers.admin.routes.AdminCollectionController.list(Some(s))">
         @CollectionStatus.label(s)
       </a>
     }
@@ -52,15 +52,15 @@
           @defining(row.collection) { c =>
             <tr>
               <td>
-                <a class="ed-bo__row-title" href="@routes.AdminCollectionController.view(c.id.get)">@c.name</a>
+                <a class="ed-bo__row-title" href="@controllers.admin.routes.AdminCollectionController.view(c.id.get)">@c.name</a>
                 <div class="ed-bo__row-sub">/@c.slug</div>
               </td>
               <td><span class="ed-bo__badge ed-bo__badge--@CollectionStatus.tone(c.status)">@CollectionStatus.label(c.status)</span></td>
               <td>@row.itemCount</td>
-              <td><span class="ed-bo__accent-dot ed-bo__accent-dot--@c.accent" title="@models.CollectionAccent.label(c.accent)"></span></td>
+              <td><span class="ed-bo__accent-dot ed-bo__accent-dot--@c.accent" title="@domains.collections.models.CollectionAccent.label(c.accent)"></span></td>
               <td class="ed-bo__cell-meta">@c.updatedAt.toString.take(10)</td>
               <td class="ed-bo__cell-actions">
-                <a class="ed-bo__link" href="@routes.AdminCollectionController.view(c.id.get)">Abrir</a>
+                <a class="ed-bo__link" href="@controllers.admin.routes.AdminCollectionController.view(c.id.get)">Abrir</a>
               </td>
             </tr>
           }

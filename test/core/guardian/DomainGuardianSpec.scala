@@ -1,4 +1,4 @@
-package core.guardian
+package infrastructure.guardian
 
 import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestProbe}
 import org.scalatest.matchers.should.Matchers
