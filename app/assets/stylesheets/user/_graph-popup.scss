@@ -1,0 +1,42 @@
+// ============================================
+// Graph popup — Popup explicativo (legacy, mantenido vacío para compatibilidad)
+// ============================================
+
+.ed-popup {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--ed-bg2);
+  border: 1px solid var(--ed-border-strong);
+  padding: 1.25rem 1.5rem;
+  width: 280px;
+  z-index: 1000;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+
+  &__title {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    margin-bottom: 1rem;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    color: var(--ed-text-faint);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    float: right;
+
+    &:hover { color: var(--ed-text); }
+  }
+
+  &__body {
+    font-size: 0.8rem;
+    color: var(--ed-text-dim);
+    line-height: 1.6;
+  }
+}
