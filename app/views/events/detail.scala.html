@@ -1,5 +1,5 @@
-@(e: models.CommunityEvent,
-  userRsvp: Option[models.EventAttendee],
+@(e: domains.events.models.CommunityEvent,
+  userRsvp: Option[domains.events.models.EventAttendee],
   rsvpCounts: Map[String, Int],
   userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
 
@@ -7,7 +7,7 @@
   Detalle de evento — incluye RSVP, countdown, share, ICS, agregar a Google.
 *@
 
-@import models.EventEnums
+@import domains.events.models.EventEnums
 
 @startsAtIso = @{ e.startsAt.toString }
 @gcalUrl = @{
@@ -27,13 +27,13 @@
   <article class="ed-event-detail ed-event-detail--accent-@e.accentToken" data-event-slug="@e.slug">
 
     <header class="ed-event-detail__header">
-      <a href="@routes.EventController.index()" class="ed-back-btn ed-event-detail__back">
+      <a href="@controllers.web.routes.EventController.index()" class="ed-back-btn ed-event-detail__back">
         <span class="ed-back-btn__arrow" aria-hidden="true">&larr;</span>
         <span>Volver a la agenda</span>
       </a>
 
       <nav class="ed-event-detail__breadcrumb" aria-label="Breadcrumb">
-        <a href="@routes.EventController.index()">Agenda</a>
+        <a href="@controllers.web.routes.EventController.index()">Agenda</a>
         <span aria-hidden="true">/</span>
         <span class="ed-event-detail__crumb-current">@EventEnums.EventType.label(e.eventType)</span>
       </nav>
@@ -97,7 +97,7 @@
       <div class="ed-event-detail__actions">
         @userInfo match {
           case Some(_) => {
-            <form method="POST" action="@routes.EventController.rsvp(e.slug)" class="ed-rsvp-form" data-rsvp-form>
+            <form method="POST" action="@controllers.web.routes.EventController.rsvp(e.slug)" class="ed-rsvp-form" data-rsvp-form>
               @helper.CSRF.formField
               <fieldset class="ed-rsvp-fieldset">
                 <legend class="ed-visually-hidden">Tu RSVP</legend>
@@ -116,12 +116,12 @@
             </form>
           }
           case None => {
-            <a href="@routes.AuthController.loginPage()" class="ed-btn-primary">Iniciar sesion para RSVP</a>
+            <a href="@controllers.auth.routes.AuthController.loginPage()" class="ed-btn-primary">Iniciar sesion para RSVP</a>
           }
         }
 
-        <div class="ed-event-detail__share" data-share data-share-title="@e.title" data-share-url="@routes.EventController.detail(e.slug).absoluteURL()">
-          <a class="ed-btn-secondary" href="@routes.EventController.singleIcs(e.slug)" download>Agregar a mi calendario (.ics)</a>
+        <div class="ed-event-detail__share" data-share data-share-title="@e.title" data-share-url="@controllers.web.routes.EventController.detail(e.slug).absoluteURL()">
+          <a class="ed-btn-secondary" href="@controllers.web.routes.EventController.singleIcs(e.slug)" download>Agregar a mi calendario (.ics)</a>
           <a class="ed-btn-secondary" href="@gcalUrl" target="_blank" rel="noopener">Google Calendar</a>
           <button type="button" class="ed-btn-ghost" data-share-trigger>Compartir</button>
         </div>
