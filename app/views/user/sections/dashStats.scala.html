@@ -1,0 +1,20 @@
+@(stats: Map[String, Int])
+
+<div class="ed-dash-stats">
+  <div class="ed-dash-stat">
+    <div class="ed-dash-stat__num">@stats.getOrElse("total", 0)</div>
+    <div class="ed-dash-stat__label">Total</div>
+  </div>
+  <div class="ed-dash-stat">
+    <div class="ed-dash-stat__num">@stats.getOrElse("approved", 0)</div>
+    <div class="ed-dash-stat__label">Aprobadas</div>
+  </div>
+  <div class="ed-dash-stat">
+    <div class="ed-dash-stat__num">@stats.getOrElse("pending", 0)</div>
+    <div class="ed-dash-stat__label">En revisión</div>
+  </div>
+  <div class="ed-dash-stat">
+    <div class="ed-dash-stat__num">@stats.getOrElse("draft", 0)</div>
+    <div class="ed-dash-stat__label">Borradores</div>
+  </div>
+</div>
