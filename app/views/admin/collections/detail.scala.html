@@ -1,11 +1,11 @@
-@(coll: models.Collection,
-  items: Seq[models.ResolvedCollectionItem],
-  history: Seq[models.CollectionStatusEntry],
-  available: Seq[utils.CollectionWorkflowPolicy.Transition])(implicit request: RequestHeader)
+@(coll: domains.collections.models.Collection,
+  items: Seq[domains.collections.models.ResolvedCollectionItem],
+  history: Seq[domains.collections.models.CollectionStatusEntry],
+  available: Seq[domains.collections.policies.CollectionWorkflowPolicy.Transition])(implicit request: RequestHeader)
 
-@import models.{CollectionStatus, CollectionItemType, CollectionAccent}
+@import domains.collections.models.{CollectionStatus, CollectionItemType, CollectionAccent}
 
-@admin.adminLayout(s"Colección · ${coll.name}", "collections") {
+@views.html.admin.adminLayout(s"Colección · ${coll.name}", "collections") {
 
   <div class="ed-bo__page-head">
     <div>
@@ -17,9 +17,9 @@
       </p>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-ghost" href="@routes.AdminCollectionController.list(None)">← Listado</a>
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminCollectionController.list(None)">← Listado</a>
       @if(coll.isEditable) {
-        <a class="ed-btn-primary" href="@routes.AdminCollectionController.editForm(coll.id.get)">Editar metadatos</a>
+        <a class="ed-btn-primary" href="@controllers.admin.routes.AdminCollectionController.editForm(coll.id.get)">Editar metadatos</a>
       }
     </div>
   </div>
@@ -39,9 +39,9 @@
       <h2 class="ed-bo__panel-title">Piezas curadas (@items.size)</h2>
 
       @if(coll.isEditable) {
-        <form method="POST" action="@routes.AdminCollectionController.addItem(coll.id.get)" class="ed-bo__items-add"
+        <form method="POST" action="@controllers.admin.routes.AdminCollectionController.addItem(coll.id.get)" class="ed-bo__items-add"
               data-collection-id="@coll.id.get"
-              data-pickable-url="@routes.AdminCollectionController.pickableItems(coll.id.get, "")"
+              data-pickable-url="@controllers.admin.routes.AdminCollectionController.pickableItems(coll.id.get, "")"
               data-csrf-token="@helper.CSRF.getToken.value">
           @helper.CSRF.formField
           <div class="ed-bo__items-add-row">
@@ -59,7 +59,7 @@
         <p class="ed-bo__muted">Todavía no hay piezas en esta colección.</p>
       } else {
         <ol class="ed-bo__items-list"
-            data-reorder-url="@routes.AdminCollectionController.reorderItems(coll.id.get)"
+            data-reorder-url="@controllers.admin.routes.AdminCollectionController.reorderItems(coll.id.get)"
             data-csrf-token="@helper.CSRF.getToken.value">
           @for(it <- items) {
             <li class="ed-bo__item-row @if(!it.existing){is-orphan}" data-item-row-id="@it.item.id.get">
@@ -73,7 +73,7 @@
                 @if(coll.isEditable) {
                   <button class="ed-bo__order-btn" data-dir="up" type="button" aria-label="Subir">↑</button>
                   <button class="ed-bo__order-btn" data-dir="down" type="button" aria-label="Bajar">↓</button>
-                  <form method="POST" action="@routes.AdminCollectionController.removeItem(coll.id.get, it.item.id.get)" style="display:inline">
+                  <form method="POST" action="@controllers.admin.routes.AdminCollectionController.removeItem(coll.id.get, it.item.id.get)" style="display:inline">
                     @helper.CSRF.formField
                     <button class="ed-bo__link ed-bo__link--danger" type="submit"
                             onclick="return confirm('¿Quitar esta pieza?')">Quitar</button>
@@ -93,7 +93,7 @@
         <p class="ed-bo__muted">No hay transiciones disponibles para tu rol en este estado.</p>
       } else {
         @for(t <- available) {
-          <form method="POST" action="@routes.AdminCollectionController.transition(coll.id.get)" class="ed-bo__transition">
+          <form method="POST" action="@controllers.admin.routes.AdminCollectionController.transition(coll.id.get)" class="ed-bo__transition">
             @helper.CSRF.formField
             <input type="hidden" name="action" value="@t.action">
             @if(t.requiresComment) {
@@ -106,7 +106,7 @@
       }
 
       <h2 class="ed-bo__panel-title">Historial</h2>
-      @admin.collections._historyTimeline(history)
+      @views.html.admin.collections._historyTimeline(history)
     </aside>
   </div>
 
