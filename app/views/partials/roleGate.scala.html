@@ -1,0 +1,26 @@
+@(roles: String*)(content: Html)(implicit request: RequestHeader)
+
+@*
+  Role Gate — renderiza @content solo si el usuario autenticado
+  tiene uno de los roles indicados.
+
+  Roles del sistema:
+    "super_admin" · "admin" · "pending_admin" · "user" · "guest"
+
+  Uso:
+    @partials.roleGate("admin", "super_admin") {
+      <a href="@controllers.admin.routes.AdminController.dashboard()">Panel Admin</a>
+    }
+
+    @partials.roleGate("user", "admin", "super_admin") {
+      <a href="@controllers.user.routes.UserPublicationController.newPublicationForm()">+ Nueva publicación</a>
+    }
+
+  Si roles está vacío, no renderiza nada (falla segura).
+*@
+
+@userRole = @{ request.session.get("userRole").getOrElse("guest") }
+
+@if(roles.nonEmpty && roles.contains(userRole)) {
+  @content
+}
