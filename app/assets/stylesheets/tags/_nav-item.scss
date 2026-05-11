@@ -1,0 +1,60 @@
+// ============================================================
+// tags/_nav-item.scss
+// Atom: ítem de navegación lateral con auto-active via request.path.
+// Template: views/tags/navItem.scala.html
+// BEM: .ed-nav-item  .ed-nav-item.is-active  .ed-nav-dot  .ed-nav-icon
+// ============================================================
+
+.ed-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 3px;
+  font-family: $font-body;
+  font-size: 0.82rem;
+  color: var(--ed-text-dim);
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition:
+    color       $duration-fast $ease-out,
+    background  $duration-fast $ease-out;
+
+  &:hover {
+    color: var(--ed-text);
+    background: var(--ed-border);
+  }
+
+  &.active,
+  &.is-active,
+  &[aria-current="page"] {
+    color: var(--ed-text);
+    background: var(--color-accent-soft);
+
+    .ed-nav-dot { background: var(--color-accent); }
+  }
+
+  @include focus-ring(2px);
+}
+
+.ed-nav-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ed-text-faint);
+  flex-shrink: 0;
+  transition: background $duration-fast $ease-out;
+}
+
+.ed-nav-icon {
+  display: none; // visible only in rail mode via shared/_navbar.scss
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  flex-shrink: 0;
+  line-height: 0;
+}
