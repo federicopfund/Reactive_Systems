@@ -1,8 +1,8 @@
-package controllers
+package controllers.admin
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import models.EditorialSeason
+import domains.editorial.models.EditorialSeason
 import java.time.Instant
 
 class AdminSeasonValidationSpec extends AnyWordSpec with Matchers {
