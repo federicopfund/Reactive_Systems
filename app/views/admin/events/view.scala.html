@@ -1,13 +1,13 @@
-@(e: models.CommunityEvent, rsvpCounts: Map[String, Int])(implicit request: RequestHeader)
+@(e: domains.events.models.CommunityEvent, rsvpCounts: Map[String, Int])(implicit request: RequestHeader)
 
-@import models.EventEnums
+@import domains.events.models.EventEnums
 
-@admin.adminLayout(s"Evento: ${e.title}", "events") {
+@views.html.admin.adminLayout(s"Evento: ${e.title}", "events") {
 
   <div class="ed-bo__page-head">
     <div>
       <div class="ed-bo__breadcrumb">
-        <a href="@routes.AdminEventController.list(None, 0)">Eventos</a> /
+        <a href="@controllers.admin.routes.AdminEventController.list(None, 0)">Eventos</a> /
         <span>@e.title</span>
       </div>
       <h1 class="ed-bo__page-title">@e.title</h1>
@@ -16,8 +16,8 @@
       </p>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-secondary" href="@routes.EventController.detail(e.slug)" target="_blank" rel="noopener">Ver pieza publica ↗</a>
-      <a class="ed-btn-secondary" href="@routes.AdminEventController.editForm(e.id.get)">Editar</a>
+      <a class="ed-btn-secondary" href="@controllers.web.routes.EventController.detail(e.slug)" target="_blank" rel="noopener">Ver pieza publica ↗</a>
+      <a class="ed-btn-secondary" href="@controllers.admin.routes.AdminEventController.editForm(e.id.get)">Editar</a>
     </div>
   </div>
 
@@ -45,7 +45,7 @@
           <li><strong>@rsvpCounts.getOrElse(s, 0)</strong> @EventEnums.RsvpStatus.label(s)</li>
         }
       </ul>
-      <a class="ed-btn-secondary" href="@routes.AdminEventController.attendees(e.id.get)">Ver asistentes</a>
+      <a class="ed-btn-secondary" href="@controllers.admin.routes.AdminEventController.attendees(e.id.get)">Ver asistentes</a>
     </article>
 
     <article class="ed-bo__card">
@@ -56,7 +56,7 @@
         else play.twirl.api.Html("")
       }
       @for(next <- EventEnums.EventStatus.allowedNext(e.status).toSeq.sorted) {
-        <form method="POST" action="@routes.AdminEventController.changeStatus(e.id.get)" class="ed-bo__inline-form">
+        <form method="POST" action="@controllers.admin.routes.AdminEventController.changeStatus(e.id.get)" class="ed-bo__inline-form">
           @helper.CSRF.formField
           <input type="hidden" name="status" value="@next">
           @if(next == EventEnums.EventStatus.Cancelled) {
@@ -68,7 +68,7 @@
 
       @if(e.status == EventEnums.EventStatus.Draft) {
         <hr>
-        <form method="POST" action="@routes.AdminEventController.delete(e.id.get)" onsubmit="return confirm('¿Eliminar borrador? Esta accion no se puede deshacer.');">
+        <form method="POST" action="@controllers.admin.routes.AdminEventController.delete(e.id.get)" onsubmit="return confirm('¿Eliminar borrador? Esta accion no se puede deshacer.');">
           @helper.CSRF.formField
           <button type="submit" class="ed-btn-danger">Eliminar borrador</button>
         </form>
