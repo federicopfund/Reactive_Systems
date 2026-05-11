@@ -1,0 +1,4 @@
+@(name: String, href: String, active: Boolean)
+<a href="@href"
+   class="ed-cat-pill @if(active){active}"
+   @if(active){aria-current="page"}>@name</a>
