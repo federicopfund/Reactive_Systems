@@ -1,15 +1,15 @@
-@(blocks: Seq[models.EditorialIdentity], role: String, username: String)(implicit request: RequestHeader)
+@(blocks: Seq[domains.editorial.models.EditorialIdentity], role: String, username: String)(implicit request: RequestHeader)
 
 @import helper.CSRF
 
-@admin.adminLayout("Identidad editorial", "editorial-identity") {
+@views.html.admin.adminLayout("Identidad editorial", "editorial-identity") {
 
   <header class="ed-bo__page-head">
     <div>
       <h1 class="ed-bo__page-title">Identidad editorial</h1>
       <p class="ed-bo__page-lead">
         Estos seis bloques componen la página pública
-        <a href="@routes.HomeController.acercaDe()" target="_blank" rel="noopener">/acerca-de</a>.
+        <a href="@controllers.web.routes.HomeController.acercaDe()" target="_blank" rel="noopener">/acerca-de</a>.
         Editalos sin redeploy. El HTML del cuerpo se renderiza tal cual; usá
         <code>&lt;p&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;strong&gt;</code>
         y nada más.
@@ -34,7 +34,7 @@
           </span>
         </summary>
 
-        <form method="POST" action="@routes.AdminEditorialIdentityController.update(b.sectionKey)" class="ed-identity-admin__form">
+        <form method="POST" action="@controllers.admin.routes.AdminEditorialIdentityController.update(b.sectionKey)" class="ed-identity-admin__form">
           @CSRF.formField
 
           <label class="ed-identity-admin__label">
