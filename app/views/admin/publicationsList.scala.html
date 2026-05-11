@@ -1,11 +1,11 @@
-@(publications: List[models.PublicationWithAuthor], status: Option[String], stages: Seq[models.EditorialStage])(implicit request: RequestHeader)
+@(publications: List[domains.publications.models.PublicationWithAuthor], status: Option[String], stages: Seq[domains.editorial.models.EditorialStage])(implicit request: RequestHeader)
 
-@stageLabel(pwa: models.PublicationWithAuthor) = @{
+@stageLabel(pwa: domains.publications.models.PublicationWithAuthor) = @{
   pwa.publication.currentStageId.flatMap(sid => stages.find(_.id.contains(sid)).map(_.label))
     .getOrElse(pwa.publication.status)
 }
 
-@admin.adminLayout("Catálogo de publicaciones", "publications") {
+@views.html.admin.adminLayout("Catálogo de publicaciones", "publications") {
 
   <header class="ed-admin-head">
     <div>
@@ -14,9 +14,9 @@
       <p class="ed-dash-sub">@publications.size resultado(s)</p>
     </div>
     <div class="ed-admin-actions">
-      <a href="@routes.AdminController.pendingPublications()" class="ed-link-btn ed-link-btn--accent">Cola de revisión</a>
-      <a href="@routes.AdminController.listAllPublicationsJson()" class="ed-link-btn" target="_blank" rel="noopener" download="publications.json" title="Exportar como JSON">Exportar JSON ↓</a>
-      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+      <a href="@controllers.admin.routes.AdminController.pendingPublications()" class="ed-link-btn ed-link-btn--accent">Cola de revisión</a>
+      <a href="@controllers.admin.routes.AdminController.listAllPublicationsJson()" class="ed-link-btn" target="_blank" rel="noopener" download="publications.json" title="Exportar como JSON">Exportar JSON ↓</a>
+      <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
     </div>
   </header>
 
@@ -24,9 +24,9 @@
   @request.flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
 
   <nav class="ed-admin-actions" style="margin-bottom:1.25rem;">
-    <a class="ed-link-btn @if(status.isEmpty){ed-link-btn--accent}" href="@routes.AdminController.allPublications(None)">Todas</a>
+    <a class="ed-link-btn @if(status.isEmpty){ed-link-btn--accent}" href="@controllers.admin.routes.AdminController.allPublications(None)">Todas</a>
     @for(s <- List("draft","pending","approved","rejected")) {
-      <a class="ed-link-btn @if(status.contains(s)){ed-link-btn--accent}" href="@routes.AdminController.allPublications(Some(s))">@s</a>
+      <a class="ed-link-btn @if(status.contains(s)){ed-link-btn--accent}" href="@controllers.admin.routes.AdminController.allPublications(Some(s))">@s</a>
     }
   </nav>
 
@@ -41,25 +41,25 @@
             <td><strong>@pwa.publication.title</strong></td>
             <td>@@@pwa.authorUsername</td>
             <td>@pwa.publication.category</td>
-            <td><span class="ed-status-pill ed-status-pill--@pwa.publication.status">@pwa.publication.status</span></td>
+            <td>@tags.statusPill(pwa.publication.status)</td>
             <td><span class="ed-stage-chip">@stageLabel(pwa)</span></td>
             <td>@pwa.publication.viewCount</td>
             <td>@pwa.publication.createdAt.toString.take(10)</td>
             <td>
               @pwa.publication.id.map { id =>
-                <a href="@routes.AdminController.reviewPublicationDetail(id)" class="ed-link-btn">Ver</a>
+                <a href="@controllers.admin.routes.AdminController.reviewPublicationDetail(id)" class="ed-link-btn">Ver</a>
                 @if(pwa.publication.status == "pending") {
-                  <form method="POST" action="@routes.AdminController.approvePublication(id)" class="ed-inline-form">
+                  <form method="POST" action="@controllers.admin.routes.AdminController.approvePublication(id)" class="ed-inline-form">
                     @helper.CSRF.formField
                     <button class="ed-link-btn ed-link-btn--success">Aprobar</button>
                   </form>
-                  <form method="POST" action="@routes.AdminController.rejectPublication(id)" class="ed-inline-form" onsubmit="var r=prompt('Motivo del rechazo');if(r===null)return false;this.elements['rejectionReason'].value=r;return true;">
+                  <form method="POST" action="@controllers.admin.routes.AdminController.rejectPublication(id)" class="ed-inline-form" onsubmit="var r=prompt('Motivo del rechazo');if(r===null)return false;this.elements['rejectionReason'].value=r;return true;">
                     @helper.CSRF.formField
                     <input type="hidden" name="rejectionReason" value="">
                     <button class="ed-link-btn ed-link-btn--warning">Rechazar</button>
                   </form>
                 }
-                <form method="POST" action="@routes.AdminController.deletePublication(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar definitivamente esta publicación?');">
+                <form method="POST" action="@controllers.admin.routes.AdminController.deletePublication(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar definitivamente esta publicación?');">
                   @helper.CSRF.formField
                   <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>
                 </form>
