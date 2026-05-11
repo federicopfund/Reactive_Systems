@@ -109,7 +109,7 @@
   </button>
 
   <div class="ed-sidebar-brand">
-    <a href="@routes.HomeController.index()">
+    <a href="@controllers.web.routes.HomeController.index()">
       <span class="ed-brand-label">Edición Digital</span>
       <div class="ed-brand-name">Manifiesto<br/>Reactivo</div>
     </a>
@@ -122,32 +122,32 @@
       <div class="ed-nav-section ed-nav-section--primary">
         <span class="ed-nav-section-label">Mi espacio</span>
         @defining(isActive("/user/dashboard") || isActive("/user/publications")) { active =>
-          <a href="@routes.UserPublicationController.dashboard()"
+          <a href="@controllers.user.routes.UserPublicationController.dashboard()"
              class="@navAttrs(active)"
              data-tip="Mis propuestas"
              @if(active){aria-current="page"}>
             @navIcon("propuestas")<span class="ed-nav-dot" aria-hidden="true"></span>Mis propuestas
           </a>
         }
-        <a href="@routes.UserPublicationController.editProfileForm()"
+        <a href="@controllers.user.routes.UserPublicationController.editProfileForm()"
            class="@navAttrs(isActive("/user/profile"))"
            data-tip="Mi perfil"
            @if(isActive("/user/profile")){aria-current="page"}>
           @navIcon("perfil")<span class="ed-nav-dot" aria-hidden="true"></span>Mi perfil
         </a>
-        <a href="@routes.UserPublicationController.inbox()"
+        <a href="@controllers.user.routes.UserPublicationController.inbox()"
            class="@navAttrs(isActive("/user/messages"))"
            data-tip="Mensajes"
            @if(isActive("/user/messages")){aria-current="page"}>
           @navIcon("mensajes")<span class="ed-nav-dot" aria-hidden="true"></span>Mensajes
         </a>
-        <a href="@routes.UserPublicationController.notifications()"
+        <a href="@controllers.user.routes.UserPublicationController.notifications()"
            class="@navAttrs(isActive("/user/notifications"))"
            data-tip="Notificaciones"
            @if(isActive("/user/notifications")){aria-current="page"}>
           @navIcon("notificaciones")<span class="ed-nav-dot" aria-hidden="true"></span>Notificaciones
         </a>
-        <a href="@routes.UserPublicationController.bookmarks()"
+        <a href="@controllers.user.routes.UserPublicationController.bookmarks()"
            class="@navAttrs(isActive("/user/bookmarks"))"
            data-tip="Guardados"
            @if(isActive("/user/bookmarks")){aria-current="page"}>
@@ -158,7 +158,7 @@
       @if(userRole == "admin" || userRole == "super_admin") {
         <div class="ed-nav-section">
           <span class="ed-nav-section-label">Administración</span>
-          <a href="@routes.AdminController.dashboard()"
+          <a href="@controllers.admin.routes.AdminController.dashboard()"
              class="@navAttrs(isActive("/admin"))"
              data-tip="Panel Admin"
              @if(isActive("/admin")){aria-current="page"}>
@@ -181,37 +181,37 @@
           </svg>
         </summary>
         <div class="ed-nav-section__items">
-          <a href="@routes.HomeController.index()"
+          <a href="@controllers.web.routes.HomeController.index()"
              class="@navAttrs(isActive("/"))"
              data-tip="Portada"
              @if(isActive("/")){aria-current="page"}>
             @navIcon("portada")<span class="ed-nav-dot" aria-hidden="true"></span>Portada
           </a>
-          <a href="@routes.HomeController.acercaDe()"
+          <a href="@controllers.web.routes.HomeController.acercaDe()"
              class="@navAttrs(isActive("/acerca-de"))"
              data-tip="Acerca de"
              @if(isActive("/acerca-de")){aria-current="page"}>
             @navIcon("acerca")<span class="ed-nav-dot" aria-hidden="true"></span>Acerca de
           </a>
-          <a href="@routes.HomeController.publicaciones()"
+          <a href="@controllers.web.routes.HomeController.publicaciones()"
              class="@navAttrs(isActive("/publicaciones") || isActive("/temporadas"))"
              data-tip="Artículos"
              @if(isActive("/publicaciones") || isActive("/temporadas")){aria-current="page"}>
             @navIcon("articulos")<span class="ed-nav-dot" aria-hidden="true"></span>Artículos
           </a>
-          <a href="@routes.EventController.index()"
+          <a href="@controllers.web.routes.EventController.index()"
              class="@navAttrs(isActive("/eventos"))"
              data-tip="Agenda"
              @if(isActive("/eventos")){aria-current="page"}>
             @navIcon("agenda")<span class="ed-nav-dot" aria-hidden="true"></span>Agenda
           </a>
-          <a href="@routes.HomeController.portafolio()"
+          <a href="@controllers.web.routes.HomeController.portafolio()"
              class="@navAttrs(isActive("/portafolio"))"
              data-tip="Colecciones"
              @if(isActive("/portafolio")){aria-current="page"}>
             @navIcon("colecciones")<span class="ed-nav-dot" aria-hidden="true"></span>Colecciones
           </a>
-          <a href="@routes.HomeController.index()#contact"
+          <a href="@controllers.web.routes.HomeController.index()#contact"
              class="ed-nav-item ed-nav-item--anchor"
              data-tip="Contacto">
             @navIcon("contacto")<span class="ed-nav-dot" aria-hidden="true"></span>Contacto
@@ -236,7 +236,7 @@
           <div class="ed-user-name">@userName</div>
           <div class="ed-user-role">@roleLabel</div>
         </div>
-        <a href="@routes.AuthController.logout()" class="ed-user-logout" title="Cerrar sesión" aria-label="Cerrar sesión">
+        <a href="@controllers.auth.routes.AuthController.logout()" class="ed-user-logout" title="Cerrar sesión" aria-label="Cerrar sesión">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
@@ -246,8 +246,8 @@
       </div>
     } else {
       <div class="ed-auth-cta">
-        <a href="@routes.AuthController.loginPage()" class="ed-btn-login">Iniciar sesión</a>
-        <a href="@routes.AuthController.registerPage()" class="ed-btn-register">Registrarse</a>
+        <a href="@controllers.auth.routes.AuthController.loginPage()" class="ed-btn-login">Iniciar sesión</a>
+        <a href="@controllers.auth.routes.AuthController.registerPage()" class="ed-btn-register">Registrarse</a>
       </div>
     }
   </div>
