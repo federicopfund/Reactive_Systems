@@ -1,0 +1,246 @@
+// ============================================
+// Forms — Editorial Reactiva
+// ============================================
+
+.ed-field {
+  margin-bottom: 1.1rem;
+
+  label {
+    display: block;
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ed-text-faint);
+    margin-bottom: 0.4rem;
+  }
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    background: var(--ed-bg3);
+    border: 1px solid var(--ed-border-strong);
+    color: var(--ed-text);
+    font-family: $font-body;
+    font-size: 0.85rem;
+    padding: 0.65rem 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+    border-radius: 0;
+
+    &:focus { border-color: var(--ed-accent); }
+    &::placeholder { color: var(--ed-text-faint); }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: $font-body;
+    line-height: 1.6;
+  }
+
+  select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ed-text-faint) 50%),
+                      linear-gradient(135deg, var(--ed-text-faint) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 2rem;
+  }
+
+  &--error input,
+  &--error textarea,
+  &--error select,
+  &--invalid input,
+  &--invalid textarea,
+  &--invalid select { border-color: $color-danger; }
+
+  // Issue #18-D: validación inline → estados visuales sutiles.
+  &--invalid input,
+  &--invalid textarea,
+  &--invalid select { border-left-width: 3px; }
+
+  &--valid input,
+  &--valid textarea,
+  &--valid select {
+    border-left: 3px solid var(--color-success);
+  }
+
+  &__error {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    color: $color-danger;
+    margin-top: 0.3rem;
+  }
+
+  &__hint {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    color: var(--ed-text-faint);
+    margin-top: 0.3rem;
+  }
+}
+
+.ed-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    align-items: center;
+  }
+}
+
+// Search bar editorial (publicaciones) — magazine style
+.ed-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  background: var(--color-surface-raised);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+  &:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.12);
+  }
+
+  input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--color-text-primary);
+    font-family: $font-mono;
+    font-size: 0.72rem;
+    width: 210px;
+
+    &::placeholder { color: var(--color-text-tertiary); }
+  }
+
+  .ed-search-icon {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+    font-family: $font-mono;
+  }
+
+  .ed-search-clear {
+    color: var(--color-text-tertiary);
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+
+    &:hover { color: var(--color-accent); }
+  }
+}
+
+.ed-search-empty {
+  margin: 2rem auto;
+  max-width: 560px;
+  padding: 1.5rem 1.75rem;
+  border: 1px dashed var(--ed-border-strong, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  text-align: center;
+  font-family: $font-mono;
+  font-size: 0.8rem;
+  color: var(--ed-text-dim, var(--ed-text-faint));
+
+  strong { color: var(--ed-text); }
+
+  &__hint {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--ed-text-faint);
+  }
+}
+
+// Barra de estado de búsqueda (contador + botón limpiar)
+.ed-search-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0 1.25rem;
+  padding: 0.45rem 0.85rem;
+  // Reserva alto fijo y usamos visibility en vez de display para evitar
+  // que el layout salte mientras el usuario tipea.
+  min-height: 2.4rem;
+  border: 1px solid var(--ed-border-strong, rgba(0, 0, 0, 0.12));
+  border-left: 3px solid var(--ed-accent, #d65a31);
+  border-radius: 4px;
+  background: var(--ed-color-surface-alt, rgba(0, 0, 0, 0.02));
+  font-family: $font-mono;
+  font-size: 0.72rem;
+  color: var(--ed-text-dim, var(--ed-text-faint));
+
+  &__count {
+    color: var(--ed-text);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  &__label { letter-spacing: 0.04em; }
+
+  &__clear {
+    margin-left: auto;
+    background: none;
+    border: 1px solid currentColor;
+    color: inherit;
+    font: inherit;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.65rem;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--ed-accent, #d65a31);
+      border-color: var(--ed-accent, #d65a31);
+      color: #fff;
+      outline: none;
+    }
+  }
+}
+
+// Highlight de coincidencias dentro de los cards
+.ed-search-hl {
+  background: rgba(214, 90, 49, 0.22);
+  color: inherit;
+  padding: 0 0.1em;
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 rgba(214, 90, 49, 0.55);
+}
+
+// Ocultar cards filtrados sin tocar su contenido (toggle de clase = no
+// reflow del innerHTML, mucho más estable mientras el usuario tipea).
+.ed-article-card.is-search-out {
+  display: none !important;
+}
+
+// Checkbox / radio
+.ed-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  color: var(--ed-text-dim);
+  cursor: pointer;
+
+  input { accent-color: var(--ed-accent); }
+}
