@@ -1088,13 +1088,20 @@
   position: relative;
   overflow: hidden;
 
-  // Borde superior acento
+  // Iluminación superior degradada
   &::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: var(--color-accent);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--color-accent-rgb), 0.5) 20%,
+      var(--color-accent) 50%,
+      rgba(var(--color-accent-rgb), 0.5) 80%,
+      transparent 100%
+    );
   }
 
   &__avatar {
