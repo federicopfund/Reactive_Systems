@@ -1,6 +1,6 @@
-@(contact: models.ContactRecord)(implicit request: RequestHeader)
+@(contact: domains.contact.models.ContactRecord)(implicit request: RequestHeader)
 
-@admin.adminLayout("Contacto · " + contact.name, "contacts") {
+@views.html.admin.adminLayout("Contacto · " + contact.name, "contacts") {
 
   <header class="ed-admin-head">
     <div>
@@ -8,10 +8,10 @@
       <h1 class="ed-admin-title">@contact.name</h1>
     </div>
     <div class="ed-admin-actions">
-      <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Bandeja</a>
-      @contact.id.map { id => <a href="@routes.AdminController.editContactPage(id)" class="ed-link-btn ed-link-btn--accent">Editar</a> }
+      <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Bandeja</a>
+      @contact.id.map { id => <a href="@controllers.admin.routes.AdminController.editContactPage(id)" class="ed-link-btn ed-link-btn--accent">Editar</a> }
       @contact.id.map { id =>
-        <form method="POST" action="@routes.AdminController.deleteContact(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este contacto?');">
+        <form method="POST" action="@controllers.admin.routes.AdminController.deleteContact(id)" class="ed-inline-form" onsubmit="return confirm('¿Eliminar este contacto?');">
           @helper.CSRF.formField
           <button class="ed-link-btn ed-link-btn--danger">Eliminar</button>
         </form>
@@ -37,7 +37,7 @@
         <h3>Cambio rápido de estado</h3>
         <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
           @for(s <- List("pending","in_progress","resolved","spam","archived")) {
-            <form method="POST" action="@routes.AdminController.updateStatus(id, s)" class="ed-inline-form">
+            <form method="POST" action="@controllers.admin.routes.AdminController.updateStatus(id, s)" class="ed-inline-form">
               @helper.CSRF.formField
               <button class="ed-link-btn @if(contact.status == s){ed-link-btn--accent}">@s</button>
             </form>
