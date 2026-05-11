@@ -9,6 +9,8 @@
     <logger name="application" level="DEBUG" />
     <logger name="core" level="DEBUG" />
     <logger name="services" level="DEBUG" />
+    <logger name="infrastructure.guardian" level="DEBUG" />
+    <logger name="infrastructure" level="DEBUG" />
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

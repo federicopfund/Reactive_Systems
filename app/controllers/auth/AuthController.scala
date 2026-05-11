@@ -150,7 +150,7 @@ class AuthController @Inject()(
               "role" -> user.role
             ))
             Redirect(routes.AuthController.userDashboard())
-              .withSession("userId" -> user.id.get.toString, "username" -> user.username, "userRole" -> user.role)
+              .withSession("userId" -> user.id.get.toString, "username" -> user.username, "userRole" -> user.role, "avatarUrl" -> user.avatarUrl)
               .flashing("success" -> s"Bienvenido, ${user.fullName}")
           }
         }
@@ -182,7 +182,8 @@ class AuthController @Inject()(
               .withSession(
                 "userId" -> user.id.get.toString,
                 "username" -> user.username,
-                "userRole" -> user.role
+                "userRole" -> user.role,
+                "avatarUrl" -> user.avatarUrl
               )
               .flashing("success" -> s"Bienvenido Admin, ${user.fullName}")
           }
@@ -368,7 +369,7 @@ class AuthController @Inject()(
               user match {
                 case Some(u) =>
                   Redirect(routes.AuthController.userDashboard())
-                    .withSession("userId" -> u.id.get.toString, "username" -> u.username, "userRole" -> u.role)
+                    .withSession("userId" -> u.id.get.toString, "username" -> u.username, "userRole" -> u.role, "avatarUrl" -> u.avatarUrl)
                     .flashing("success" -> "¡Email verificado exitosamente! Bienvenido")
                 case None =>
                   Redirect(routes.AuthController.loginPage())

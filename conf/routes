@@ -110,6 +110,7 @@ POST    /user/newsletter/unsubscribe    controllers.user.UserPublicationControll
 # Profile
 GET     /user/profile/edit              controllers.user.UserPublicationController.editProfileForm()
 POST    /user/profile/edit              controllers.user.UserPublicationController.updateProfile()
+POST    /user/profile/avatar            controllers.user.UserPublicationController.uploadAvatar()
 GET     /profile/:username              controllers.user.UserPublicationController.publicProfile(username: String)
 
 # Reactions / Comments / Bookmarks

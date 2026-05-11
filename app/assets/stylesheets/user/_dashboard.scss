@@ -9,12 +9,28 @@
 .ed-dash-header {
   margin-bottom: 2.5rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid var(--ed-border);
+  border-bottom: 1px solid rgba(var(--color-accent-rgb), 0.25);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: 2rem;
   flex-wrap: wrap;
+  position: relative;
+
+  // Línea de acento izquierda
+  &::before {
+    content: '';
+    position: absolute;
+    left: -3.5rem;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(
+      to bottom,
+      var(--color-accent) 0%,
+      rgba(var(--color-accent-rgb), 0) 100%
+    );
+  }
 }
 
 .ed-dash-welcome {
@@ -24,6 +40,26 @@
   text-transform: uppercase;
   color: var(--ed-accent);
   margin-bottom: 0.5rem;
+}
+
+// Eyebrow — nombre de usuario (clase usada en dashboard.scala.html)
+.ed-dash-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.4rem;
+  opacity: 0.85;
+}
+
+// Subtitle del header
+.ed-dash-sub {
+  font-family: $font-body;
+  font-size: 0.85rem;
+  color: var(--ed-text-faint);
+  max-width: 42ch;
+  line-height: 1.5;
 }
 
 .ed-dash-title {
@@ -36,31 +72,65 @@
 
 .ed-dash-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  border: 1px solid var(--ed-border);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.875rem;
   margin-bottom: 2rem;
 }
 
 .ed-dash-stat {
-  padding: 1.5rem;
-  border-right: 1px solid var(--ed-border);
+  position: relative;
+  padding: 1.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 2px solid var(--color-accent);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
 
-  &:last-child { border-right: none; }
+  // Ambient glow subtle al acento
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at 30% 0%,
+      rgba(var(--color-accent-rgb), 0.1) 0%,
+      transparent 65%
+    );
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 10px 36px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(var(--color-accent-rgb), 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
 }
 
-.ed-dash-stat-num {
+// Compatibilidad: el HTML usa __num pero el SCSS anterior usaba -num
+.ed-dash-stat-num,
+.ed-dash-stat__num {
   font-family: $font-display;
   font-size: 2.5rem;
   font-weight: 900;
   color: var(--ed-text);
   line-height: 1;
   margin-bottom: 0.25rem;
+  text-shadow: 0 0 22px rgba(var(--color-accent-rgb), 0.30);
 
   span { color: var(--ed-accent); }
 }
 
-.ed-dash-stat-label {
+// Compatibilidad: el HTML usa __label
+.ed-dash-stat-label,
+.ed-dash-stat__label {
   font-family: $font-mono;
   font-size: 0.58rem;
   letter-spacing: 0.12em;
@@ -74,6 +144,24 @@
   font-weight: 700;
   color: var(--ed-text);
   margin-bottom: 1rem;
+}
+
+// Barra de acciones rápidas
+.ed-dash-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+
+  // El primer botón (CTA principal) tiene más peso visual
+  > a:first-child,
+  > button:first-child {
+    box-shadow: 0 0 14px rgba(var(--color-accent-rgb), 0.30);
+  }
 }
 
 // Submission rows (publicaciones del usuario)
@@ -957,4 +1045,247 @@
   border-radius: 1px 1px 0 0;
 
   &:hover { background: rgba(212, 255, 0, 0.5); }
+}
+
+
+// ============================================
+// Edit Profile — two-column layout
+// ============================================
+
+.ed-edit-profile {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Columna izquierda: preview fija
+.ed-edit-profile__preview {
+  position: sticky;
+  top: 2rem;
+}
+
+.ed-edit-profile__preview-hint {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+// ── Preview card ────────────────────────────────────────
+.ed-profile-preview-card {
+  border: 1px solid var(--ed-border-strong);
+  padding: 2rem 1.25rem 1.5rem;
+  background: var(--ed-bg2);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  // Borde superior acento
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--color-accent);
+  }
+
+  &__avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 0.85rem;
+    background: #1a1109; // fondo oscuro cuando no hay foto
+    color: var(--ed-bg);
+    font-family: $font-mono;
+    font-weight: 700;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    // Ring: 3px gap oscuro + 3px borde naranja sólido
+    box-shadow:
+      0 0 0 3px var(--ed-bg2),
+      0 0 0 6px var(--color-accent);
+    position: relative;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top; // centra en la zona de la cara
+      border-radius: 50%;
+      display: block;
+    }
+  }
+
+  &__name {
+    font-family: $font-display;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ed-text);
+    line-height: 1.2;
+    margin-bottom: 0.15rem;
+  }
+
+  &__username {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--color-accent);
+    margin-bottom: 0.75rem;
+  }
+
+  &__bio {
+    font-family: $font-body;
+    font-size: 0.75rem;
+    color: var(--ed-text-dim);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+    min-height: 1.5em;
+    transition: color 0.2s;
+
+    &--empty {
+      font-style: italic;
+      color: var(--ed-text-faint);
+    }
+  }
+
+  &__location {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    color: var(--ed-text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-height: 1em;
+
+    &--empty { visibility: hidden; }
+
+    svg { flex-shrink: 0; }
+  }
+}
+
+// ── Form sections ───────────────────────────────────────
+.ed-form-section {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--ed-border);
+
+  &:last-of-type { border-bottom: none; }
+
+  &__title {
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(var(--color-accent-rgb), 0.18);
+  }
+}
+
+// ============================================
+// Avatar Upload Dropzone
+// ============================================
+
+.ed-avatar-upload {
+  position: relative;
+  border: 2px dashed rgba(var(--color-accent-rgb), 0.35);
+  border-radius: 2px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: rgba(var(--color-accent-rgb), 0.02);
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--color-accent);
+    background: rgba(var(--color-accent-rgb), 0.05);
+    outline: none;
+  }
+
+  &--drag {
+    border-color: var(--color-accent);
+    background: rgba(var(--color-accent-rgb), 0.08);
+  }
+
+  &--done {
+    border-style: solid;
+    border-color: rgba(var(--color-accent-rgb), 0.6);
+  }
+
+  &__icon {
+    color: var(--color-accent);
+    opacity: 0.7;
+    margin-bottom: 0.6rem;
+  }
+
+  &__text {
+    font-family: $font-body;
+    font-size: 0.82rem;
+    color: var(--ed-text-dim);
+    margin-bottom: 0.3rem;
+
+    strong { color: var(--ed-text); }
+  }
+
+  &__hint {
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    color: var(--ed-text-faint);
+    text-transform: uppercase;
+  }
+
+  &__input {
+    // Oculto visualmente pero accesible
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    font-size: 0; // evita que tome espacio en iOS
+  }
+}
+
+// Barra de progreso del upload
+.ed-avatar-progress {
+  height: 3px;
+  background: var(--ed-border);
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+
+  &__bar {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+}
+
+// Mensaje de estado del upload
+.ed-avatar-status {
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  margin-top: 0.4rem;
+  min-height: 1.2em;
+
+  &--ok    { color: $color-success; }
+  &--error { color: $color-danger;  }
 }
