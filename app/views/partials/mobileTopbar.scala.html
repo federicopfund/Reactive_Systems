@@ -30,7 +30,7 @@
     </svg>
   </button>
 
-  <a href="@routes.HomeController.index()" class="ed-mobile-topbar__brand">
+  <a href="@controllers.web.routes.HomeController.index()" class="ed-mobile-topbar__brand">
     <span class="ed-mobile-topbar__eyebrow">Edición Digital</span>
     <span class="ed-mobile-topbar__title">Manifiesto Reactivo</span>
   </a>
@@ -38,7 +38,7 @@
   <div class="ed-mobile-topbar__actions">
     @partials.themeToggle(compact = true)
     @if(userId.isDefined) {
-      <a href="@routes.UserPublicationController.dashboard()"
+      <a href="@controllers.user.routes.UserPublicationController.dashboard()"
          class="ed-mobile-topbar__menu"
          aria-label="Mi espacio · @userName">
         <span style="font-family: monospace; font-size: 0.65rem; font-weight: 700;">@initials</span>
