@@ -1,0 +1,18 @@
+@(user: domains.identity.models.User)
+
+<header class="ed-profile-hero">
+  <div class="ed-profile-hero__avatar" aria-hidden="true">
+    @user.fullName.headOption.map(_.toUpper).getOrElse(user.username.head.toUpper)
+  </div>
+  <div class="ed-profile-hero__info">
+    <div class="ed-profile-hero__eyebrow">Perfil público</div>
+    <h1 class="ed-profile-hero__name">@user.fullName</h1>
+    <div class="ed-profile-hero__handle">@@@user.username@if(user.location.nonEmpty){ · @user.location}</div>
+    @if(user.bio.nonEmpty) {
+      <p class="ed-profile-hero__bio">@user.bio</p>
+    }
+    @if(user.website.nonEmpty) {
+      <a href="@user.website" class="ed-profile-hero__site" target="_blank" rel="noopener noreferrer">↗ @user.website</a>
+    }
+  </div>
+</header>
