@@ -1,0 +1,30 @@
+// ============================================================
+// tags/_badge.scss
+// Atom: insignia/etiqueta inline de acento.
+// Template: views/tags/badge.scala.html
+// BEM: .ed-badge  .ed-badge--{variant}
+// ============================================================
+
+.ed-badge {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1;
+
+  // Usado en badge grid (el tag recibe un BadgeDefinition completo)
+  &__icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+  &__name { font-weight: 600; font-size: 0.82rem; font-family: $font-body; text-transform: none; letter-spacing: 0; }
+  &__desc { font-size: 0.72rem; color: var(--color-text-secondary); font-family: $font-body; text-transform: none; letter-spacing: 0; margin-top: 0.1rem; }
+
+  &--accent  { color: var(--color-accent); border-color: rgba(var(--color-accent-rgb), 0.3); }
+  &--warn    { color: var(--color-warning); border-color: rgba(245, 158, 11, 0.4); }
+  &--success { color: var(--color-success); border-color: rgba(107, 143, 113, 0.4); }
+  &--danger  { color: var(--color-danger);  border-color: rgba(239, 68, 68, 0.4); }
+  &--neutral { color: var(--color-text-secondary); border-color: var(--color-border-subtle); }
+}
