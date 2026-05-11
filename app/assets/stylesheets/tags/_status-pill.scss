@@ -1,0 +1,31 @@
+// ============================================================
+// tags/_status-pill.scss
+// Atom: estado de publicación / contacto / usuario.
+// Template: views/tags/statusPill.scala.html
+// BEM: .ed-status-pill  .ed-status-pill--{variant}
+// ============================================================
+
+.ed-status-pill {
+  font-family: $font-mono;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid currentColor;
+  display: inline-block;
+  line-height: 1;
+  white-space: nowrap;
+
+  &--pending,
+  &--draft        { color: var(--color-warning); }
+  &--in_progress,
+  &--processing,
+  &--processed    { color: var(--color-info, #60a5fa); }
+  &--approved,
+  &--resolved,
+  &--active       { color: var(--color-success); }
+  &--rejected,
+  &--archived,
+  &--spam,
+  &--inactive     { color: var(--color-danger); }
+}
