@@ -1,9 +1,10 @@
-package core
+package shared.eventbus
 
 import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import shared.{DomainEvent, PublicationSubmittedEvent, BadgeEarnedEvent, NotificationDeliveredEvent}
 
 import scala.concurrent.duration._
 
@@ -19,7 +20,7 @@ class EventBusEngineClusterSpec
       ConfigFactory.parseString(
         """
           |akka.actor.provider = "cluster"
-          |akka.actor.serialization-bindings { "core.DomainEvent" = jackson-json }
+          |akka.actor.serialization-bindings { "shared.DomainEvent" = jackson-json }
           |akka.remote.artery.canonical.hostname = "127.0.0.1"
           |akka.remote.artery.canonical.port = 2552
           |akka.cluster.seed-nodes = ["akka://EventBusEngineClusterSpec@127.0.0.1:2552"]
