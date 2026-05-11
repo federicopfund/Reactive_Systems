@@ -1,4 +1,4 @@
-@(user: models.User, bookmarkedPublications: List[models.Publication], userPublications: List[models.Publication] = Nil)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(user: domains.identity.models.User, bookmarkedPublications: List[domains.publications.models.Publication], userPublications: List[domains.publications.models.Publication] = Nil)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @main("Mi espacio · " + user.username) {
   <section class="ed-dashboard">
@@ -31,9 +31,9 @@
     </div>
 
     <div class="ed-dash-actions">
-      <a href="@routes.UserPublicationController.newPublicationForm()" class="ed-btn-primary">Nueva publicación</a>
-      <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ver todas mis piezas</a>
-      <a href="@routes.AuthController.userProfile()" class="ed-btn-ghost">Editar perfil</a>
+      <a href="@controllers.user.routes.UserPublicationController.newPublicationForm()" class="ed-btn-primary">Nueva publicación</a>
+      <a href="@controllers.user.routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ver todas mis piezas</a>
+      <a href="@controllers.auth.routes.AuthController.userProfile()" class="ed-btn-ghost">Editar perfil</a>
     </div>
 
     <section class="ed-dash-section">
@@ -45,7 +45,7 @@
           title = "Aún no has publicado nada",
           body = "Tu primer artículo puede ser una nota corta, un caso de estudio o un patrón observado. Lo importante es empezar.",
           ctaLabel = Some("Propuesta nueva"),
-          ctaHref = Some(routes.UserPublicationController.newPublicationForm().url)
+          ctaHref = Some(controllers.user.routes.UserPublicationController.newPublicationForm().url)
         )
       } else {
         <div class="ed-submission-list">
@@ -56,7 +56,7 @@
                 <div class="ed-submission__meta">@p.category · @p.createdAt.toString.take(10)</div>
               </div>
               <span class="ed-sub-badge ed-sub-badge--@p.status">@p.status</span>
-              <a href="@routes.UserPublicationController.editPublicationForm(p.id.get)" class="ed-link-btn">Editar</a>
+              <a href="@controllers.user.routes.UserPublicationController.editPublicationForm(p.id.get)" class="ed-link-btn">Editar</a>
             </div>
           }
         </div>
@@ -72,14 +72,14 @@
           title = "Sin marcadores aún",
           body = "Cuando guardes una publicación aparecerá aquí para que la retomes cuando quieras.",
           ctaLabel = Some("Explorar publicaciones"),
-          ctaHref = Some(routes.HomeController.publicaciones().url)
+          ctaHref = Some(controllers.web.routes.HomeController.publicaciones().url)
         )
       } else {
         <div class="ed-submission-list">
           @bookmarkedPublications.take(6).map { p =>
             <div class="ed-submission">
               <div class="ed-submission__main">
-                <a href="@routes.HomeController.publicacion(p.slug)" class="ed-submission__title">@p.title</a>
+                <a href="@controllers.web.routes.HomeController.publicacion(p.slug)" class="ed-submission__title">@p.title</a>
                 <div class="ed-submission__meta">@p.category</div>
               </div>
             </div>
