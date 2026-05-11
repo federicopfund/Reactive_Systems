@@ -1,0 +1,51 @@
+// ============================================================
+// tags/_kpi-card.scss
+// Atom: tarjeta de métrica KPI (label + número grande).
+// Template: views/tags/kpiCard.scala.html
+// BEM: .ed-kpi  .ed-kpi__label  .ed-kpi__num  .ed-kpi__sub
+// Wrapper: .ed-kpi-grid  (grid padre — definido en admin/sections/_kpi-grid.scss)
+// ============================================================
+
+.ed-kpi {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  padding: 1.1rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: border-color $duration-fast $ease-out;
+
+  &:hover { border-color: var(--color-border-strong); }
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.55rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  &__num {
+    font-family: $font-display;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+
+    span { color: var(--color-accent); }
+  }
+
+  &__sub {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    color: var(--color-text-secondary);
+  }
+}
+
+// Grid wrapper that contains multiple kpi atoms
+.ed-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
