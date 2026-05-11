@@ -1,0 +1,186 @@
+// ============================================
+// Contact — sección "Escribe a la redacción" (home)
+// Estética editorial: papel/sobre, eyebrow monoespaciado,
+// filete de acento y ornamento. Reutiliza .ed-field/.ed-form.
+// ============================================
+
+.ed-contact {
+  position: relative;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 3rem;
+    align-items: start;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+    }
+  }
+
+  // ── Columna izquierda: invitación editorial ──
+  &__intro {
+    position: relative;
+    padding-left: 1.25rem;
+    border-left: 2px solid var(--ed-accent);
+
+    @media (max-width: 900px) {
+      padding-left: 1rem;
+    }
+  }
+
+  &__ornament {
+    display: inline-block;
+    font-family: $font-display;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--ed-accent);
+    margin-bottom: 0.5rem;
+    transform: rotate(-8deg);
+    transform-origin: bottom left;
+  }
+
+  &__title {
+    margin: 0 0 0.6rem;
+  }
+
+  &__lede {
+    max-width: 46ch;
+    color: var(--ed-text-dim);
+    margin: 0 0 1.5rem;
+  }
+
+  &__meta {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+    border-top: 1px dashed var(--ed-border);
+    padding-top: 1rem;
+
+    li {
+      display: grid;
+      grid-template-columns: 7.5rem 1fr;
+      gap: 0.75rem;
+      align-items: baseline;
+    }
+  }
+
+  &__meta-key {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ed-text-faint);
+  }
+
+  &__meta-val {
+    font-family: $font-body;
+    font-size: 0.82rem;
+    color: var(--ed-text);
+  }
+
+  // ── Columna derecha: el formulario como "pliego" ──
+  &__form {
+    position: relative;
+    background: var(--ed-bg2, var(--ed-bg));
+    border: 1px solid var(--ed-border);
+    padding: 1.75rem 1.75rem 1.5rem;
+    box-shadow:
+      0 1px 0 var(--ed-border) inset,
+      0 12px 28px -22px rgba(0, 0, 0, 0.35);
+
+    // Esquina superior derecha plegada (sello editorial)
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      background:
+        linear-gradient(225deg, var(--ed-bg) 50%, transparent 50%),
+        linear-gradient(225deg, transparent 48%, var(--ed-border) 49%, transparent 51%);
+      pointer-events: none;
+    }
+
+    @media (max-width: 900px) {
+      padding: 1.25rem 1.1rem 1.1rem;
+    }
+
+    // Refinamientos sobre .ed-field heredado
+    .ed-field label {
+      color: var(--ed-text-dim);
+    }
+
+    .ed-field input,
+    .ed-field textarea {
+      background: var(--ed-bg);
+      border-color: var(--ed-border);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
+      &:hover { border-color: var(--ed-border-strong); }
+      &:focus {
+        border-color: var(--ed-accent);
+        // Anillo de foco derivado del acento vía canales RGB del token.
+        box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.20);
+        background: var(--ed-bg);
+      }
+    }
+
+    .ed-field textarea {
+      min-height: 160px;
+      line-height: 1.65;
+    }
+  }
+
+  &__form-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: -0.25rem 0 1.1rem;
+  }
+
+  &__form-eyebrow {
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    white-space: nowrap;
+  }
+
+  &__form-rule {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--ed-border), transparent);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    border-top: 1px dashed var(--ed-border);
+    padding-top: 1rem;
+    margin-top: 0.75rem;
+  }
+
+  &__legal {
+    margin: 0;
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    color: var(--ed-text-faint);
+
+    a {
+      color: var(--ed-text-dim);
+      text-decoration: underline dotted;
+      text-underline-offset: 2px;
+      &:hover { color: var(--ed-accent); }
+    }
+  }
+}
