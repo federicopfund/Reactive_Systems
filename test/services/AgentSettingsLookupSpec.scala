@@ -1,4 +1,4 @@
-package services
+package domains.admin.services
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
