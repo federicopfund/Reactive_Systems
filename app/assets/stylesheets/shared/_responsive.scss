@@ -1,0 +1,212 @@
+// ============================================
+// Responsive — Overrides al final
+// ============================================
+
+@include respond-to(lg) {
+  .ed-hero,
+  .ed-guest {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-hero-main,
+  .ed-guest-main {
+    border-right: none;
+    border-bottom: 1px solid var(--ed-border);
+  }
+
+  .ed-pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ed-pillar:nth-child(2n) { border-right: none; }
+  .ed-pillar:nth-child(3n) { border-right: 1px solid var(--ed-border); }
+
+  .ed-process-stages {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ed-recents-grid,
+  .ed-placeholder-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ed-rev-detail,
+  .ed-article-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include respond-to(md) {
+  // Issue #17-A: el sidebar deja de ser barra apilada y pasa a drawer
+  // (gestionado por _navbar.scss + sidebar.js). Conservamos overrides para
+  // el admin layout (que aún no migró a drawer) bajo .ed-admin-shell.
+
+  // Fix navegación mobile: el shell debe dejar que el body sea el contenedor
+  // de scroll. Si lo dejamos en height:100vh + overflow:hidden, el contenido
+  // de .ed-main queda atrapado dentro del viewport y no se puede recorrer.
+  .ed-shell {
+    display: block;
+    height: auto;
+    width: 100%;
+    overflow: visible;
+  }
+
+  .ed-admin-shell {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .ed-admin-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--ed-border);
+    padding: 1rem 0;
+  }
+
+  .ed-admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0 1rem;
+  }
+
+  .ed-admin-nav-label {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .ed-admin-nav-item { width: auto; }
+
+  .ed-main,
+  .ed-admin-main { height: auto; overflow-y: visible; }
+
+  // Padding más compacto en móviles
+  .ed-hero-main,
+  .ed-pub-header,
+  .ed-cta,
+  .ed-pullquote,
+  .ed-recents-header,
+  .ed-process-header,
+  .ed-pillars-section,
+  .ed-already-member,
+  .ed-guest-main,
+  .ed-concept-strip,
+  .ed-dashboard,
+  .ed-admin-page {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .ed-hero { grid-template-columns: 1fr; }
+  .ed-hero-aside { padding: 1.5rem 1.25rem; }
+
+  .ed-pillars-grid,
+  .ed-articles-grid,
+  .ed-recents-grid,
+  .ed-placeholder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-pillar,
+  .ed-article-card,
+  .ed-recent-card,
+  .ed-placeholder-card {
+    border-right: none !important;
+  }
+
+  .ed-process-stages {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-process-stage {
+    border-right: none;
+    border-bottom: 1px solid var(--ed-border);
+
+    &::after { display: none; }
+  }
+
+  .ed-definition,
+  .ed-concept-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-def-divider,
+  .ed-concept-divider { display: none; }
+
+  .ed-def-col,
+  .ed-concept-col {
+    padding: 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--ed-border);
+  }
+
+  .ed-cta {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .ed-cta-actions { flex-direction: row; }
+
+  .ed-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ed-kpi-card:nth-child(2n) { border-right: none; }
+
+  .ed-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-contact-card {
+    border-right: none;
+  }
+
+  .ed-rev-detail-main,
+  .ed-rev-detail-aside {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .ed-rev-detail-main {
+    border-right: none;
+    border-bottom: 1px solid rgba(242, 237, 214, 0.08);
+  }
+
+  .ed-article-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-article-body-col {
+    border-right: none;
+    border-bottom: 1px solid var(--ed-border);
+    padding: 2rem 1.25rem;
+  }
+
+  .ed-article-aside { padding: 2rem 1.25rem; }
+
+  .ed-pub-form-page,
+  .ed-legal-page {
+    padding: 2rem 1.25rem;
+  }
+}
+
+@include respond-to(sm) {
+  .ed-dash-stats { grid-template-columns: 1fr; }
+  .ed-dash-stat { border-right: none; border-bottom: 1px solid var(--ed-border); }
+
+  .ed-kpi-grid { grid-template-columns: 1fr; }
+  .ed-kpi-card { border-right: none; border-bottom: 1px solid rgba(242, 237, 214, 0.08); }
+
+  .ed-revision-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ed-revision-actions { flex-wrap: wrap; }
+
+  .ed-pub-header { padding: 2rem 1.25rem 1.25rem; }
+
+  .ed-verify-card__code-row input {
+    width: 44px;
+    height: 52px;
+    font-size: 1.1rem;
+  }
+}
