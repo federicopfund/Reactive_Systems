@@ -1,0 +1,116 @@
+// ============================================
+// Buttons — Editorial Reactiva
+// ============================================
+
+%ed-btn-base {
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  @include focus-ring;
+}
+
+.ed-btn {
+  @extend %ed-btn-base;
+}
+
+.ed-btn-primary {
+  @extend %ed-btn-base;
+  color: var(--ed-bg);
+  background: var(--ed-accent);
+
+  &:hover { opacity: 0.85; }
+}
+
+.ed-btn-secondary {
+  @extend %ed-btn-base;
+  color: var(--ed-text-dim);
+  background: none;
+  border: 1px solid var(--ed-border-strong);
+
+  &:hover {
+    color: var(--ed-text);
+    border-color: var(--ed-text-dim);
+  }
+}
+
+.ed-btn-ghost {
+  @extend %ed-btn-base;
+  color: var(--ed-text-faint);
+  background: none;
+
+  &:hover { color: var(--ed-text); }
+}
+
+.ed-btn-danger {
+  @extend %ed-btn-base;
+  color: $color-danger;
+  background: none;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+
+  &:hover { background: rgba(239, 68, 68, 0.1); }
+}
+
+.ed-btn-success {
+  @extend %ed-btn-base;
+  color: $color-success;
+  background: none;
+  border: 1px solid rgba(107, 143, 113, 0.4);
+
+  &:hover { background: rgba(107, 143, 113, 0.1); }
+}
+
+.ed-btn-block {
+  width: 100%;
+  text-align: center;
+}
+
+.ed-btn-sm {
+  font-size: 0.58rem;
+  padding: 0.4rem 0.85rem;
+  letter-spacing: 0.1em;
+}
+
+.ed-btn-lg {
+  font-size: 0.75rem;
+  padding: 0.85rem 2rem;
+}
+
+// Login/Register botones del sidebar
+.ed-btn-login {
+  @extend %ed-btn-base;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--ed-bg);
+  background: var(--ed-accent);
+  padding: 0.55rem 1rem;
+  text-align: center;
+
+  &:hover { opacity: 0.85; }
+}
+
+.ed-btn-register {
+  @extend %ed-btn-base;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--ed-text-dim);
+  background: none;
+  border: 1px solid var(--ed-border-strong);
+  padding: 0.55rem 1rem;
+  text-align: center;
+
+  &:hover {
+    color: var(--ed-text);
+    border-color: var(--ed-text-dim);
+  }
+}
