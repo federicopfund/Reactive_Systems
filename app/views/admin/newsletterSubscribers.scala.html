@@ -1,6 +1,6 @@
-@(subscribers: List[models.NewsletterSubscriber])(implicit request: RequestHeader)
+@(subscribers: List[domains.newsletter.models.NewsletterSubscriber])(implicit request: RequestHeader)
 
-@admin.adminLayout("Newsletter", "newsletter") {
+@views.html.admin.adminLayout("Newsletter", "newsletter") {
 
   @defining(subscribers.count(_.isActive)) { activeCount =>
   @defining(subscribers.count(!_.isActive)) { inactiveCount =>
@@ -14,7 +14,7 @@
         </p>
       </div>
       <div class="ed-admin-actions">
-        <a href="@routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
+        <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-link-btn">← Resumen</a>
       </div>
     </header>
 
