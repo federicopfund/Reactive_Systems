@@ -1,0 +1,63 @@
+@(article: domains.publications.models.EditorialArticle)(implicit request: RequestHeader, messages: Messages)
+
+@*
+  Render de una pieza editorial (DB-driven).
+  Reemplaza las 6 vistas hardcoded en app/views/articulos/*.scala.html.
+  El layout coincide con el `articleLayout` legacy.
+*@
+
+@main(article.title) {
+  <article class="ed-article-layout ed-article-layout--legacy">
+    <div class="ed-article-body-col">
+      <header class="ed-article-head">
+        <div class="ed-article-eyebrow">@article.categoryLabel</div>
+        <h1 class="ed-article-h1">@article.title</h1>
+        <div class="ed-article-meta-row">
+          <span>@article.publishedLabel</span>
+          @if(article.tags.nonEmpty) {
+            <span>·</span>
+            <span>@article.tags.mkString(", ")</span>
+          }
+          <span>·</span>
+          <span>@article.viewCount vistas</span>
+        </div>
+      </header>
+
+      @article.excerpt.map { e => <p class="ed-article-lede">@e</p> }
+
+      <div class="ed-article-content ed-legacy-prose">
+        @Html(article.bodyHtml)
+      </div>
+
+      @if(article.tags.nonEmpty) {
+        <div class="ed-article-tags">
+          @for(tag <- article.tags) {
+            <span class="ed-article-tag">@tag</span>
+          }
+        </div>
+      }
+
+      <nav class="ed-article-back">
+        <a href="@controllers.web.routes.HomeController.publicaciones()" class="ed-btn-ghost">← Volver a publicaciones</a>
+      </nav>
+    </div>
+
+    <aside class="ed-article-aside">
+      @partials.collectionBackBar()
+      <div class="ed-aside-card">
+        <div class="ed-aside-eyebrow">Categoría</div>
+        <a href="@controllers.web.routes.HomeController.searchPublicaciones("", Some(article.categoryLabel))" class="ed-aside-author">@article.categoryLabel</a>
+      </div>
+
+      <div class="ed-aside-card ed-aside-newsletter">
+        <div class="ed-aside-eyebrow">Novedades</div>
+        <p class="ed-aside-newsletter__text">Recibí una notificación cada vez que se publique una nueva pieza.</p>
+        <form method="POST" action="@controllers.web.routes.HomeController.subscribeNewsletter()" class="ed-aside-newsletter__form">
+          @helper.CSRF.formField
+          <input type="email" name="email" placeholder="tu@@email.com" required class="ed-aside-newsletter__input">
+          <button type="submit" class="ed-btn-primary ed-aside-newsletter__btn">Suscribirme</button>
+        </form>
+      </div>
+    </aside>
+  </article>
+}
