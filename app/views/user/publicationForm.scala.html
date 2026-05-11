@@ -1,4 +1,4 @@
-@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String, currentSeason: Option[models.EditorialSeason])(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(form: Form[controllers.user.PublicationFormData], publication: Option[domains.publications.models.Publication], username: String, currentSeason: Option[domains.editorial.models.EditorialSeason])(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @*
  * Editor de publicaciones — experiencia "writers' room".
@@ -19,8 +19,8 @@
 @isEdit               = @{ publication.isDefined }
 @currentSeasonName    = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
 @formAction           = @{ publication.flatMap(_.id) match {
-  case Some(id) => routes.UserPublicationController.updatePublication(id)
-  case None     => routes.UserPublicationController.createPublication()
+  case Some(id) => controllers.user.routes.UserPublicationController.updatePublication(id)
+  case None     => controllers.user.routes.UserPublicationController.createPublication()
 }}
 @pageTitle            = @{ if(isEdit) "Editar publicación" else "Nueva publicación" }
 
@@ -42,7 +42,7 @@
         }
       </div>
       <div class="ed-editor-topbar__right">
-        <a href="@routes.UserPublicationController.dashboard()"
+        <a href="@controllers.user.routes.UserPublicationController.dashboard()"
            class="ed-btn-ghost ed-btn-xs ed-back-btn"
            data-confirm-unsaved="true"
            title="Volver al dashboard">← Volver</a>
@@ -245,7 +245,7 @@
 
         @* Acciones *@
         <div class="ed-editor-actions">
-          <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Cancelar</a>
+          <a href="@controllers.user.routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Cancelar</a>
           <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios}else{Enviar a revisión →}</button>
         </div>
       </aside>
