@@ -5,8 +5,8 @@
   items: secuencia de (label, Option[ruta]). El último item siempre va sin link.
   Ejemplo:
     @partials.breadcrumbs(Seq(
-      "Mi espacio" -> Some(routes.UserPublicationController.dashboard()),
-      "Mis propuestas" -> Some(routes.UserPublicationController.dashboard()),
+      "Mi espacio" -> Some(controllers.user.routes.UserPublicationController.dashboard()),
+      "Mis propuestas" -> Some(controllers.user.routes.UserPublicationController.dashboard()),
       "Vista previa" -> None
     ))
 *@
