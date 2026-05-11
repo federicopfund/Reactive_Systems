@@ -1,4 +1,4 @@
-@(user: models.User)(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(user: domains.identity.models.User)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @main("Perfil · " + user.username) {
   <section class="ed-profile-page">
@@ -25,8 +25,8 @@
     </article>
 
     <div class="ed-dash-actions">
-      <a href="@routes.UserPublicationController.editProfileForm()" class="ed-btn-primary">Editar perfil</a>
-      <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ir a mi espacio</a>
+      <a href="@controllers.user.routes.UserPublicationController.editProfileForm()" class="ed-btn-primary">Editar perfil</a>
+      <a href="@controllers.user.routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ir a mi espacio</a>
     </div>
   </section>
 }
