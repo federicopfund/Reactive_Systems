@@ -1,11 +1,11 @@
 @(
-  publication: models.Publication,
+  publication: domains.publications.models.Publication,
   username: String,
-  stages: Seq[models.EditorialStage],
-  timeline: Seq[models.PublicationStageHistoryWithStage],
+  stages: Seq[domains.editorial.models.EditorialStage],
+  timeline: Seq[domains.publications.models.PublicationStageHistoryWithStage],
   currentStageCode: Option[String],
-  notifications: List[models.UserNotification],
-  feedback: List[models.PublicationFeedbackWithAdmin]
+  notifications: List[domains.messaging.models.UserNotification],
+  feedback: List[domains.publications.models.PublicationFeedbackWithAdmin]
 )(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @*
@@ -41,14 +41,14 @@
         referenciar un punto exacto del proceso.
       </p>
       <div class="ed-dash-actions">
-        <a href="@routes.UserPublicationController.dashboard()" class="ed-link-btn">← Dashboard</a>
-        <a href="@routes.UserPublicationController.viewPublication(publication.id.getOrElse(0L))" class="ed-link-btn">Ver pieza</a>
-        <a href="@routes.UserPublicationController.editPublicationForm(publication.id.getOrElse(0L))" class="ed-link-btn">Editar</a>
+        <a href="@controllers.user.routes.UserPublicationController.dashboard()" class="ed-link-btn">← Dashboard</a>
+        <a href="@controllers.user.routes.UserPublicationController.viewPublication(publication.id.getOrElse(0L))" class="ed-link-btn">Ver pieza</a>
+        <a href="@controllers.user.routes.UserPublicationController.editPublicationForm(publication.id.getOrElse(0L))" class="ed-link-btn">Editar</a>
       </div>
     </header>
 
     @* Pipeline visual reusando el widget admin con notas internas ocultas *@
-    @admin._publicationPipeline(publication, stages, timeline, currentStageCode, "user", showInternalNotes = false)
+    @views.html.admin._publicationPipeline(publication, stages, timeline, currentStageCode, "user", showInternalNotes = false)
 
     <section class="ed-thread" aria-label="Hilo de trazabilidad">
       <header class="ed-thread__head">
@@ -75,7 +75,7 @@
                 </span>
                 <code class="ed-thread__commit"
                       title="Commit hash determinístico de esta transición — cítalo al equipo para referenciar este punto">
-                  @utils.StageCommitHash.shortOf(entry.history)
+                  @infrastructure.support.StageCommitHash.shortOf(entry.history)
                 </code>
                 @if(entry.history.isCurrent) {
                   <span class="ed-thread__pill ed-thread__pill--current">actual</span>
@@ -87,7 +87,7 @@
                 @entry.history.exitedAt.map { out =>
                   · salió el @formatTs(out)
                 }
-                · responsable: <em>@utils.EditorialStagePolicy.ownerLabelFor(entry.stageCode)</em>
+                · responsable: <em>@domains.publications.policies.EditorialStagePolicy.ownerLabelFor(entry.stageCode)</em>
               </div>
               @entry.history.reason.map { r =>
                 <blockquote class="ed-thread__reason">@r</blockquote>
@@ -114,7 +114,7 @@
             <li class="ed-thread__entry ed-thread__entry--notif @if(!n.isRead){is-unread}">
               <div class="ed-thread__entry-head">
                 <span class="ed-thread__badge ed-thread__badge--notif">
-                  @models.NotificationType.icon(n.notificationType) Notificación
+                  @domains.messaging.models.NotificationType.icon(n.notificationType) Notificación
                 </span>
                 <span class="ed-thread__pill ed-thread__pill--type">@n.notificationType</span>
               </div>
