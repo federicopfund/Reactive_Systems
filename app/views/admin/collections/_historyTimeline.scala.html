@@ -1,6 +1,6 @@
-@(history: Seq[models.CollectionStatusEntry])(implicit request: RequestHeader)
+@(history: Seq[domains.collections.models.CollectionStatusEntry])(implicit request: RequestHeader)
 
-@import models.CollectionStatus
+@import domains.collections.models.CollectionStatus
 
 <div class="ed-bo__timeline">
   @if(history.isEmpty) {
