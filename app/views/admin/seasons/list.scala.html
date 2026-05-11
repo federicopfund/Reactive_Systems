@@ -1,6 +1,6 @@
-@(seasons: Seq[models.EditorialSeason])(implicit request: RequestHeader)
+@(seasons: Seq[domains.editorial.models.EditorialSeason])(implicit request: RequestHeader)
 
-@admin.adminLayout("Temporadas", "seasons") {
+@views.html.admin.adminLayout("Temporadas", "seasons") {
 
   <div class="ed-bo__page-head">
     <div>
@@ -8,7 +8,7 @@
       <p class="ed-bo__page-lead">Crea, edita y define la temporada actual.</p>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-primary" href="@routes.AdminSeasonController.newForm()">+ Nueva temporada</a>
+      <a class="ed-btn-primary" href="@controllers.admin.routes.AdminSeasonController.newForm()">+ Nueva temporada</a>
     </div>
   </div>
 
@@ -52,10 +52,10 @@
             </td>
             <td class="ed-bo__cell-actions">
               @season.id.map { sid =>
-                <a href="@routes.AdminSeasonController.editForm(sid)">Editar</a>
+                <a href="@controllers.admin.routes.AdminSeasonController.editForm(sid)">Editar</a>
                 @if(!season.isCurrent) {
                   <span> · </span>
-                  <form method="POST" action="@routes.AdminSeasonController.setCurrent(sid)" class="ed-inline-form">
+                  <form method="POST" action="@controllers.admin.routes.AdminSeasonController.setCurrent(sid)" class="ed-inline-form">
                     @helper.CSRF.formField
                     <label>
                       <input type="checkbox" name="announceNewsletter" value="on">
