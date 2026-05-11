@@ -92,7 +92,7 @@
 
     @* ============= TOP BAR ============= *@
     <header class="ed-bo__topbar">
-      <a href="@routes.AdminController.dashboard(0, None)" class="ed-bo__brand">
+      <a href="@controllers.admin.routes.AdminController.dashboard(0, None)" class="ed-bo__brand">
         <span class="ed-bo__brand-eyebrow">Manifiesto Reactivo</span>
         <span class="ed-bo__brand-title">Backoffice</span>
       </a>
@@ -104,7 +104,7 @@
       </nav>
 
       <div class="ed-bo__topbar-right">
-        <a class="ed-bo__topbar-link" href="@routes.HomeController.index()" target="_blank" rel="noopener">Ver sitio ↗</a>
+        <a class="ed-bo__topbar-link" href="@controllers.web.routes.HomeController.index()" target="_blank" rel="noopener">Ver sitio ↗</a>
         @partials.themeToggle(compact = true)
         <span class="ed-bo__role ed-bo__role--@role">@roleLabel</span>
         <div class="ed-bo__user">
@@ -114,7 +114,7 @@
             <span class="ed-bo__user-meta">conectado</span>
           </div>
         </div>
-        <a class="ed-bo__logout" href="@routes.AuthController.logout()" title="Cerrar sesión">Salir</a>
+        <a class="ed-bo__logout" href="@controllers.auth.routes.AuthController.logout()" title="Cerrar sesión">Salir</a>
       </div>
     </header>
 
@@ -132,112 +132,112 @@
             <span class="ed-bo__nav-label-text">General</span>
             <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
           </summary>
-          @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.DashboardView)) {
-            <a class="ed-bo__nav-item @isActive("dashboard")" href="@routes.AdminController.dashboard(0, None)">
+          @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.DashboardView)) {
+            <a class="ed-bo__nav-item @isActive("dashboard")" href="@controllers.admin.routes.AdminController.dashboard(0, None)">
               <span class="ed-bo__nav-dot"></span>Resumen
             </a>
           }
-          @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.StatsView)) {
-            <a class="ed-bo__nav-item @isActive("stats")" href="@routes.AdminController.statisticsPage()">
+          @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.StatsView)) {
+            <a class="ed-bo__nav-item @isActive("stats")" href="@controllers.admin.routes.AdminController.statisticsPage()">
               <span class="ed-bo__nav-dot"></span>Estadísticas
             </a>
           }
         </details>
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport) || utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage) || utils.RolePolicy.can(role, utils.Capabilities.Cap.SeasonsManage)) {
+        @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.PublicationsReview) || infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.PublicationsExport) || infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.EditorialIdentityManage) || infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.SeasonsManage)) {
           <details class="ed-bo__nav-group" data-section="editorial" open>
             <summary class="ed-bo__nav-label">
               <span class="ed-bo__nav-label-text">Editorial</span>
               <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
             </summary>
-            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview)) {
-              <a class="ed-bo__nav-item @isActive("review")" href="@routes.AdminController.pendingPublications()">
+            @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.PublicationsReview)) {
+              <a class="ed-bo__nav-item @isActive("review")" href="@controllers.admin.routes.AdminController.pendingPublications()">
                 <span class="ed-bo__nav-dot"></span>Cola de revisión
               </a>
-              <a class="ed-bo__nav-item @isActive("publications")" href="@routes.AdminController.allPublications(None)">
+              <a class="ed-bo__nav-item @isActive("publications")" href="@controllers.admin.routes.AdminController.allPublications(None)">
                 <span class="ed-bo__nav-dot"></span>Catálogo
               </a>
             }
-            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage)) {
-              <a class="ed-bo__nav-item @isActive("editorial-identity")" href="@routes.AdminEditorialIdentityController.list()">
+            @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.EditorialIdentityManage)) {
+              <a class="ed-bo__nav-item @isActive("editorial-identity")" href="@controllers.admin.routes.AdminEditorialIdentityController.list()">
                 <span class="ed-bo__nav-dot"></span>Identidad editorial
               </a>
             }
-            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.SeasonsManage)) {
-              <a class="ed-bo__nav-item @isActive("seasons")" href="@routes.AdminSeasonController.list()">
+            @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.SeasonsManage)) {
+              <a class="ed-bo__nav-item @isActive("seasons")" href="@controllers.admin.routes.AdminSeasonController.list()">
                 <span class="ed-bo__nav-dot"></span>Temporadas
               </a>
             }
           </details>
         }
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.EventsView)) {
+        @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.EventsView)) {
           <details class="ed-bo__nav-group" data-section="eventos" open>
             <summary class="ed-bo__nav-label">
               <span class="ed-bo__nav-label-text">Eventos</span>
               <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
             </summary>
-            <a class="ed-bo__nav-item @isActive("events")" href="@routes.AdminEventController.list(None, 0)">
+            <a class="ed-bo__nav-item @isActive("events")" href="@controllers.admin.routes.AdminEventController.list(None, 0)">
               <span class="ed-bo__nav-dot"></span>Agenda editorial
             </a>
           </details>
         }
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.CollectionsCurate)) {
+        @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.CollectionsCurate)) {
           <details class="ed-bo__nav-group" data-section="curaduria" open>
             <summary class="ed-bo__nav-label">
               <span class="ed-bo__nav-label-text">Curaduría</span>
               <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
             </summary>
-            <a class="ed-bo__nav-item @isActive("collections")" href="@routes.AdminCollectionController.list(None)">
+            <a class="ed-bo__nav-item @isActive("collections")" href="@controllers.admin.routes.AdminCollectionController.list(None)">
               <span class="ed-bo__nav-dot"></span>Colecciones
             </a>
           </details>
         }
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ObservabilityView)) {
+        @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.ObservabilityView)) {
           <details class="ed-bo__nav-group" data-section="observabilidad" open>
             <summary class="ed-bo__nav-label">
               <span class="ed-bo__nav-label-text">Observabilidad</span>
               <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
             </summary>
-            <a class="ed-bo__nav-item @isActive("agents")" href="@routes.AdminAgentsController.dashboard()">
+            <a class="ed-bo__nav-item @isActive("agents")" href="@controllers.admin.routes.AdminAgentsController.dashboard()">
               <span class="ed-bo__nav-dot"></span>Agentes &amp; Guardians
             </a>
-            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ObservabilityManage)) {
-              <a class="ed-bo__nav-item @isActive("agent-settings")" href="@routes.AdminAgentSettingsController.view()">
+            @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.ObservabilityManage)) {
+              <a class="ed-bo__nav-item @isActive("agent-settings")" href="@controllers.admin.routes.AdminAgentSettingsController.view()">
                 <span class="ed-bo__nav-dot"></span>Configuración de agentes
               </a>
             }
           </details>
         }
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView) || utils.RolePolicy.can(role, utils.Capabilities.Cap.NewsletterView)) {
+        @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.ContactsView) || infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.NewsletterView)) {
           <details class="ed-bo__nav-group" data-section="comunidad" open>
             <summary class="ed-bo__nav-label">
               <span class="ed-bo__nav-label-text">Comunidad</span>
               <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
             </summary>
-            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ContactsView)) {
-              <a class="ed-bo__nav-item @isActive("contacts")" href="@routes.AdminController.dashboard(0, None)#contacts">
+            @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.ContactsView)) {
+              <a class="ed-bo__nav-item @isActive("contacts")" href="@controllers.admin.routes.AdminController.dashboard(0, None)#contacts">
                 <span class="ed-bo__nav-dot"></span>Contactos
               </a>
             }
-            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.NewsletterView)) {
-              <a class="ed-bo__nav-item @isActive("newsletter")" href="@routes.AdminController.newsletterSubscribers()">
+            @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.NewsletterView)) {
+              <a class="ed-bo__nav-item @isActive("newsletter")" href="@controllers.admin.routes.AdminController.newsletterSubscribers()">
                 <span class="ed-bo__nav-dot"></span>Newsletter
               </a>
             }
           </details>
         }
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.GovernanceManageAdmins)) {
+        @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.GovernanceManageAdmins)) {
           <details class="ed-bo__nav-group" data-section="gobernanza" open>
             <summary class="ed-bo__nav-label">
               <span class="ed-bo__nav-label-text">Gobernanza</span>
               <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
             </summary>
-            <a class="ed-bo__nav-item @isActive("admins")" href="@routes.AdminController.adminManagement()">
+            <a class="ed-bo__nav-item @isActive("admins")" href="@controllers.admin.routes.AdminController.adminManagement()">
               <span class="ed-bo__nav-dot"></span>Administradores
             </a>
           </details>
@@ -250,10 +250,10 @@
             <span class="ed-bo__nav-label-text">Comunicación</span>
             <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
           </summary>
-          <a class="ed-bo__nav-item @isActive("messages")" href="@routes.UserPublicationController.inbox()">
+          <a class="ed-bo__nav-item @isActive("messages")" href="@controllers.user.routes.UserPublicationController.inbox()">
             <span class="ed-bo__nav-dot"></span>Mensajes
           </a>
-          <a class="ed-bo__nav-item @isActive("notifications")" href="@routes.UserPublicationController.notifications()">
+          <a class="ed-bo__nav-item @isActive("notifications")" href="@controllers.user.routes.UserPublicationController.notifications()">
             <span class="ed-bo__nav-dot"></span>Notificaciones
           </a>
         </details>
