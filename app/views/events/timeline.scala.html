@@ -1,4 +1,4 @@
-@(grouped: Seq[(String, Seq[models.CommunityEvent])],
+@(grouped: Seq[(String, Seq[domains.events.models.CommunityEvent])],
   userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
 
 @*
@@ -21,8 +21,8 @@
       <h1 class="ed-events-timeline__title">Cronograma <em>completo</em></h1>
       <p class="ed-events-timeline__lead">Todos los eventos publicados, ordenados cronologicamente.</p>
       <div class="ed-events-timeline__actions">
-        <a class="ed-btn-secondary" href="@routes.EventController.index()">Volver al mes</a>
-        <a class="ed-btn-primary" href="@routes.EventController.calendarIcs()" download>Suscribirse (.ics)</a>
+        <a class="ed-btn-secondary" href="@controllers.web.routes.EventController.index()">Volver al mes</a>
+        <a class="ed-btn-primary" href="@controllers.web.routes.EventController.calendarIcs()" download>Suscribirse (.ics)</a>
       </div>
     </header>
 
