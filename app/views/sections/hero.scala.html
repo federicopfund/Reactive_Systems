@@ -1,0 +1,75 @@
+@(
+  seasonName: Option[String],
+  seasonTagline: Option[String],
+  pillars: Seq[domains.editorial.models.ManifestoPillar],
+  communityPublications: List[domains.publications.models.PublicationWithAuthor],
+  currentSeason: Option[domains.editorial.models.EditorialSeason]
+)(implicit request: RequestHeader)
+
+@*
+  Sección Hero — portada editorial.
+  Fragmento: sections/hero.scala.html
+  Parámetros:
+    - seasonName              Nombre de la temporada vigente (opcional)
+    - seasonTagline           Tagline/descripción de la temporada (opcional)
+    - pillars                 Pilares del manifiesto (para stat del aside)
+    - communityPublications   Publicaciones de la comunidad (para stat de conteo)
+    - currentSeason           Temporada vigente (para URL del Journey CTA)
+*@
+
+<section class="ed-hero">
+  <div class="ed-hero-main">
+    <div>
+      <div class="ed-hero-issue">
+        <span class="ed-hero-issue-dot"></span>
+        @seasonName.map { name =>
+          Temporada vigente · @name
+        }.getOrElse {
+          Temporada editorial en curso
+        }
+      </div>
+      <h1 class="ed-hero-title">
+        Sistemas que <em>responden,</em><br/>
+        <span class="ed-hero-rule"></span>
+        resisten y escalan.
+      </h1>
+    </div>
+    <div class="ed-hero-bottom">
+      <p class="ed-hero-subtitle">
+        @seasonTagline.getOrElse("Publicaciones en flujo continuo sobre el Manifiesto Reactivo: arquitecturas que conviven con el fallo, la carga y el cambio.")
+      </p>
+      <a href="@controllers.web.routes.HomeController.publicaciones()" class="ed-btn-primary">
+        Explorar publicaciones
+      </a>
+    </div>
+  </div>
+  <aside class="ed-hero-aside">
+    @defining(currentSeason.map(s => controllers.web.routes.HomeController.temporada(s.code)).getOrElse(controllers.web.routes.HomeController.temporadas())) { journeyHref =>
+      <a href="@journeyHref" class="ed-hero-journey-cta">
+        <span class="ed-hero-journey-cta__eyebrow">Journey editorial</span>
+        <span class="ed-hero-journey-cta__body">
+          @seasonName.map { name =>
+            Temporada vigente: @name · <em>Conocer la temporada</em>
+          }.getOrElse {
+            Recorré el archivo · <em>Ver temporadas</em>
+          }
+        </span>
+      </a>
+    }
+    <div class="ed-aside-stat">
+      <div class="ed-aside-stat-num">@{"%02d".format(pillars.size)} <span>·</span></div>
+      <div class="ed-aside-stat-label">Pilares
+del manifiesto</div>
+    </div>
+    <div class="ed-aside-stat">
+      <div class="ed-aside-stat-num">05</div>
+      <div class="ed-aside-stat-label">Etapas
+del proceso editorial</div>
+    </div>
+    <div class="ed-aside-stat">
+      <div class="ed-aside-stat-num">@{communityPublications.size.formatted("%02d")}</div>
+      <div class="ed-aside-stat-label">Publicaciones
+de la comunidad</div>
+    </div>
+  </aside>
+</section>
