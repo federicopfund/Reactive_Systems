@@ -1,0 +1,94 @@
+// ============================================
+// Portfolio / Colecciones / Autores — placeholder grid
+// ============================================
+
+.ed-placeholder-page {
+  padding: 4rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.ed-placeholder-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+}
+
+.ed-placeholder-title {
+  font-family: $font-display;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--ed-text);
+  line-height: 1;
+}
+
+.ed-placeholder-desc {
+  font-size: 0.9rem;
+  color: var(--ed-text-dim);
+  line-height: 1.7;
+  max-width: 48ch;
+  text-wrap: pretty;
+}
+
+.ed-placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border: 1px solid var(--ed-border);
+  width: 100%;
+}
+
+.ed-placeholder-card {
+  padding: 1.5rem;
+  border-right: 1px solid var(--ed-border);
+  border-bottom: 1px solid var(--ed-border);
+
+  &:nth-child(3n) { border-right: none; }
+
+  &__img {
+    height: 80px;
+    background: var(--ed-bg2);
+    border: 1px solid var(--ed-border);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    color: var(--ed-text-faint);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 6px,
+        rgba(128, 128, 128, 0.04) 6px,
+        rgba(128, 128, 128, 0.04) 7px
+      );
+    }
+  }
+
+  &__name {
+    font-family: $font-display;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ed-text);
+    margin-bottom: 0.3rem;
+  }
+
+  &__meta {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    color: var(--ed-text-faint);
+    letter-spacing: 0.08em;
+  }
+}
