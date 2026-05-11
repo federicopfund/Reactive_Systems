@@ -1,8 +1,8 @@
-package controllers
+package controllers.admin
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import models.EditorialStageCode
+import domains.editorial.models.EditorialStageCode
 
 class SeasonAutoAssignmentSpec extends AnyWordSpec with Matchers {
 
