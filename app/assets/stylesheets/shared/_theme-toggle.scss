@@ -1,0 +1,85 @@
+// ============================================
+// Theme Toggle — botón único (claro ↔ oscuro)
+// Muestra el glifo del tema OPUESTO al activo.
+// ============================================
+
+.ed-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  position: relative;
+  transition:
+    color $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
+
+  &:hover {
+    color: var(--color-text-primary);
+    transform: scale(1.08);
+  }
+
+  @include focus-ring(2px);
+}
+
+.ed-theme-toggle__glyph {
+  font-size: 1.05rem;
+  line-height: 1;
+  display: none;
+}
+
+// Modo oscuro activo → mostrar SOL (ofrece pasar a claro)
+:root[data-theme="noche"] .ed-theme-toggle__glyph--sun { display: inline-flex; }
+// Modo claro activo → mostrar LUNA (ofrece pasar a oscuro)
+:root[data-theme="crema"] .ed-theme-toggle__glyph--moon { display: inline-flex; }
+// Auto / sin definir → seguimos preferencia del sistema
+:root:not([data-theme="crema"]):not([data-theme="noche"]) {
+  .ed-theme-toggle__glyph--moon { display: inline-flex; }
+  @media (prefers-color-scheme: dark) {
+    .ed-theme-toggle__glyph--moon { display: none; }
+    .ed-theme-toggle__glyph--sun  { display: inline-flex; }
+  }
+}
+
+.ed-theme-toggle__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ── Variante compacta ──
+.ed-theme-toggle--compact {
+  width: 30px;
+  height: 30px;
+}
+
+// ── Sidebar editorial ──
+.ed-sidebar .ed-theme-toggle {
+  margin: $space-3 $space-4;
+}
+
+// ── Topbar admin — color consciente del tema activo ──
+.ed-bo .ed-theme-toggle {
+  color: var(--color-text-secondary);
+  &:hover { color: var(--color-text-primary); }
+}
+
+// En temas oscuros seguimos usando blanco para mayor contraste
+:root[data-theme="noche"] .ed-bo .ed-theme-toggle,
+:root[data-theme="negro"] .ed-bo .ed-theme-toggle,
+:root[data-theme="azul"]  .ed-bo .ed-theme-toggle {
+  color: rgba(255, 255, 255, 0.7);
+  &:hover { color: #fff; }
+}
