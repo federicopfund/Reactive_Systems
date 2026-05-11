@@ -1,0 +1,9 @@
+@(badges: List[domains.gamification.models.UserBadge])
+
+<div class="ed-badge-grid">
+  @badges.map { b =>
+    @domains.gamification.models.BadgeDefinition.get(b.badgeKey).map { def0 =>
+      @tags.badge(def0)
+    }
+  }
+</div>
