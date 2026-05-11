@@ -1,0 +1,75 @@
+@(isAuthenticated: Boolean,
+  username: Option[String],
+  collections: Seq[domains.collections.models.CollectionWithCount])(implicit request: RequestHeader, messages: Messages)
+
+@import domains.collections.models.CollectionAccent
+
+@main("Colecciones") {
+
+  <section class="ed-collections-hero">
+    <div class="ed-collections-hero__inner">
+      <div class="ed-collections-hero__eyebrow">
+        Portafolio editorial · Edición Nº @{f"${collections.size}%02d"}
+      </div>
+      <h1 class="ed-collections-hero__title">Colecciones<br/>de la edición</h1>
+      <div class="ed-collections-hero__rule" aria-hidden="true">
+        <span class="ed-collections-hero__rule-line"></span>
+        <span class="ed-collections-hero__rule-mark">❦</span>
+        <span class="ed-collections-hero__rule-line"></span>
+      </div>
+      <p class="ed-collections-hero__lead">
+        Recorridos temáticos sobre el manifiesto reactivo: piezas seleccionadas y
+        ordenadas por la curaduría editorial para leer en serie.
+      </p>
+    </div>
+  </section>
+
+  <section class="ed-collections-grid-wrap">
+  @if(collections.isEmpty) {
+    <div class="ed-collections-empty">
+      <div class="ed-collections-empty__ornament" aria-hidden="true">❧</div>
+      <h2>Sin colecciones publicadas todavía</h2>
+      <p>El equipo editorial está preparando las primeras curadurías. Volvé pronto.</p>
+    </div>
+  } else {
+    <div class="ed-collections-section-head">
+      <span class="ed-collections-section-head__line" aria-hidden="true"></span>
+      <span class="ed-collections-section-head__label">Tomos en circulación</span>
+      <span class="ed-collections-section-head__line" aria-hidden="true"></span>
+    </div>
+
+    <div class="ed-collections-grid">
+    @for((cwc, idx) <- collections.zipWithIndex) {
+      @defining(cwc.collection) { c =>
+        <a class="ed-collection-card ed-collection-card--@c.accent ed-collection-card--link"
+           href="@controllers.web.routes.HomeController.collectionDetail(c.slug)">
+          <div class="ed-collection-card__folio" aria-hidden="true">N.º @{f"${idx + 1}%02d"}</div>
+          <header class="ed-collection-card__head">
+            <span class="ed-collection-card__eyebrow">@c.coverLabel</span>
+            <span class="ed-collection-card__count">@cwc.itemCount @if(cwc.itemCount == 1){pieza}else{piezas}</span>
+          </header>
+          <h2 class="ed-collection-card__title">@c.name</h2>
+          @c.description.map { d =>
+            <p class="ed-collection-card__desc">@d</p>
+          }
+          <div class="ed-collection-card__sep" aria-hidden="true"></div>
+          <footer class="ed-collection-card__foot">
+            <span class="ed-collection-card__meta">curado · @c.publishedAt.map(_.toString.take(10)).getOrElse("")</span>
+            <span class="ed-collection-card__cta">Abrir →</span>
+          </footer>
+        </a>
+      }
+    }
+    </div>
+  }
+  </section>
+
+  <section class="ed-collections-cta">
+    <div class="ed-collections-cta__ornament" aria-hidden="true">·  ·  ·</div>
+    @if(isAuthenticated) {
+      <a href="@controllers.user.routes.UserPublicationController.dashboard()" class="ed-btn-primary">Ir a mi espacio · @username.getOrElse("")</a>
+    } else {
+      <a href="@controllers.auth.routes.AuthController.registerPage()" class="ed-btn-primary">Únete a la edición</a>
+    }
+  </section>
+}
