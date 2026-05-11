@@ -1,0 +1,14 @@
+@()(implicit request: RequestHeader)
+
+@*
+  Partial compartido — mensajes flash globales.
+  Incluir en cualquier vista que necesite mostrar éxito / error.
+  Uso: @partials.flash()
+*@
+
+@request.flash.get("success").map { msg =>
+  <div class="ed-section"><div class="ed-flash ed-flash--success">@msg</div></div>
+}
+@request.flash.get("error").map { msg =>
+  <div class="ed-section"><div class="ed-flash ed-flash--error">@msg</div></div>
+}
