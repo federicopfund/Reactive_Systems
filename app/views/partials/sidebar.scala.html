@@ -65,10 +65,11 @@
   </span>
 }
 
-@userId   = @{ request.session.get("userId") }
-@userName = @{ request.session.get("userName").getOrElse("Invitado") }
-@userRole = @{ request.session.get("userRole").getOrElse("guest") }
-@initials = @{
+@userId     = @{ request.session.get("userId") }
+@userName   = @{ request.session.get("userName").getOrElse("Invitado") }
+@userRole   = @{ request.session.get("userRole").getOrElse("guest") }
+@userAvatar = @{ request.session.get("avatarUrl").getOrElse("") }
+@initials   = @{
   val parts = userName.split("\\s+").filter(_.nonEmpty)
   (if (parts.length >= 2) parts(0).take(1) + parts(1).take(1) else userName.take(2)).toUpperCase
 }
@@ -231,7 +232,13 @@
   <div class="ed-sidebar-auth">
     @if(userId.isDefined) {
       <div class="ed-user-block">
-        <span class="ed-user-avatar" aria-hidden="true">@initials</span>
+        @if(userAvatar.nonEmpty) {
+          <span class="ed-user-avatar ed-user-avatar--img" aria-hidden="true">
+            <img src="@userAvatar" alt="@userName" class="ed-user-avatar__img">
+          </span>
+        } else {
+          <span class="ed-user-avatar" aria-hidden="true">@initials</span>
+        }
         <div class="ed-user-info">
           <div class="ed-user-name">@userName</div>
           <div class="ed-user-role">@roleLabel</div>

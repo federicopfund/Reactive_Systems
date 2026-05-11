@@ -354,7 +354,7 @@
 
 // Sidebar auth block (footer)
 .ed-sidebar-auth {
-  padding: 1rem 1.5rem;
+  padding: 0.35rem 1.25rem;
   border-top: 1px solid var(--ed-border);
   margin-top: auto;
 }
@@ -366,8 +366,8 @@
 }
 
 .ed-user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--ed-accent);
   color: var(--ed-bg);
@@ -379,6 +379,25 @@
   justify-content: center;
   flex-shrink: 0;
   text-decoration: none;
+  overflow: hidden;
+  // Ring igual al de la preview card
+  box-shadow:
+    0 0 0 2px var(--ed-bg2),
+    0 0 0 4px var(--color-accent);
+
+  // Variante con foto (fondo oscuro para que el ring luzca bien)
+  &--img {
+    background: #1a1109;
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    border-radius: 50%;
+    display: block;
+  }
 }
 
 .ed-user-info {
@@ -444,7 +463,7 @@
   display: flex;
   align-items: center;
   gap: $space-2;
-  margin: $space-3 1.25rem;
+  margin: 0.2rem 1.25rem;
   opacity: 0.85;
 }
 

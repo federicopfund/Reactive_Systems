@@ -25,6 +25,8 @@ import domains.messaging.engines.{MessageSent, MessageError}
 import shared.moderation.ModerationResult
 import controllers.actions.{UserAction, AuthRequest}
 import java.time.Instant
+import java.nio.file.{Files, Paths, StandardCopyOption}
+import play.api.Environment
 
 case class PublicationFormData(
   title: String,
@@ -56,7 +58,8 @@ class UserPublicationController @Inject()(
   analyticsAdapter: ReactiveAnalyticsAdapter,
   notificationAdapter: ReactiveNotificationAdapter,
   moderationAdapter: ReactiveModerationAdapter,
-  userAction: UserAction
+  userAction: UserAction,
+  env: Environment
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
 
   private def renderPublicationForm(
@@ -608,9 +611,57 @@ class UserPublicationController @Inject()(
   def updateProfile = userAction.async { implicit request: AuthRequest[AnyContent] =>
     val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
     def f(key: String) = form.get(key).flatMap(_.headOption).getOrElse("")
-    userRepo.updateProfile(request.userId, f("bio"), f("avatarUrl"), f("website"), f("location")).map { _ =>
+    val newAvatarUrl = f("avatarUrl")
+    userRepo.updateProfile(request.userId, f("bio"), newAvatarUrl, f("website"), f("location")).map { _ =>
       Redirect(routes.UserPublicationController.publicProfile(request.username))
         .flashing("success" -> "Perfil actualizado")
+        .addingToSession("avatarUrl" -> newAvatarUrl)
+    }
+  }
+
+  /** Upload avatar image from computer (multipart/form-data, max 5 MB) */
+  def uploadAvatar = Action.async(parse.multipartFormData(maxLength = 5 * 1024 * 1024)) { implicit request =>
+    val allowedTypes = Set("image/jpeg", "image/png", "image/gif", "image/webp")
+
+    request.session.get("userId") match {
+      case None =>
+        Future.successful(Unauthorized(Json.obj("error" -> "No autenticado")))
+
+      case Some(userIdStr) =>
+        val userId = userIdStr.toLong
+
+        request.body.file("avatarFile") match {
+          case None =>
+            Future.successful(BadRequest(Json.obj("error" -> "No se recibió ningún archivo")))
+
+          case Some(upload) =>
+            val contentType = upload.contentType.getOrElse("")
+            if (!allowedTypes(contentType)) {
+              Future.successful(BadRequest(Json.obj("error" -> "Formato no permitido. Usa JPG, PNG, GIF o WEBP.")))
+            } else {
+              val ext = contentType match {
+                case "image/png"  => "png"
+                case "image/gif"  => "gif"
+                case "image/webp" => "webp"
+                case _            => "jpg"
+              }
+              val uploadDir = Paths.get(env.rootPath.getAbsolutePath, "public", "uploads", "avatars")
+              Files.createDirectories(uploadDir)
+              val destPath = uploadDir.resolve(s"$userId.$ext")
+              // Mueve el archivo temporal al destino final de forma atómica
+              Files.move(upload.ref.path, destPath, StandardCopyOption.REPLACE_EXISTING)
+              val publicUrl = s"/assets/uploads/avatars/$userId.$ext"
+
+              userRepo.findById(userId).flatMap {
+                case None => Future.successful(NotFound(Json.obj("error" -> "Usuario no encontrado")))
+                case Some(user) =>
+                  userRepo.updateProfile(userId, user.bio, publicUrl, user.website, user.location).map { _ =>
+                    Ok(Json.obj("ok" -> true, "url" -> publicUrl))
+                      .addingToSession("avatarUrl" -> publicUrl)
+                  }
+              }
+            }
+        }
     }
   }
 

@@ -2,42 +2,306 @@
 
 @main("Editar perfil") {
   <section class="ed-dashboard">
+
     <header class="ed-dash-header">
-      <div class="ed-dash-eyebrow">@username</div>
-      <h1 class="ed-dash-title">Editar perfil</h1>
+      <div>
+        <div class="ed-dash-eyebrow">@username</div>
+        <h1 class="ed-dash-title">Editar perfil</h1>
+      </div>
       <p class="ed-dash-sub">Actualiza tu bio, ubicación y enlaces.</p>
     </header>
 
     @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
 
-    <form method="POST" action="@controllers.user.routes.UserPublicationController.updateProfile()" class="ed-form">
-      @helper.CSRF.formField
+    <div class="ed-edit-profile">
 
-      <div class="ed-field">
-        <label for="bio">Bio</label>
-        <textarea id="bio" name="bio" rows="4" maxlength="500">@user.bio</textarea>
-      </div>
-
-      <div class="ed-field-row">
-        <div class="ed-field">
-          <label for="location">Ubicación</label>
-          <input type="text" id="location" name="location" value="@user.location">
+      <!-- ── Vista previa (sidebar izquierdo) ── -->
+      <aside class="ed-edit-profile__preview">
+        <div class="ed-profile-preview-card">
+          <div class="ed-profile-preview-card__avatar" id="jsAvatarPreview">
+            @if(user.avatarUrl.nonEmpty) {
+              <img src="@user.avatarUrl" alt="@username" id="jsAvatarImg">
+            } else {
+              <span id="jsAvatarInitial">@username.headOption.map(_.toUpper).getOrElse("?")</span>
+            }
+          </div>
+          <div class="ed-profile-preview-card__name">@user.fullName</div>
+          <div class="ed-profile-preview-card__username">@@@username</div>
+          @if(user.bio.nonEmpty) {
+            <p class="ed-profile-preview-card__bio" id="jsPreviewBio">@user.bio</p>
+          } else {
+            <p class="ed-profile-preview-card__bio ed-profile-preview-card__bio--empty" id="jsPreviewBio">Sin bio todavía.</p>
+          }
+          @if(user.location.nonEmpty) {
+            <div class="ed-profile-preview-card__location" id="jsPreviewLocation">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21c-4-4-8-8-8-12a8 8 0 1 1 16 0c0 4-4 8-8 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              @user.location
+            </div>
+          } else {
+            <div class="ed-profile-preview-card__location ed-profile-preview-card__location--empty" id="jsPreviewLocation"></div>
+          }
         </div>
-        <div class="ed-field">
-          <label for="website">Sitio web</label>
-          <input type="url" id="website" name="website" value="@user.website" placeholder="https://…">
-        </div>
+        <p class="ed-edit-profile__preview-hint">Vista previa de tu perfil público</p>
+      </aside>
+
+      <!-- ── Formulario (columna principal) ── -->
+      <div class="ed-edit-profile__form">
+        <form method="POST" action="@controllers.user.routes.UserPublicationController.updateProfile()" class="ed-form" novalidate>
+          @helper.CSRF.formField
+
+          <!-- Sección 1: Identidad -->
+          <div class="ed-form-section">
+            <div class="ed-form-section__title">Identidad</div>
+
+            <div class="ed-field">
+              <label for="bio">
+                Bio
+                <span class="ed-field__counter"><span id="jsBioCount">@user.bio.length</span>/500</span>
+              </label>
+              <textarea id="bio" name="bio" rows="5" maxlength="500">@user.bio</textarea>
+            </div>
+
+            <div class="ed-field-row">
+              <div class="ed-field">
+                <label for="location">Ubicación</label>
+                <input type="text" id="location" name="location" value="@user.location" placeholder="Ciudad, País">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección 2: Foto de perfil -->
+          <div class="ed-form-section">
+            <div class="ed-form-section__title">Foto de perfil</div>
+
+            <!-- Zona drag-and-drop / click -->
+            <div class="ed-avatar-upload" id="jsAvatarDropzone" role="button" tabindex="0" aria-label="Subir foto de perfil">
+              <div class="ed-avatar-upload__icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <div class="ed-avatar-upload__text">
+                <strong>Arrastrá una imagen</strong> o hacé clic para explorar
+              </div>
+              <div class="ed-avatar-upload__hint">JPG, PNG, GIF, WEBP · máx. 5 MB</div>
+              <input type="file" id="jsAvatarFile" accept="image/jpeg,image/png,image/gif,image/webp" class="ed-avatar-upload__input" aria-hidden="true">
+            </div>
+
+            <!-- Barra de progreso (oculta por defecto) -->
+            <div class="ed-avatar-progress" id="jsAvatarProgress" hidden>
+              <div class="ed-avatar-progress__bar" id="jsAvatarBar"></div>
+            </div>
+            <div class="ed-avatar-status" id="jsAvatarStatus" aria-live="polite"></div>
+
+            <!-- URL manual (colapsada por defecto) -->
+            <div class="ed-field ed-field--url" style="margin-top:0.75rem">
+              <label for="avatarUrl">
+                O pegá una URL de imagen
+              </label>
+              <div class="ed-field__input-wrap">
+                <span class="ed-field__prefix" aria-hidden="true">IMG</span>
+                <input type="url" id="avatarUrl" name="avatarUrl" value="@user.avatarUrl" placeholder="https://…/avatar.jpg">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección 3: Presencia web -->
+          <div class="ed-form-section">
+            <div class="ed-form-section__title">Presencia web</div>
+
+            <div class="ed-field ed-field--url">
+              <label for="website">Sitio web</label>
+              <div class="ed-field__input-wrap">
+                <span class="ed-field__prefix" aria-hidden="true">URL</span>
+                <input type="url" id="website" name="website" value="@user.website" placeholder="https://tu-sitio.com">
+              </div>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="ed-form-actions">
+            <a href="@controllers.user.routes.UserPublicationController.publicProfile(username)" class="ed-btn-ghost">Cancelar</a>
+            <button type="submit" class="ed-btn-primary">Guardar perfil</button>
+          </div>
+
+        </form>
       </div>
 
-      <div class="ed-field">
-        <label for="avatarUrl">URL de avatar</label>
-        <input type="url" id="avatarUrl" name="avatarUrl" value="@user.avatarUrl" placeholder="https://…">
-      </div>
-
-      <div class="ed-form-actions">
-        <a href="@controllers.user.routes.UserPublicationController.publicProfile(username)" class="ed-btn-ghost">Cancelar</a>
-        <button type="submit" class="ed-btn-primary">Guardar perfil</button>
-      </div>
-    </form>
+    </div>
   </section>
+
+  <script>
+  (function () {
+    var UPLOAD_URL  = '@controllers.user.routes.UserPublicationController.uploadAvatar()';
+    var CSRF_TOKEN  = document.querySelector('input[name="csrfToken"]')
+                       ? document.querySelector('input[name="csrfToken"]').value
+                       : (document.querySelector('meta[name="csrf-token"]')
+                           ? document.querySelector('meta[name="csrf-token"]').content : '');
+
+    var initialChar = '@{username.headOption.map(_.toUpper).getOrElse("?")}';
+
+    // ── Bio counter + preview ──────────────────────────────
+    var bioTa    = document.getElementById('bio');
+    var bioCount = document.getElementById('jsBioCount');
+    var bioPrev  = document.getElementById('jsPreviewBio');
+
+    if (bioTa) {
+      bioTa.addEventListener('input', function () {
+        var len = bioTa.value.length;
+        if (bioCount) bioCount.textContent = len;
+        if (bioPrev) {
+          bioPrev.textContent = bioTa.value || 'Sin bio todavía.';
+          bioPrev.classList.toggle('ed-profile-preview-card__bio--empty', !bioTa.value);
+        }
+      });
+    }
+
+    // ── Location preview ──────────────────────────────────
+    var locInput = document.getElementById('location');
+    var locPrev  = document.getElementById('jsPreviewLocation');
+
+    if (locInput && locPrev) {
+      locInput.addEventListener('input', function () {
+        if (locInput.value) {
+          locPrev.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21c-4-4-8-8-8-12a8 8 0 1 1 16 0c0 4-4 8-8 12z"/><circle cx="12" cy="9" r="2.5"/></svg> ' + locInput.value;
+          locPrev.classList.remove('ed-profile-preview-card__location--empty');
+        } else {
+          locPrev.textContent = '';
+          locPrev.classList.add('ed-profile-preview-card__location--empty');
+        }
+      });
+    }
+
+    // ── Avatar URL manual → preview en vivo ──────────────
+    var avatarInput = document.getElementById('avatarUrl');
+    var avatarWrap  = document.getElementById('jsAvatarPreview');
+
+    function setAvatarPreview(url) {
+      if (!avatarWrap) return;
+      if (url) {
+        avatarWrap.innerHTML = '<img src="' + url + '" alt="preview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.remove()">';
+      } else {
+        avatarWrap.innerHTML = '<span>' + initialChar + '</span>';
+      }
+    }
+
+    if (avatarInput) {
+      avatarInput.addEventListener('input', function () {
+        setAvatarPreview(avatarInput.value.trim());
+      });
+    }
+
+    // ── Drag-and-drop + file upload ───────────────────────
+    var dropzone  = document.getElementById('jsAvatarDropzone');
+    var fileInput = document.getElementById('jsAvatarFile');
+    var progress  = document.getElementById('jsAvatarProgress');
+    var bar       = document.getElementById('jsAvatarBar');
+    var status    = document.getElementById('jsAvatarStatus');
+
+    function setStatus(msg, isError) {
+      if (!status) return;
+      status.textContent = msg;
+      status.className   = 'ed-avatar-status' + (isError ? ' ed-avatar-status--error' : ' ed-avatar-status--ok');
+    }
+
+    function uploadFile(file) {
+      var allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowed.includes(file.type)) {
+        setStatus('Formato no permitido. Usá JPG, PNG, GIF o WEBP.', true);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setStatus('El archivo supera los 5 MB.', true);
+        return;
+      }
+
+      var fd = new FormData();
+      fd.append('avatarFile', file);
+      fd.append('csrfToken', CSRF_TOKEN);
+
+      if (progress) progress.hidden = false;
+      if (bar) bar.style.width = '10%';
+      setStatus('Subiendo…', false);
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', UPLOAD_URL, true);
+
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable && bar) {
+          bar.style.width = Math.round((e.loaded / e.total) * 90) + '%';
+        }
+      };
+
+      xhr.onload = function () {
+        if (bar) bar.style.width = '100%';
+        setTimeout(function () { if (progress) progress.hidden = true; }, 600);
+
+        if (xhr.status === 200) {
+          try {
+            var res = JSON.parse(xhr.responseText);
+            if (res.ok && res.url) {
+              // Actualiza el input URL y la preview del formulario
+              if (avatarInput) avatarInput.value = res.url;
+              setAvatarPreview(res.url);
+              setStatus('Foto actualizada correctamente.', false);
+              if (dropzone) dropzone.classList.add('ed-avatar-upload--done');
+
+              // Actualiza el avatar del sidebar sin recargar
+              var sidebarAvatar = document.querySelector('.ed-user-avatar');
+              if (sidebarAvatar) {
+                sidebarAvatar.classList.add('ed-user-avatar--img');
+                sidebarAvatar.innerHTML = '<img src="' + res.url + '" alt="avatar" class="ed-user-avatar__img">';
+              }
+            } else {
+              setStatus(res.error || 'Error al subir la foto.', true);
+            }
+          } catch (e) {
+            setStatus('Respuesta inesperada del servidor.', true);
+          }
+        } else {
+          setStatus('Error ' + xhr.status + '. Intentá de nuevo.', true);
+        }
+      };
+
+      xhr.onerror = function () {
+        if (progress) progress.hidden = true;
+        setStatus('Error de red. Verificá tu conexión.', true);
+      };
+
+      xhr.send(fd);
+    }
+
+    // Click en la zona → abre el file picker
+    if (dropzone && fileInput) {
+      dropzone.addEventListener('click', function (e) {
+        if (e.target !== fileInput) fileInput.click();
+      });
+      dropzone.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+      });
+
+      fileInput.addEventListener('change', function () {
+        if (fileInput.files && fileInput.files[0]) uploadFile(fileInput.files[0]);
+      });
+
+      // Drag & drop
+      dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropzone.classList.add('ed-avatar-upload--drag');
+      });
+      dropzone.addEventListener('dragleave', function () {
+        dropzone.classList.remove('ed-avatar-upload--drag');
+      });
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('ed-avatar-upload--drag');
+        var files = e.dataTransfer.files;
+        if (files && files[0]) uploadFile(files[0]);
+      });
+    }
+  })();
+  </script>
 }

@@ -81,6 +81,68 @@
     color: var(--ed-text-faint);
     margin-top: 0.3rem;
   }
+
+  // Contador de caracteres (bio, etc.)
+  &__counter {
+    float: right;
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    color: var(--ed-text-faint);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+
+  // Input con prefijo textual (ej. "URL", "IMG")
+  &__input-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--ed-border-strong);
+    transition: border-color 0.15s;
+
+    &:focus-within { border-color: var(--ed-accent); }
+
+    input {
+      border: none !important;
+      outline: none;
+      flex: 1;
+    }
+  }
+
+  &__prefix {
+    font-family: $font-mono;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    background: var(--ed-bg3);
+    border-right: 1px solid var(--ed-border-strong);
+    color: var(--ed-text-faint);
+    padding: 0 0.65rem;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    user-select: none;
+  }
+}
+
+// Fila de campos horizontales
+.ed-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Acciones del formulario (footer)
+.ed-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 1.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--ed-border);
 }
 
 .ed-form {
