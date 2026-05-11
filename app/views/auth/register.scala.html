@@ -1,6 +1,6 @@
-@(registerForm: Form[controllers.UserRegisterForm])(implicit request: RequestHeader, flash: Flash, messages: Messages)
+@(registerForm: Form[controllers.auth.UserRegisterForm])(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@main("Crear cuenta") {
+@layouts.authLayout("Crear cuenta") {
   <section class="ed-auth-page">
     <aside class="ed-auth-side">
       <div class="ed-auth-side__eyebrow">Únete a la edición</div>
@@ -20,7 +20,7 @@
       @flash.get("error").map { m => <div class="ed-flash ed-flash--error">@m</div> }
       @registerForm.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
 
-      <form method="POST" action="@routes.AuthController.register()" class="ed-form">
+      <form method="POST" action="@controllers.auth.routes.AuthController.register()" class="ed-form">
         @helper.CSRF.formField
 
         <div class="ed-field">
@@ -64,7 +64,7 @@
 
       <div class="ed-auth-aux">
         ¿Ya tienes cuenta?
-        <a href="@routes.AuthController.loginPage()">Inicia sesión</a>
+        <a href="@controllers.auth.routes.AuthController.loginPage()">Inicia sesión</a>
       </div>
     </div>
   </section>
