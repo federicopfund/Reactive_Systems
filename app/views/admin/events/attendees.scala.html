@@ -1,23 +1,23 @@
-@(e: models.CommunityEvent,
-  attendees: Seq[models.EventAttendee],
-  usersById: Map[Long, Option[models.User]],
+@(e: domains.events.models.CommunityEvent,
+  attendees: Seq[domains.events.models.EventAttendee],
+  usersById: Map[Long, Option[domains.identity.models.User]],
   countsByStatus: Map[String, Int])(implicit request: RequestHeader)
 
-@import models.EventEnums
+@import domains.events.models.EventEnums
 
-@admin.adminLayout(s"Asistentes: ${e.title}", "events") {
+@views.html.admin.adminLayout(s"Asistentes: ${e.title}", "events") {
 
   <div class="ed-bo__page-head">
     <div>
       <div class="ed-bo__breadcrumb">
-        <a href="@routes.AdminEventController.list(None, 0)">Eventos</a> /
-        <a href="@routes.AdminEventController.view(e.id.get)">@e.title</a> /
+        <a href="@controllers.admin.routes.AdminEventController.list(None, 0)">Eventos</a> /
+        <a href="@controllers.admin.routes.AdminEventController.view(e.id.get)">@e.title</a> /
         <span>Asistentes</span>
       </div>
       <h1 class="ed-bo__page-title">Asistentes — @e.title</h1>
     </div>
     <div class="ed-bo__page-actions">
-      <a class="ed-btn-secondary" href="@routes.AdminEventController.attendeesCsv(e.id.get)">Exportar CSV</a>
+      <a class="ed-btn-secondary" href="@controllers.admin.routes.AdminEventController.attendeesCsv(e.id.get)">Exportar CSV</a>
     </div>
   </div>
 
