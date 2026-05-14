@@ -1,0 +1,162 @@
+name: CI/CD → IBM Code Engine
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE:      us.icr.io/reactive-systems-ns/reactive-systems
+  CE_PROJECT: reactive-systems-project
+  CE_APP:     reactive-systems-app
+  CE_REGION:  us-south
+  APP_URL:    https://reactive-systems-app.29uatxtikeu0.us-south.codeengine.appdomain.cloud
+
+jobs:
+  # ────────────────────────────────────────────────────────────
+  # JOB 1 — CI: compilar y ejecutar tests
+  # ────────────────────────────────────────────────────────────
+  test:
+    name: Test (sbt)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: sbt
+
+      - name: Cache sbt / ivy2
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.cache/coursier
+          key: sbt-${{ hashFiles('build.sbt', 'project/plugins.sbt', 'project/build.properties') }}
+          restore-keys: sbt-
+
+      - name: Run tests
+        run: sbt -batch -no-colors test
+        env:
+          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
+
+  # ────────────────────────────────────────────────────────────
+  # JOB 2 — CD: build Docker → push ICR → deploy Code Engine
+  # Solo corre en push a main (no en PRs)
+  # ────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy → IBM Code Engine
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Docker Buildx con cache ──────────────────────────────
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-${{ github.sha }}
+          restore-keys: buildx-
+
+      # ── Instalar IBM Cloud CLI + plugins ─────────────────────
+      - name: Install IBM Cloud CLI
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install code-engine      -f -q
+          ibmcloud plugin install container-registry -f -q
+
+      # ── Login IBM Cloud ──────────────────────────────────────
+      - name: IBM Cloud login
+        run: |
+          ibmcloud login \
+            --apikey "${{ secrets.IBM_CLOUD_API_KEY }}" \
+            -r "${{ env.CE_REGION }}" \
+            -g Default \
+            -q
+          ibmcloud target -r "${{ env.CE_REGION }}" -g Default
+
+      # ── Login IBM Container Registry ─────────────────────────
+      - name: Login IBM Container Registry
+        run: ibmcloud cr login --client docker
+
+      # ── Build y push de la imagen Docker ────────────────────
+      - name: Build & push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to:   type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      # Previene crecimiento ilimitado del cache
+      - name: Rotate Buildx cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      # ── Deploy en Code Engine ────────────────────────────────
+      - name: Select Code Engine project
+        run: ibmcloud ce project select --name "${{ env.CE_PROJECT }}"
+
+      - name: Update Code Engine application
+        run: |
+          ibmcloud ce application update \
+            --name  "${{ env.CE_APP }}" \
+            --image "${{ env.IMAGE }}:${{ github.sha }}" \
+            --env   APPLICATION_SECRET="${{ secrets.APPLICATION_SECRET }}" \
+            --env   DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            --env   DATABASE_USER="${{ secrets.DATABASE_USER }}" \
+            --env   DATABASE_PASSWORD="${{ secrets.DATABASE_PASSWORD }}" \
+            --env   JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -Dplay.server.pidfile.path=/dev/null -Dplay.filters.hosts.allowed.0=.us-south.codeengine.appdomain.cloud -Dplay.filters.hosts.allowed.1=localhost" \
+            --wait
+
+      # ── Health check post-deploy ─────────────────────────────
+      - name: Health check
+        run: |
+          echo "Esperando que la aplicación esté lista..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.APP_URL }}")
+            echo "Intento $i → HTTP $STATUS"
+            if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 302 ]; then
+              echo "✓ Aplicación respondiendo correctamente (HTTP $STATUS)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "✗ La aplicación no respondió en 2 minutos"
+          exit 1
+
+      # ── Notificación de éxito ────────────────────────────────
+      - name: Deploy summary
+        if: success()
+        run: |
+          echo "### Deploy exitoso :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **App** | \`${{ env.CE_APP }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Imagen** | \`${{ env.IMAGE }}:${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **URL** | ${{ env.APP_URL }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Actor** | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY

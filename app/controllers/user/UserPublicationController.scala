@@ -249,6 +249,10 @@ class UserPublicationController @Inject()(
             else
               existingPub.status
 
+            val formAction = request.body.asFormUrlEncoded
+              .flatMap(_.get("action").flatMap(_.headOption))
+              .getOrElse("draft")
+
             val updatedPub = existingPub.copy(
               title = formData.title,
               slug = slug,
@@ -261,16 +265,58 @@ class UserPublicationController @Inject()(
               updatedAt = Instant.now()
             )
             
-            publicationRepo.update(updatedPub).map { success =>
-              if (success) {
-                val msg = if (newStatus == PublicationStatus.Draft.toString)
-                  "Publicación actualizada. Enviala para revisión cuando esté lista."
-                else
-                  "Publicación actualizada exitosamente"
-                Redirect(routes.UserPublicationController.dashboard())
-                  .flashing("success" -> msg)
+            publicationRepo.update(updatedPub).flatMap { success =>
+              if (!success) {
+                Future.successful(InternalServerError("Error al actualizar la publicación"))
+              } else if (formAction == "submit_review" &&
+                         (newStatus == PublicationStatus.Draft.toString ||
+                          newStatus == PublicationStatus.Rejected.toString)) {
+                val isRevision = existingPub.updatedAt != existingPub.createdAt
+                moderationAdapter.moderate(
+                  contentId = id,
+                  contentType = "publication",
+                  authorId = request.userId,
+                  title = Some(formData.title),
+                  content = formData.content
+                ).flatMap {
+                  case ModerationResult(_, verdict, flags, score) =>
+                    val submittedStatus = if (verdict == "auto_rejected") "rejected" else PublicationStatus.Pending.toString
+                    publicationRepo.update(updatedPub.copy(status = submittedStatus, updatedAt = Instant.now())).map { _ =>
+                      analyticsAdapter.trackEvent("publication.submitted", Some(request.userId), Map(
+                        "publicationId" -> id.toString,
+                        "verdict" -> verdict,
+                        "score" -> score.toString,
+                        "isRevision" -> isRevision.toString
+                      ))
+                      notificationAdapter.notify(
+                        userId = request.userId,
+                        userEmail = None,
+                        notificationType = "publication_submitted",
+                        title = if (verdict == "auto_rejected") "Publicación rechazada"
+                                else if (isRevision) "Nueva versión enviada"
+                                else "Publicación enviada",
+                        message = if (verdict == "auto_rejected")
+                          s"Tu publicación '${formData.title}' no pasó la moderación: ${flags.mkString(", ")}"
+                        else if (isRevision)
+                          s"La nueva versión de '${formData.title}' fue enviada al equipo editorial para su revisión."
+                        else
+                          s"Tu publicación '${formData.title}' fue enviada para revisión.",
+                        publicationId = Some(id)
+                      )
+                      gamificationAdapter.checkBadges(request.userId, "publication", Map("publicationCount" -> 1L))
+                      if (verdict == "auto_rejected")
+                        Redirect(routes.UserPublicationController.dashboard())
+                          .flashing("error" -> s"Publicación rechazada automáticamente: ${flags.mkString(", ")}")
+                      else
+                        Redirect(routes.UserPublicationController.dashboard())
+                          .flashing("success" -> s"Publicación enviada para revisión (moderación: $verdict)")
+                    }
+                }
               } else {
-                InternalServerError("Error al actualizar la publicación")
+                Future.successful(
+                  Redirect(routes.UserPublicationController.editPublicationForm(id))
+                    .flashing("success" -> "Borrador guardado correctamente")
+                )
               }
             }
           }
