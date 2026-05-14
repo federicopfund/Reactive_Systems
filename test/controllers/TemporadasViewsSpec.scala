@@ -57,7 +57,7 @@ class TemporadasViewsSpec extends AnyWordSpec with Matchers {
       )
 
       val html = views.html.seasons.detail(season, List(publication), Seq.empty, Seq.empty, Seq.empty).body
-      html should include("Índice de piezas asociadas (1)")
+      html should include("Índice de piezas (1)")
       html should include("/publicaciones/mensajeria-reactiva")
       html should include("Mensajería reactiva")
     }
