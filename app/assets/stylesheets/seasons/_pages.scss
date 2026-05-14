@@ -1,48 +1,59 @@
 // ============================================
 // Temporadas — detalle de temporada editorial
-// Transmite la "información de la temporada":
-// estado vigente, código, nombre, tagline, fechas,
-// descripción, ensayo de apertura e índice de piezas.
 // ============================================
 
+// ── Contenedor centrado compartido ──────────────────────────────
+%season-container {
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+// ── Hero ─────────────────────────────────────────────────────────
 .ed-season-hero {
-  padding: 3.5rem 3.5rem 2.5rem;
+  padding: 4rem 2.5rem 3rem;
   border-bottom: 1px solid var(--ed-border);
   background: var(--ed-bg);
 }
 
 .ed-season-hero__back {
+  @extend %season-container;
+  display: block;
   font-family: $font-mono;
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 
   a {
     color: var(--ed-text-dim);
     text-decoration: none;
-
+    @include focus-ring;
     &:hover { color: var(--ed-accent); }
   }
 }
 
 .ed-season-hero__eyebrow {
+  @extend %season-container;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   font-family: $font-mono;
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ed-text-dim);
-  margin-bottom: 1rem;
+  color: var(--ed-text-faint);
+  margin-bottom: 1.25rem;
 
   code {
     font-family: $font-mono;
+    font-size: 0.68rem;
     color: var(--ed-text);
     background: var(--ed-bg2);
-    padding: 0.1rem 0.4rem;
-    border-radius: 2px;
+    padding: 0.15rem 0.55rem;
+    border-radius: 3px;
+    border: 1px solid var(--ed-border);
   }
 }
 
@@ -51,102 +62,122 @@
   height: 8px;
   border-radius: 50%;
   background: var(--ed-text-faint);
+  flex-shrink: 0;
 
   &.is-active {
     background: var(--ed-accent);
-    box-shadow: 0 0 0 3px rgba(255, 109, 56, 0.15);
-    animation: ed-season-hero-pulse 1.6s ease-in-out infinite;
+    box-shadow: 0 0 0 3px rgba(193, 68, 14, 0.18);
+    @include motion-safe {
+      animation: ed-season-pulse 1.8s ease-in-out infinite;
+    }
   }
 }
 
-@keyframes ed-season-hero-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 109, 56, 0.55);
-    transform: scale(1);
-  }
-  70% {
-    box-shadow: 0 0 0 8px rgba(255, 109, 56, 0);
-    transform: scale(1.15);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 109, 56, 0);
-    transform: scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ed-season-hero__dot.is-active {
-    animation: none;
-  }
+@keyframes ed-season-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(193, 68, 14, 0.55); transform: scale(1);    }
+  65%  { box-shadow: 0 0 0 7px rgba(193, 68, 14, 0);    transform: scale(1.12); }
+  100% { box-shadow: 0 0 0 0   rgba(193, 68, 14, 0);    transform: scale(1);    }
 }
 
 .ed-season-hero__title {
+  @extend %season-container;
+  display: block;
   font-family: $font-display;
-  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  font-size: clamp(2.4rem, 5vw, 4rem);
   font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  line-height: 1.0;
+  letter-spacing: -0.025em;
   color: var(--ed-text);
-  margin: 0 0 1rem;
+  margin: 0 0 1.25rem;
 }
 
 .ed-season-hero__tagline {
+  @extend %season-container;
+  display: block;
   font-family: $font-body;
   font-style: italic;
-  font-size: 1.05rem;
-  line-height: 1.55;
+  font-size: 1.1rem;
+  line-height: 1.6;
   color: var(--ed-text-dim);
-  max-width: 60ch;
-  margin: 0 0 2rem;
+  max-width: 58ch;
+  margin: 0 0 2.5rem;
 }
 
 .ed-season-hero__meta {
+  @extend %season-container;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0;
   margin: 0;
-  padding-top: 1.5rem;
+  padding-top: 2rem;
   border-top: 1px solid var(--ed-border);
 
-  > div { margin: 0; }
+  > div {
+    margin: 0;
+    padding: 1.1rem 1.5rem 1.1rem 0;
+    position: relative;
+
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 25%;
+      height: 50%;
+      width: 1px;
+      background: var(--ed-border);
+    }
+  }
 
   dt {
     font-family: $font-mono;
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--ed-text-faint);
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.45rem;
   }
 
   dd {
     font-family: $font-display;
-    font-size: 1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
     color: var(--ed-text);
     margin: 0;
+    line-height: 1.2;
   }
 }
 
+// ── Bloques de sección ───────────────────────────────────────────
 .ed-season-block {
-  padding: 2.25rem 3.5rem;
+  padding: 2.75rem 2.5rem;
   border-bottom: 1px solid var(--ed-border);
 }
 
 .ed-season-block__label {
+  @extend %season-container;
+  display: block;
   font-family: $font-mono;
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ed-text-faint);
-  margin: 0 0 1rem;
+  margin: 0 0 1.75rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--ed-accent);
 }
 
 .ed-season-block__body {
+  // No @extend %season-container aquí: max-width: 1080px sería dead code
+  // porque max-width: 68ch lo sobreescribe. Solo se toman margin/width.
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  display: block;
   font-family: $font-body;
   font-size: 1rem;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--ed-text);
-  max-width: 70ch;
+  max-width: 68ch;
 
   p { margin: 0 0 1rem; }
 }
@@ -155,29 +186,389 @@
   background: var(--ed-bg2);
 }
 
+// ── Índice de piezas ─────────────────────────────────────────────
 .ed-season-index {
-  list-style: decimal;
-  padding-left: 1.5rem;
+  @extend %season-container;
+  list-style: none;
+  padding: 0;
   margin: 0;
-  max-width: 70ch;
+  counter-reset: season-item;
 
   li {
-    padding: 0.6rem 0;
-    border-bottom: 1px dotted var(--ed-border);
-    font-family: $font-body;
+    counter-increment: season-item;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--ed-border);
+
+    &::before {
+      content: counter(season-item, decimal-leading-zero);
+      font-family: $font-mono;
+      font-size: 0.58rem;
+      color: var(--ed-text-faint);
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+      width: 2ch;
+    }
 
     a {
       color: var(--ed-text);
       text-decoration: none;
+      font-family: $font-body;
       font-weight: 600;
-
+      font-size: 0.97rem;
+      line-height: 1.4;
+      @include focus-ring;
       &:hover { color: var(--ed-accent); }
     }
   }
 }
 
+.ed-season-index__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .ed-season-index__author {
-  color: var(--ed-text-dim);
+  font-family: $font-body;
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--ed-text-dim);
+}
+
+.ed-season-index__cat {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ed-accent);
+  background: rgba(193, 68, 14, 0.08);
+  padding: 0.1rem 0.45rem;
+  border-radius: 2px;
+}
+
+// ── Eventos de la temporada ──────────────────────────────────────
+.ed-season-events {
+  background: var(--ed-bg);
+}
+
+.ed-season-events__grid {
+  @extend %season-container;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-top: 0;
+}
+
+%ed-season-event-card-base {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1.5rem 1.4rem;
+  border: 1px solid var(--ed-border);
+  border-radius: 6px;
+  background: var(--ed-bg2);
+  text-decoration: none;
+  @include focus-ring(3px);
+}
+
+.ed-season-event-card {
+  @extend %ed-season-event-card-base;
+
+  @include motion-safe {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  &:hover {
+    border-color: var(--ed-accent);
+    box-shadow: 0 4px 18px rgba(193, 68, 14, 0.1);
+    @include motion-safe { transform: translateY(-2px); }
+  }
+
+  &.is-live {
+    border-color: var(--ed-accent);
+    background: rgba(193, 68, 14, 0.04);
+    box-shadow: 0 0 0 1px rgba(193, 68, 14, 0.15);
+  }
+
+  &.is-past {
+    opacity: 0.65;
+    filter: grayscale(0.25);
+  }
+}
+
+.ed-season-event-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+%ed-event-pill-base {
+  font-family: $font-mono;
+  font-size: 0.57rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+.ed-season-event-card__type {
+  @extend %ed-event-pill-base;
+  color: var(--ed-accent);
+  background: rgba(193, 68, 14, 0.1);
+}
+
+.ed-season-event-card__modality {
+  @extend %ed-event-pill-base;
+  color: var(--ed-text-faint);
+  background: var(--ed-bg);
+  border: 1px solid var(--ed-border);
+}
+
+.ed-season-event-card__title {
+  font-family: $font-display;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.ed-season-event-card__summary {
+  font-family: $font-body;
+  font-size: 0.875rem;
+  color: var(--ed-text-dim);
+  margin: 0;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.ed-season-event-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ed-border);
+  flex-wrap: wrap;
+}
+
+.ed-season-event-card__date {
+  font-family: $font-mono;
+  font-size: 0.63rem;
+  color: var(--ed-text-dim);
+  letter-spacing: 0.06em;
+}
+
+%ed-season-badge-base {
+  font-family: $font-mono;
+  font-size: 0.54rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+.ed-season-event-card__live-badge {
+  @extend %ed-season-badge-base;
+  background: var(--ed-accent);
+  color: #fff;
+  @include motion-safe {
+    animation: ed-season-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+.ed-season-event-card__upcoming-badge {
+  @extend %ed-season-badge-base;
+  background: rgba(193, 68, 14, 0.1);
+  color: var(--ed-accent);
+  border: 1px solid rgba(193, 68, 14, 0.2);
+}
+
+// ── Colecciones editoriales ──────────────────────────────────────
+.ed-season-collections {
+  background: var(--ed-bg2);
+}
+
+.ed-season-collections__grid {
+  @extend %season-container;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.1rem;
+  margin-top: 0;
+}
+
+.ed-season-col-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 1.4rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--ed-accent);
+  background: var(--ed-bg);
+  text-decoration: none;
+  @include focus-ring(3px);
+
+  @include motion-safe {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  &[data-accent="ambar"]   { border-left-color: #b28600; }
+  &[data-accent="oliva"]   { border-left-color: #4a7c26; }
+  &[data-accent="indigo"]  { border-left-color: #3d4fc2; }
+  &[data-accent="bordo"]   { border-left-color: #8b1a2e; }
+  &[data-accent="grafito"] { border-left-color: #3a3629; }
+}
+
+.ed-season-col-card__label {
+  font-family: $font-mono;
+  font-size: 0.57rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  margin: 0;
+}
+
+.ed-season-col-card__name {
+  font-family: $font-display;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.ed-season-col-card__desc {
+  font-family: $font-body;
+  font-size: 0.84rem;
+  color: var(--ed-text-dim);
+  margin: 0;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.ed-season-col-card__count {
+  font-family: $font-mono;
+  font-size: 0.59rem;
+  color: var(--ed-text-faint);
+  letter-spacing: 0.1em;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ed-border);
+}
+
+// ── Navegación entre temporadas ──────────────────────────────────
+.ed-season-nav {
+  border-top: 1px solid var(--ed-border);
+  background: var(--ed-bg2);
+  padding: 2.5rem;
+}
+
+.ed-season-nav__inner {
+  @extend %season-container;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.ed-season-nav__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-decoration: none;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--ed-border);
+  border-radius: 6px;
+  background: var(--ed-bg);
+  @include focus-ring(3px);
+
+  @include motion-safe {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  &--prev { align-items: flex-start; }
+  &--next { align-items: flex-end; }
+  &--empty { opacity: 0; pointer-events: none; }
+
+  &:not(.ed-season-nav__item--empty):hover {
+    border-color: var(--ed-accent);
+    box-shadow: 0 3px 14px rgba(193, 68, 14, 0.08);
+    .ed-season-nav__name { color: var(--ed-accent); }
+  }
+}
+
+.ed-season-nav__direction {
+  font-family: $font-mono;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+}
+
+.ed-season-nav__name {
+  font-family: $font-display;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ed-text);
+  line-height: 1.25;
+  @include motion-safe { transition: color 0.15s ease; }
+}
+
+.ed-season-nav__code {
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  color: var(--ed-text-dim);
+  background: var(--ed-bg2);
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+}
+
+// ── Responsive ───────────────────────────────────────────────────
+@include respond-to(md) {
+  .ed-season-hero { padding: 2.5rem 1.5rem 2rem; }
+
+  .ed-season-hero__meta {
+    grid-template-columns: repeat(3, 1fr);
+    > div:not(:last-child)::after { display: none; }
+    > div { padding: 0.9rem 0; border-bottom: 1px solid var(--ed-border); }
+  }
+
+  .ed-season-block { padding: 2rem 1.5rem; }
+  .ed-season-events__grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .ed-season-collections__grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .ed-season-nav { padding: 2rem 1.5rem; }
+}
+
+@include respond-to(sm) {
+  .ed-season-hero { padding: 2rem 1.25rem 1.5rem; }
+  .ed-season-hero__meta { grid-template-columns: repeat(2, 1fr); }
+  .ed-season-hero__title { font-size: clamp(1.9rem, 8vw, 2.8rem); }
+
+  .ed-season-block { padding: 1.75rem 1.25rem; }
+  .ed-season-events__grid,
+  .ed-season-collections__grid { grid-template-columns: 1fr; }
+
+  .ed-season-nav { padding: 1.5rem 1.25rem; }
+  .ed-season-nav__inner { grid-template-columns: 1fr; }
+  .ed-season-nav__item--next { align-items: flex-start; }
+  .ed-season-nav__item--empty { display: none; }
 }

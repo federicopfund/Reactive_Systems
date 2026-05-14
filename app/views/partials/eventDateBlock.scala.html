@@ -5,13 +5,13 @@
 *@
 
 @monthLabel = @{
-  e.localStart.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es")).toUpperCase
+  e.localStart.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.forLanguageTag("es")).toUpperCase
 }
 
 <div class="ed-event-date-block" aria-hidden="true">
   <span class="ed-event-date-block__month">@monthLabel</span>
   <span class="ed-event-date-block__day">@e.localStart.getDayOfMonth</span>
   <span class="ed-event-date-block__weekday">@{
-    e.localStart.getDayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es"))
+    e.localStart.getDayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.forLanguageTag("es"))
   }</span>
 </div>

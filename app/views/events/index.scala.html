@@ -10,7 +10,7 @@
 *@
 
 @monthLabel = @{
-  yearMonth.getMonth.getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es")).capitalize
+  yearMonth.getMonth.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.forLanguageTag("es")).capitalize
 }
 
 @key(ym: java.time.YearMonth) = @{ f"${ym.getYear}%04d-${ym.getMonthValue}%02d" }
@@ -40,9 +40,9 @@
     </header>
 
     <nav class="ed-events-agenda__nav" aria-label="Navegacion de meses">
-      <a class="ed-btn-ghost" href="@controllers.web.routes.EventController.month(key(prev))" aria-label="Mes anterior">‹ @prev.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es")).capitalize</a>
+      <a class="ed-btn-ghost" href="@controllers.web.routes.EventController.month(key(prev))" aria-label="Mes anterior">‹ @prev.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.forLanguageTag("es")).capitalize</a>
       <span class="ed-events-agenda__current">@monthLabel @yearMonth.getYear</span>
-      <a class="ed-btn-ghost" href="@controllers.web.routes.EventController.month(key(next))" aria-label="Mes siguiente">@next.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es")).capitalize ›</a>
+      <a class="ed-btn-ghost" href="@controllers.web.routes.EventController.month(key(next))" aria-label="Mes siguiente">@next.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.forLanguageTag("es")).capitalize ›</a>
     </nav>
 
     <div class="ed-events-agenda__layout">

@@ -1,0 +1,11 @@
+{
+  "name": "Reactive Systems",
+  "forwardPorts": [9000],
+  "portsAttributes": {
+    "9000": {
+      "label": "Play App",
+      "onAutoForward": "notify"
+    }
+  },
+  "postStartCommand": "echo '\\n🚀 App URL: https://${CODESPACE_NAME}-9000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}\\n'"
+}
