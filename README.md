@@ -589,6 +589,134 @@ Español (default) e inglés vía `conf/messages` y `conf/messages.en`.
 
 ---
 
+## ☁️ Arquitectura de Deployment — IBM Cloud
+
+La aplicación corre en **IBM Code Engine** (serverless containers, us-south) con base de datos externa en **Supabase PostgreSQL** (Session Pooler, IPv4).
+
+```mermaid
+graph TB
+    subgraph Internet["🌐 Internet"]
+        U["👤 Usuario / Browser"]
+    end
+
+    subgraph IBMCloud["☁️ IBM Cloud — us-south (Dallas)"]
+        subgraph CE["IBM Code Engine — reactive-systems-project"]
+            APP1["🟢 reactive-systems-app\ninstance-1"]
+            APP2["🟢 reactive-systems-app\ninstance-2"]
+            APP3["🟡 reactive-systems-app\ninstance-3 (on demand)"]
+            LB[["⚖️ Load Balancer\nauto-scaling 1→3"]]
+        end
+
+        subgraph CR["IBM Container Registry — us.icr.io"]
+            NS["📦 reactive-systems-ns\nreactive-systems:latest\n(Eclipse Temurin 17-jre\n+ Play Framework)"]
+        end
+    end
+
+    subgraph Supabase["🐘 Supabase — AWS us-west-1"]
+        POOL["🔀 Session Pooler\naws-1-us-west-1.pooler.supabase.com\n:5432 (IPv4)"]
+        PG[("🗄️ PostgreSQL 15\n22 tablas\nfdubncgzipnrhcnfqhhu")]
+    end
+
+    subgraph DevEnv["💻 Dev Container — GitHub Codespaces"]
+        SRC["📁 Código fuente\nPlay Framework + Scala 2.13"]
+        DOCKER["🐳 docker build\n(Multi-stage: sbt → JRE)"]
+        CLI["🔧 ibmcloud CLI\nce application update"]
+    end
+
+    U -->|"HTTPS\n*.us-south.codeengine.appdomain.cloud"| LB
+    LB --> APP1
+    LB --> APP2
+    LB -.->|"scale-out"| APP3
+
+    APP1 -->|"JDBC + SSL\nSession Pooler (IPv4)"| POOL
+    APP2 -->|"JDBC + SSL"| POOL
+    APP3 -->|"JDBC + SSL"| POOL
+    POOL --> PG
+
+    CE -->|"pull image\niamapikey auth"| NS
+
+    SRC --> DOCKER
+    DOCKER -->|"docker push\nus.icr.io/..."| NS
+    CLI -->|"rolling update\n(zero downtime)"| CE
+
+    style IBMCloud fill:#0530ad,stroke:#4589ff,color:#fff
+    style CE fill:#0043ce,stroke:#4589ff,color:#fff
+    style CR fill:#001d6c,stroke:#4589ff,color:#fff
+    style Supabase fill:#1a7f4b,stroke:#3ecf8e,color:#fff
+    style DevEnv fill:#2d3748,stroke:#718096,color:#fff
+    style Internet fill:#1a202c,stroke:#4a5568,color:#fff
+    style LB fill:#0072c3,stroke:#4589ff,color:#fff
+    style APP1 fill:#24a148,stroke:#3ecf8e,color:#fff
+    style APP2 fill:#24a148,stroke:#3ecf8e,color:#fff
+    style APP3 fill:#f1c21b,stroke:#f1c21b,color:#000
+    style NS fill:#0043ce,stroke:#82cfff,color:#fff
+    style POOL fill:#136b3f,stroke:#3ecf8e,color:#fff
+    style PG fill:#0a3d23,stroke:#3ecf8e,color:#fff
+```
+
+### Flujo de CI/CD manual
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Dev as 💻 Dev (Codespaces)
+    participant GH  as 🐙 GitHub
+    participant DCK as 🐳 Docker
+    participant CR  as 📦 IBM Container Registry
+    participant CE  as ☁️ IBM Code Engine
+    participant DB  as 🐘 Supabase PostgreSQL
+
+    Dev->>GH: git push (branch / main)
+
+    Note over Dev,DCK: Re-deploy manual
+    Dev->>Dev: ibmcloud cr login
+    Dev->>DCK: docker build -t us.icr.io/.../reactive-systems:latest .
+    Note over DCK: Stage 1 — eclipse-temurin:17-jdk<br/>sbt clean compile assets stage (~2 min)
+    Note over DCK: Stage 2 — eclipse-temurin:17-jre<br/>COPY staged app (imagen final ~350 MB)
+    DCK-->>CR: docker push us.icr.io/reactive-systems-ns/reactive-systems:latest
+
+    Dev->>CE: ibmcloud ce application update --image ...
+    CE->>CR: pull image (iamapikey auth)
+    CR-->>CE: image layers
+
+    Note over CE: Rolling update — sin downtime<br/>nueva revision 0000N activa
+    CE->>DB: Evolutions check (Slick / Play Evolutions)
+    DB-->>CE: schema OK / applied
+    CE-->>Dev: URL pública activa
+```
+
+### Variables de entorno en producción
+
+```mermaid
+graph LR
+    subgraph CodeEngine["IBM Code Engine — Env Vars"]
+        AS["APPLICATION_SECRET\n(base64 32 bytes)"]
+        DU["DATABASE_URL\njdbc:postgresql://pooler:5432/postgres\n?sslmode=require"]
+        DUS["DATABASE_USER\npostgres.fdubncgzipnrhcnfqhhu"]
+        DP["DATABASE_PASSWORD"]
+        JO["JAVA_OPTS\n-Xms256m -Xmx512m -XX:+UseG1GC\n-Dplay.filters.hosts.allowed.0=..."]
+    end
+
+    subgraph PlayFramework["Play Framework Runtime"]
+        SK["play.http.secret.key"]
+        SL["slick.dbs.default.db.url\n.user / .password"]
+        AH["AllowedHostsFilter\nhosts permitidos"]
+    end
+
+    AS -->|"-Dplay.http.secret.key"| SK
+    DU --> SL
+    DUS --> SL
+    DP --> SL
+    JO --> AH
+
+    style CodeEngine fill:#0043ce,stroke:#4589ff,color:#fff
+    style PlayFramework fill:#1a365d,stroke:#3182ce,color:#fff
+```
+
+> Documentación completa: [docs/IBM-CLOUD-DEPLOY.md](docs/IBM-CLOUD-DEPLOY.md)
+
+---
+
 ## 👤 Autor
 
 **Federico Pfund** — [@federicopfund](https://github.com/federicopfund)

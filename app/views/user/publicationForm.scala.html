@@ -17,6 +17,7 @@
  *@
 
 @isEdit               = @{ publication.isDefined }
+@canSubmit            = @{ publication.exists(p => p.status == "draft" || p.status == "rejected") }
 @currentSeasonName    = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
 @formAction           = @{ publication.flatMap(_.id) match {
   case Some(id) => controllers.user.routes.UserPublicationController.updatePublication(id)
@@ -246,7 +247,14 @@
         @* Acciones *@
         <div class="ed-editor-actions">
           <a href="@controllers.user.routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Cancelar</a>
-          <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios}else{Enviar a revisión →}</button>
+          @if(isEdit) {
+            <button type="submit" name="action" value="draft" class="ed-btn-secondary">Guardar borrador</button>
+            @if(canSubmit) {
+              <button type="submit" name="action" value="submit_review" class="ed-btn-primary">Enviar a revisión →</button>
+            }
+          } else {
+            <button type="submit" class="ed-btn-primary">Guardar borrador</button>
+          }
         </div>
       </aside>
     </form>
