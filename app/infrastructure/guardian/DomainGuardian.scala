@@ -5,8 +5,11 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import domains.publications.engines._
 import domains.publications.engines.publication._
 import domains.gamification.engines._
+import domains.gamification.engines.gamification._
 import domains.messaging.engines._
+import domains.messaging.engines.message._
 import domains.contact.engines._
+import domains.contact.engines.contact._
 import shared.analytics._
 import shared.moderation._
 import shared.eventbus._
