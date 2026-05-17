@@ -4,6 +4,7 @@ import akka.actor.typed.{ActorRef, Scheduler}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
 import domains.publications.engines._
+import domains.publications.engines.pipeline._
 import infrastructure.guardian._
 
 import scala.concurrent.{ExecutionContext, Future}
