@@ -7,8 +7,8 @@ import domains.publications.engines.publication.{PublicationResponse, Publicatio
 import scala.concurrent.ExecutionContext
 import java.time.Instant
 import shared.moderation.{ModerationCommand, ModerationResponse, ModerateContent, ModerationResult}
-import domains.messaging.engines.{NotificationCommand, SendNotification}
-import domains.gamification.engines.{GamificationCommand, CheckBadges}
+import domains.messaging.engines.notification.{NotificationCommand, SendNotification}
+import domains.gamification.engines.gamification.{GamificationCommand, CheckBadges}
 import shared.analytics.{AnalyticsCommand, TrackEvent}
 import shared.eventbus.{EventBusCommand, PublishEvent}
 import shared.{PublicationSubmittedEvent, ContentModeratedEvent, PipelineCompletedEvent}
