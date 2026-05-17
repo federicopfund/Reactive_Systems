@@ -3,6 +3,7 @@ package infrastructure.guardian
 import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy, Terminated}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import domains.publications.engines._
+import domains.publications.engines.publication._
 import domains.gamification.engines._
 import domains.messaging.engines._
 import domains.contact.engines._
