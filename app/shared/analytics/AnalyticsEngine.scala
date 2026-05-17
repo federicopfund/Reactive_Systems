@@ -1,6 +1,6 @@
 package shared.analytics
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import scala.concurrent.ExecutionContext
 import java.time.Instant
@@ -8,12 +8,9 @@ import java.time.Instant
 /**
  * AnalyticsEngine — Actor reactivo para tracking de métricas y eventos.
  *
- * Recopila eventos de uso sin bloquear el flujo principal:
- *   - Page views / publication views
- *   - User actions (login, register, publish, comment)
- *   - Engagement metrics (time on page, interactions)
- *
- * Mantiene contadores in-memory y puede flush a persistencia periódicamente.
+ * Protocolo separado en:
+ *   - [[Commands]]  → AnalyticsCommand (TrackEvent, TrackPageView, TrackPublicationView, GetMetrics, ResetMetrics)
+ *   - [[Responses]] → AnalyticsResponse (MetricsSnapshot)
  *
  * Principios Reactivos:
  *   - Message-Driven: eventos como mensajes fire-and-forget (tell pattern)
@@ -21,46 +18,6 @@ import java.time.Instant
  *   - Resilient: actor stateful con snapshot recovery
  *   - Responsive: zero-latency impact en el flujo del usuario
  */
-
-// ── Commands ──
-sealed trait AnalyticsCommand
-
-case class TrackEvent(
-  eventType: String,
-  userId: Option[Long],
-  metadata: Map[String, String]
-) extends AnalyticsCommand
-
-case class TrackPageView(
-  path: String,
-  userId: Option[Long],
-  referrer: Option[String]
-) extends AnalyticsCommand
-
-case class TrackPublicationView(
-  publicationId: Long,
-  userId: Option[Long]
-) extends AnalyticsCommand
-
-case class GetMetrics(
-  replyTo: ActorRef[AnalyticsResponse]
-) extends AnalyticsCommand
-
-case object ResetMetrics extends AnalyticsCommand
-
-// ── Responses ──
-sealed trait AnalyticsResponse
-case class MetricsSnapshot(
-  totalEvents: Long,
-  totalPageViews: Long,
-  totalPublicationViews: Long,
-  activeUsers: Set[Long],
-  topPages: Map[String, Long],
-  topPublications: Map[Long, Long],
-  eventCounts: Map[String, Long],
-  since: Instant
-) extends AnalyticsResponse
-
 object AnalyticsEngine {
 
   private case class State(
