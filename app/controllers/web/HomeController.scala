@@ -19,7 +19,7 @@ import domains.events.repositories.CommunityEventRepository
 import domains.events.models.CommunityEvent
 import domains.identity.repositories.UserRepository
 import java.time.{Instant, ZoneId}
-import domains.contact.engines.{Contact, ContactSubmitted, ContactError}
+import domains.contact.engines.contact.{Contact, ContactSubmitted, ContactError}
 import _root_.controllers.actions.{OptionalAuthAction, OptionalAuthRequest}
 import domains.editorial.models.EditorialSeason
 import scala.concurrent.{ExecutionContext, Future}
