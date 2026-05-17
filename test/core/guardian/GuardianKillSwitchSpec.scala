@@ -5,7 +5,7 @@ import domains.contact.engines._
 import shared.moderation.{ModerationCommand, ModerationResponse, ModerateContent, ModerationResult}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import domains.publications.engines.{PipelineCommand, ProcessNewPublication, PipelineResponse, PipelineError}
+import domains.publications.engines.pipeline.{PipelineCommand, ProcessNewPublication, PipelineResponse, PipelineError}
 import domains.admin.services.AgentSettingsLookup
 
 import scala.concurrent.ExecutionContext
