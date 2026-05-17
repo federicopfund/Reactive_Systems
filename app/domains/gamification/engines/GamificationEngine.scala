@@ -1,7 +1,8 @@
 package domains.gamification.engines
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
+import domains.gamification.engines.gamification._
 import domains.gamification.repositories.BadgeRepository
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
@@ -13,48 +14,15 @@ import scala.util.{Success, Failure}
  * que procesa verificaciones de badges de forma fire-and-forget,
  * desacoplando la lógica de gamificación del flujo principal.
  *
+ * Protocolo separado en:
+ *   - [[gamification.Commands]]   → GamificationCommand + internos private[engines]
+ *   - [[gamification.Responses]]  → GamificationResponse (BadgesAwarded, GamificationError)
+ *
  * Principios Reactivos:
  *   - Message-Driven: cada check es un mensaje independiente
  *   - Elastic: puede acumular checks sin bloquear el caller
  *   - Resilient: fallos en badges no afectan la operación principal
  */
-
-// ── Commands ──
-sealed trait GamificationCommand
-
-case class CheckBadges(
-  userId: Long,
-  triggerType: String, // "publication", "comment", "reaction", "login"
-  metadata: Map[String, Long],
-  replyTo: Option[ActorRef[GamificationResponse]]
-) extends GamificationCommand
-
-case class AwardBadge(
-  userId: Long,
-  badgeKey: String,
-  replyTo: Option[ActorRef[GamificationResponse]]
-) extends GamificationCommand
-
-private case class BadgesChecked(
-  userId: Long,
-  awarded: List[String],
-  replyTo: Option[ActorRef[GamificationResponse]]
-) extends GamificationCommand
-
-private case class BadgeCheckFailed(
-  userId: Long,
-  exception: Throwable,
-  replyTo: Option[ActorRef[GamificationResponse]]
-) extends GamificationCommand
-
-private case class BadgeAwarded(userId: Long, badgeKey: String) extends GamificationCommand
-private case class BadgeAwardFailed(exception: Throwable, userId: Long, badgeKey: String) extends GamificationCommand
-
-// ── Responses ──
-sealed trait GamificationResponse
-case class BadgesAwarded(badges: List[String]) extends GamificationResponse
-case class GamificationError(reason: String) extends GamificationResponse
-
 object GamificationEngine {
 
   def apply(
