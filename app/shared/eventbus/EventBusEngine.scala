@@ -33,36 +33,6 @@ import shared.DomainEvent
  *     `GetEventBusMetrics` mantienen su firma pública.
  */
 
-// ── Commands ──
-sealed trait EventBusCommand
-
-case class PublishEvent(event: DomainEvent) extends EventBusCommand
-
-case class SubscribeToEvents(
-  subscriber: ActorRef[DomainEvent],
-  topics: Set[String] // "publication", "content", "badge", "*" para todos
-) extends EventBusCommand
-
-case class UnsubscribeFromEvents(
-  subscriber: ActorRef[DomainEvent]
-) extends EventBusCommand
-
-case class GetEventBusMetrics(
-  replyTo: ActorRef[EventBusResponse]
-) extends EventBusCommand
-
-// ── Responses ──
-sealed trait EventBusResponse
-
-case class EventBusMetrics(
-  totalEventsPublished: Long,
-  subscriberCount: Int,
-  deadLetterCount: Long,
-  recentEvents: List[String],
-  since: Instant
-) extends EventBusResponse
-
-
 object EventBusEngine {
 
   // Tabla mínima para soportar `UnsubscribeFromEvents` (que sólo trae el ref,
