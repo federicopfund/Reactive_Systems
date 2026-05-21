@@ -22,3 +22,5 @@ echo "└───────────────────────�
 echo ""
 
 exec sbt "run $PORT"
+## Para activa Code Enginner y escalar a una instancia 
+## ibmcloud ce application update --name reactive-systems-app --min-scale 0 --max-scale 1
