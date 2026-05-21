@@ -1,0 +1,27 @@
+# Build artifacts
+target/
+project/target/
+project/project/
+
+# Dev/docs
+docs/
+sql/
+deploy/
+test/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

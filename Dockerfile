@@ -31,10 +31,14 @@ COPY public public
 
 # Build the application using sbt: clean, compile assets, and stage
 # IMPORTANT: 'assets' task compiles SASS/LESS files before staging
-RUN sbt clean compile assets stage
+RUN sbt clean compile assets stage \
+    && find /app/target/universal/stage -type f -name '*.md' -delete \
+    && find /app/target/universal/stage -type f -name '*.txt' -delete \
+    && find /app/target/universal/stage -type d -name 'api' -exec rm -rf {} + 2>/dev/null || true \
+    && find /app/target/universal/stage -type d -name 'javadoc' -exec rm -rf {} + 2>/dev/null || true
 
 # Stage 2: Runtime - Minimal image for running the application
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
