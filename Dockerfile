@@ -40,6 +40,9 @@ RUN sbt clean compile assets stage \
 # Stage 2: Runtime - Minimal image for running the application
 FROM eclipse-temurin:17-jre-alpine
 
+# bash is required by the Play Framework startup script (/app/bin/web)
+RUN apk add --no-cache bash
+
 WORKDIR /app
 
 # Copy the staged application from builder
