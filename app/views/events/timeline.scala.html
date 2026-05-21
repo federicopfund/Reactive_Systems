@@ -9,7 +9,7 @@
   val parts = monthKey.split("-")
   if (parts.length == 2) {
     val ym = java.time.YearMonth.of(parts(0).toInt, parts(1).toInt)
-    ym.getMonth.getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es")).capitalize + " " + ym.getYear
+    ym.getMonth.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.forLanguageTag("es")).capitalize + " " + ym.getYear
   } else monthKey
 }
 

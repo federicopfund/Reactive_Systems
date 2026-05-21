@@ -4,6 +4,7 @@ import akka.actor.typed.{ActorRef, Scheduler}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
 import domains.messaging.engines._
+import domains.messaging.engines.notification._
 import infrastructure.guardian._
 
 import javax.inject._

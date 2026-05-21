@@ -1,66 +1,19 @@
 package domains.messaging.engines
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
+import domains.messaging.engines.message._
 import domains.messaging.repositories.{PrivateMessageRepository, UserNotificationRepository}
 import domains.messaging.models.{PrivateMessage, UserNotification}
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 
 /**
- * Sistema de mensajería reactivo basado en Akka Typed.
- *
- * Implements the Message-Driven principle of the Reactive Manifesto:
- * - Asynchronous message passing between components
- * - Location transparency
- * - Isolation and loose coupling
- * - Back-pressure through the ask pattern
- *
- * Flow:
- *   1. Controller sends SendPrivateMessage command to this actor
- *   2. Actor persists the message asynchronously via repository
- *   3. On success, actor creates a UserNotification for the receiver
- *   4. Actor replies with MessageSent / MessageError to the caller
- */
-
-// ── Commands ──
-sealed trait MessageCommand
-case class SendPrivateMessage(
-  senderId: Long,
-  senderUsername: String,
-  receiverId: Long,
-  publicationId: Option[Long],
-  publicationTitle: Option[String],
-  subject: String,
-  content: String,
-  replyTo: ActorRef[MessageResponse]
-) extends MessageCommand
-
-private case class MessagePersisted(
-  messageId: Long,
-  receiverId: Long,
-  senderUsername: String,
-  publicationId: Option[Long],
-  publicationTitle: Option[String],
-  subject: String,
-  replyTo: ActorRef[MessageResponse]
-) extends MessageCommand
-
-private case class MessagePersistFailed(
-  exception: Throwable,
-  replyTo: ActorRef[MessageResponse]
-) extends MessageCommand
-
-private case class NotificationCreated(messageId: Long) extends MessageCommand
-private case class NotificationFailed(exception: Throwable, messageId: Long) extends MessageCommand
-
-// ── Responses ──
-sealed trait MessageResponse
-case class MessageSent(messageId: Long) extends MessageResponse
-case class MessageError(reason: String) extends MessageResponse
-
-/**
  * MessageEngine — Actor reactivo para el sistema de mensajería privada.
+ *
+ * Protocolo separado en:
+ *   - [[message.Commands]]   → MessageCommand + internos private[engines]
+ *   - [[message.Responses]]  → MessageResponse (MessageSent, MessageError)
  *
  * Siguiendo el principio Message-Driven del Manifiesto Reactivo:
  * los componentes se comunican exclusivamente a través de mensajes asíncronos,

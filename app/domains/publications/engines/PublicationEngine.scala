@@ -2,6 +2,7 @@ package domains.publications.engines
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
+import domains.publications.engines.publication._
 import domains.publications.repositories.PublicationRepository
 import domains.messaging.repositories.UserNotificationRepository
 import domains.publications.models.Publication
@@ -15,94 +16,32 @@ import scala.util.{Success, Failure}
  * Maneja el flujo completo: creación → revisión → aprobación/rechazo,
  * emitiendo notificaciones en cada transición de estado.
  *
+ * Protocolo separado en:
+ *   - [[publication.Commands]]  → comandos públicos + internos
+ *   - [[publication.Responses]] → respuestas al caller
+ *
  * Principios Reactivos:
  *   - Message-Driven: comandos tipados para cada acción del ciclo
  *   - Resilient: errores aislados por publicación, sin afectar al sistema
  *   - Responsive: respuesta inmediata, notificaciones fire-and-forget
  */
-
-// ── Commands ──
-sealed trait PublicationCommand
-
-case class CreatePublication(
-  userId: Long,
-  username: String,
-  title: String,
-  content: String,
-  excerpt: Option[String],
-  coverImage: Option[String],
-  category: String,
-  tags: Option[String],
-  replyTo: ActorRef[PublicationResponse]
-) extends PublicationCommand
-
-case class ApprovePublication(
-  publicationId: Long,
-  adminId: Long,
-  adminUsername: String,
-  replyTo: ActorRef[PublicationResponse]
-) extends PublicationCommand
-
-case class RejectPublication(
-  publicationId: Long,
-  adminId: Long,
-  adminUsername: String,
-  reason: String,
-  replyTo: ActorRef[PublicationResponse]
-) extends PublicationCommand
-
-private case class PublicationCreated(
-  publicationId: Long,
-  username: String,
-  replyTo: ActorRef[PublicationResponse]
-) extends PublicationCommand
-
-private case class PublicationCreateFailed(
-  exception: Throwable,
-  replyTo: ActorRef[PublicationResponse]
-) extends PublicationCommand
-
-private case class PublicationStatusUpdated(
-  publicationId: Long,
-  newStatus: String,
-  userId: Long,
-  adminUsername: String,
-  reason: Option[String],
-  replyTo: ActorRef[PublicationResponse]
-) extends PublicationCommand
-
-private case class PublicationStatusUpdateFailed(
-  exception: Throwable,
-  replyTo: ActorRef[PublicationResponse]
-) extends PublicationCommand
-
-private case class PublicationNotified(publicationId: Long) extends PublicationCommand
-private case class PublicationNotifyFailed(exception: Throwable, publicationId: Long) extends PublicationCommand
-
-// ── Responses ──
-sealed trait PublicationResponse
-case class PublicationCreatedOk(publicationId: Long) extends PublicationResponse
-case class PublicationApproved(publicationId: Long) extends PublicationResponse
-case class PublicationRejected(publicationId: Long) extends PublicationResponse
-case class PublicationError(reason: String) extends PublicationResponse
-
 object PublicationEngine {
 
   def apply(
-    publicationRepo: PublicationRepository,
+    publicationRepo:  PublicationRepository,
     notificationRepo: UserNotificationRepository
   )(implicit ec: ExecutionContext): Behavior[PublicationCommand] =
     active(publicationRepo, notificationRepo)
 
   private def active(
-    publicationRepo: PublicationRepository,
+    publicationRepo:  PublicationRepository,
     notificationRepo: UserNotificationRepository
-  )(implicit ec: ExecutionContext): Behavior[PublicationCommand] = {
+  )(implicit ec: ExecutionContext): Behavior[PublicationCommand] =
 
     Behaviors.receive { (context, message) =>
       message match {
 
-        // ── Create publication ──
+        // ── Create ────────────────────────────────────────────────────────
         case CreatePublication(userId, username, title, content, excerpt, coverImage, category, tags, replyTo) =>
           context.log.info(s"[PublicationEngine] Creating publication '$title' for user $userId")
 
@@ -112,15 +51,15 @@ object PublicationEngine {
             .take(100)
 
           val pub = Publication(
-            userId = userId,
-            title = title,
-            slug = slug,
-            content = content,
-            excerpt = excerpt,
+            userId     = userId,
+            title      = title,
+            slug       = slug,
+            content    = content,
+            excerpt    = excerpt,
             coverImage = coverImage,
-            category = category,
-            tags = tags,
-            status = "pending"
+            category   = category,
+            tags       = tags,
+            status     = "pending"
           )
 
           context.pipeToSelf(publicationRepo.create(pub)) {
@@ -129,8 +68,8 @@ object PublicationEngine {
           }
           Behaviors.same
 
-        case PublicationCreated(pubId, username, replyTo) =>
-          context.log.info(s"[PublicationEngine] Publication $pubId created, notifying admins")
+        case PublicationCreated(pubId, _, replyTo) =>
+          context.log.info(s"[PublicationEngine] Publication $pubId created")
           replyTo ! PublicationCreatedOk(pubId)
           Behaviors.same
 
@@ -139,9 +78,9 @@ object PublicationEngine {
           replyTo ! PublicationError(s"Error al crear publicación: ${ex.getMessage}")
           Behaviors.same
 
-        // ── Approve publication ──
+        // ── Approve ───────────────────────────────────────────────────────
         case ApprovePublication(publicationId, adminId, adminUsername, replyTo) =>
-          context.log.info(s"[PublicationEngine] Approving publication $publicationId by $adminUsername (id=$adminId)")
+          context.log.info(s"[PublicationEngine] Approving publication $publicationId by $adminUsername")
 
           context.pipeToSelf(
             publicationRepo.findById(publicationId).flatMap {
@@ -154,9 +93,10 @@ object PublicationEngine {
           }
           Behaviors.same
 
-        // ── Reject publication ──
+        // ── Reject ────────────────────────────────────────────────────────
         case RejectPublication(publicationId, adminId, adminUsername, reason, replyTo) =>
-          context.log.info(s"[PublicationEngine] Rejecting publication $publicationId by $adminUsername (id=$adminId): $reason")
+          context.log.info(s"[PublicationEngine] Rejecting publication $publicationId by $adminUsername: $reason")
+
           context.pipeToSelf(
             publicationRepo.findById(publicationId).flatMap {
               case Some(pub) => publicationRepo.changeStatus(publicationId, "rejected", adminId, Some(reason)).map(_ => pub.userId)
@@ -168,13 +108,13 @@ object PublicationEngine {
           }
           Behaviors.same
 
-        // ── Status updated → notify author ──
+        // ── Status updated → notify author ────────────────────────────────
         case PublicationStatusUpdated(publicationId, newStatus, userId, adminUsername, reason, replyTo) =>
           context.log.info(s"[PublicationEngine] Publication $publicationId → $newStatus")
 
           val (notifTitle, notifMessage) = newStatus match {
             case "approved" =>
-              ("Publicación aprobada", s"Tu publicación ha sido aprobada por $adminUsername")
+              ("Publicación aprobada",  s"Tu publicación ha sido aprobada por $adminUsername")
             case "rejected" =>
               ("Publicación rechazada", s"Tu publicación fue rechazada por $adminUsername: ${reason.getOrElse("Sin razón")}")
             case other =>
@@ -182,11 +122,11 @@ object PublicationEngine {
           }
 
           val notification = UserNotification(
-            userId = userId,
+            userId           = userId,
             notificationType = "publication_status",
-            title = notifTitle,
-            message = notifMessage,
-            publicationId = Some(publicationId)
+            title            = notifTitle,
+            message          = notifMessage,
+            publicationId    = Some(publicationId)
           )
 
           context.pipeToSelf(notificationRepo.create(notification)) {
@@ -195,7 +135,7 @@ object PublicationEngine {
           }
 
           if (newStatus == "approved") replyTo ! PublicationApproved(publicationId)
-          else replyTo ! PublicationRejected(publicationId)
+          else                         replyTo ! PublicationRejected(publicationId)
           Behaviors.same
 
         case PublicationStatusUpdateFailed(ex, replyTo) =>
@@ -203,6 +143,7 @@ object PublicationEngine {
           replyTo ! PublicationError(s"Error al actualizar estado: ${ex.getMessage}")
           Behaviors.same
 
+        // ── Notification callbacks (fire-and-forget) ──────────────────────
         case PublicationNotified(publicationId) =>
           context.log.info(s"[PublicationEngine] Notification sent for publication $publicationId")
           Behaviors.same
@@ -212,5 +153,5 @@ object PublicationEngine {
           Behaviors.same
       }
     }
-  }
 }
+

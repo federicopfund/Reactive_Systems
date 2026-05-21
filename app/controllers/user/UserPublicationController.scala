@@ -21,7 +21,7 @@ import domains.gamification.services.ReactiveGamificationAdapter
 import shared.analytics.ReactiveAnalyticsAdapter
 import domains.messaging.services.ReactiveNotificationAdapter
 import shared.moderation.ReactiveModerationAdapter
-import domains.messaging.engines.{MessageSent, MessageError}
+import domains.messaging.engines.message.{MessageSent, MessageError}
 import shared.moderation.ModerationResult
 import controllers.actions.{UserAction, AuthRequest}
 import java.time.Instant

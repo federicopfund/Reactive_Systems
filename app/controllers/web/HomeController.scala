@@ -15,8 +15,11 @@ import domains.gamification.repositories.BookmarkRepository
 import domains.newsletter.repositories.NewsletterRepository
 import domains.editorial.repositories.{ManifestoPillarRepository, LegalDocumentRepository, EditorialIdentityRepository, EditorialSeasonRepository}
 import domains.collections.repositories.CollectionRepository
+import domains.events.repositories.CommunityEventRepository
+import domains.events.models.CommunityEvent
 import domains.identity.repositories.UserRepository
-import domains.contact.engines.{Contact, ContactSubmitted, ContactError}
+import java.time.{Instant, ZoneId}
+import domains.contact.engines.contact.{Contact, ContactSubmitted, ContactError}
 import _root_.controllers.actions.{OptionalAuthAction, OptionalAuthRequest}
 import domains.editorial.models.EditorialSeason
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,6 +45,7 @@ class HomeController @Inject()(
   editorialArticleRepo: EditorialArticleRepository,
   identityRepo: EditorialIdentityRepository,
   seasonRepo: EditorialSeasonRepository,
+  eventRepo: CommunityEventRepository,
   userRepo: UserRepository,
   optionalAuth: OptionalAuthAction
 )(implicit ec: ExecutionContext) extends BaseController with I18nSupport with Logging {
@@ -95,14 +99,31 @@ class HomeController @Inject()(
     analyticsAdapter.trackPageView(s"/temporadas/$code", None, request.headers.get("Referer"))
     seasonRepo.findByCode(code).flatMap {
       case Some(season) =>
-        season.id match {
-          case Some(seasonId) =>
-            publicationRepository.findApprovedBySeasonId(seasonId).map { publications =>
-              Ok(views.html.seasons.detail(season, publications))
-            }
-          case None =>
-            Future.successful(Ok(views.html.seasons.detail(season, Nil)))
+        val pubsFut = season.id match {
+          case Some(seasonId) => publicationRepository.findApprovedBySeasonId(seasonId)
+          case None           => Future.successful(Nil)
         }
+        val eventsFut: Future[Seq[CommunityEvent]] = ((season.startsOn, season.endsOn) match {
+          case (Some(s), Some(e)) =>
+            val from = s.atStartOfDay(ZoneId.of("UTC")).toInstant
+            val to   = e.plusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant
+            eventRepo.findPublishedByRange(from, to)
+          case _ if season.isCurrent =>
+            eventRepo.findPublishedUpcoming(limit = 5)
+          case (Some(s), None) =>
+            val from = s.atStartOfDay(ZoneId.of("UTC")).toInstant
+            eventRepo.findPublishedByRange(from, Instant.now())
+          case _ =>
+            Future.successful(Nil)
+        }).recover { case _ => Nil }
+        val collsFut      = collectionRepo.findPublishedWithCounts().recover { case _ => Nil }
+        val allSeasonsFut = seasonRepo.findAllChronologicalDesc().recover { case _ => Nil }
+        for {
+          publications <- pubsFut
+          events       <- eventsFut
+          collections  <- collsFut
+          allSeasons   <- allSeasonsFut
+        } yield Ok(views.html.seasons.detail(season, publications, events, collections, allSeasons))
       case None =>
         Future.successful(NotFound(views.html.errors.notFound()))
     }

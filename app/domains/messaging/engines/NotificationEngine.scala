@@ -1,7 +1,8 @@
 package domains.messaging.engines
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
+import domains.messaging.engines.notification._
 import domains.messaging.repositories.UserNotificationRepository
 import domains.identity.services.EmailService
 import domains.messaging.models.UserNotification
@@ -26,55 +27,16 @@ import java.time.Instant
  *       └─────────────────────────────────────────────────┘
  *                          │ failure → back to OPEN
  *
+ * Protocolo separado en:
+ *   - [[notification.Commands]]   → NotificationCommand + internos private[engines]
+ *   - [[notification.Responses]]  → NotificationResponse (Queued, DeliveryError, CircuitBreakerStatus)
+ *
  * Principios Reactivos:
  *   - Message-Driven: cada notificación es un comando independiente
  *   - Resilient: Circuit Breaker protege el canal email; in-app siempre funciona
  *   - Elastic: procesa alto volumen de notificaciones sin bloquear
  *   - Responsive: fire-and-forget, el caller no espera por delivery
  */
-
-// ── Commands ──
-sealed trait NotificationCommand
-
-case class SendNotification(
-  userId: Long,
-  userEmail: Option[String],
-  notificationType: String,
-  title: String,
-  message: String,
-  publicationId: Option[Long],
-  channels: Set[String], // "inapp", "email"
-  replyTo: Option[ActorRef[NotificationResponse]]
-) extends NotificationCommand
-
-case class SendBulkNotification(
-  userIds: Seq[Long],
-  notificationType: String,
-  title: String,
-  message: String,
-  publicationId: Option[Long]
-) extends NotificationCommand
-
-case class GetCircuitBreakerStatus(
-  replyTo: ActorRef[NotificationResponse]
-) extends NotificationCommand
-
-private case class InAppNotifSaved(userId: Long, notifId: Long) extends NotificationCommand
-private case class InAppNotifFailed(exception: Throwable, userId: Long) extends NotificationCommand
-private case class EmailNotifSent(userId: Long, email: String) extends NotificationCommand
-private case class EmailNotifFailed(exception: Throwable, userId: Long, email: String) extends NotificationCommand
-
-// ── Responses ──
-sealed trait NotificationResponse
-case class NotificationQueued(channels: Set[String]) extends NotificationResponse
-case class NotificationDeliveryError(reason: String) extends NotificationResponse
-case class CircuitBreakerStatus(
-  state: String,
-  consecutiveFailures: Int,
-  totalTripped: Int,
-  emailsSkipped: Long
-) extends NotificationResponse
-
 object NotificationEngine {
 
   // ── Circuit Breaker State ──

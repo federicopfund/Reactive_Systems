@@ -1,27 +1,24 @@
 package domains.contact.engines
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
+import domains.contact.engines.contact._
 import domains.contact.repositories.ContactRepository
 import domains.contact.models.ContactRecord
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 
-// Contact domain model
-case class Contact(name: String, email: String, message: String)
-
-// Commands for the reactive actor
-sealed trait ContactCommand
-case class SubmitContact(contact: Contact, replyTo: ActorRef[ContactResponse]) extends ContactCommand
-private case class ContactSaved(savedContact: ContactRecord, replyTo: ActorRef[ContactResponse]) extends ContactCommand
-private case class ContactSaveFailed(exception: Throwable, replyTo: ActorRef[ContactResponse]) extends ContactCommand
-
-// Responses
-sealed trait ContactResponse
-case class ContactSubmitted(id: String) extends ContactResponse
-case class ContactError(message: String) extends ContactResponse
-
-// The reactive contact engine using Akka Typed with persistence
+/**
+ * ContactEngine — Actor reactivo para el procesamiento del formulario de contacto.
+ *
+ * Protocolo separado en:
+ *   - [[contact.Commands]]   → ContactCommand + Contact DTO + internos private[engines]
+ *   - [[contact.Responses]]  → ContactResponse (ContactSubmitted, ContactError)
+ *
+ * Principios Reactivos:
+ *   - Message-Driven: cada envío es un mensaje independiente
+ *   - Resilient: fallos de BD no bloquean el actor
+ */
 object ContactEngine {
   def apply(repository: ContactRepository)(implicit ec: ExecutionContext): Behavior[ContactCommand] = 
     active(repository)

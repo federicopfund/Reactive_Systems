@@ -1,6 +1,6 @@
 package shared.moderation
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import scala.concurrent.ExecutionContext
 
@@ -17,31 +17,6 @@ import scala.concurrent.ExecutionContext
  *   - Resilient: fallos en filtros no bloquean el sistema
  *   - Responsive: respuesta inmediata con resultado preliminar
  */
-
-// ── Commands ──
-sealed trait ModerationCommand
-
-case class ModerateContent(
-  contentId: Long,
-  contentType: String, // "publication", "comment"
-  authorId: Long,
-  title: Option[String],
-  content: String,
-  replyTo: ActorRef[ModerationResponse]
-) extends ModerationCommand
-
-case class UpdateBlocklist(
-  words: Set[String]
-) extends ModerationCommand
-
-// ── Responses ──
-sealed trait ModerationResponse
-case class ModerationResult(
-  contentId: Long,
-  verdict: String, // "auto_approved", "pending_review", "auto_rejected"
-  flags: List[String],
-  score: Double
-) extends ModerationResponse
 
 object ModerationEngine {
 

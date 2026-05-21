@@ -20,7 +20,7 @@ import domains.editorial.models.EditorialStageCode
 import domains.publications.services.ReactivePublicationAdapter
 import domains.messaging.services.ReactiveNotificationAdapter
 import shared.analytics.ReactiveAnalyticsAdapter
-import domains.publications.engines.{PublicationApproved, PublicationRejected, PublicationError}
+import domains.publications.engines.publication.{PublicationApproved, PublicationRejected, PublicationError}
 import domains.publications.policies.EditorialStagePolicy
 import infrastructure.support.{RolePolicy, Capabilities}
 import controllers.actions.{AdminOnlyAction, SuperAdminOnlyAction, AuthRequest}

@@ -63,7 +63,7 @@
           <dd>
             <time datetime="@startsAtIso">
               @{
-                val locale = new java.util.Locale("es")
+                val locale = java.util.Locale.forLanguageTag("es")
                 val fmt = java.time.format.DateTimeFormatter.ofPattern("EEEE d 'de' MMMM, yyyy · HH:mm", locale)
                 e.localStart.format(fmt)
               }

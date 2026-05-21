@@ -3,7 +3,7 @@
 @import java.util.Locale
 @import java.time.format.DateTimeFormatter
 
-@dateFmt = @{ DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "AR")) }
+@dateFmt = @{ DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es-AR")) }
 @dateLabel(d: Option[java.time.LocalDate], fallback: String) = @{ d.map(_.format(dateFmt)).getOrElse(fallback) }
 
 @main("Temporadas editoriales", fullBleed = false) {

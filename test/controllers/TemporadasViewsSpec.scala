@@ -56,8 +56,8 @@ class TemporadasViewsSpec extends AnyWordSpec with Matchers {
         authorFullName = "Ana Gómez"
       )
 
-      val html = views.html.seasons.detail(season, List(publication)).body
-      html should include("Índice de piezas asociadas (1)")
+      val html = views.html.seasons.detail(season, List(publication), Seq.empty, Seq.empty, Seq.empty).body
+      html should include("Índice de piezas (1)")
       html should include("/publicaciones/mensajeria-reactiva")
       html should include("Mensajería reactiva")
     }

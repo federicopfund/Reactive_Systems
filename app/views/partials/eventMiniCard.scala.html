@@ -8,7 +8,7 @@
   <div class="ed-event-mini__date">
     <span class="ed-event-mini__day">@e.localStart.getDayOfMonth</span>
     <span class="ed-event-mini__month">@{
-      val m = e.localStart.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es"))
+      val m = e.localStart.getMonth.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.forLanguageTag("es"))
       m.toUpperCase
     }</span>
   </div>

@@ -1,10 +1,44 @@
-@(season: domains.editorial.models.EditorialSeason, publications: List[domains.publications.models.PublicationWithAuthor])(implicit request: RequestHeader)
+@(
+  season:       domains.editorial.models.EditorialSeason,
+  publications: List[domains.publications.models.PublicationWithAuthor],
+  events:       Seq[domains.events.models.CommunityEvent],
+  collections:  Seq[domains.collections.models.CollectionWithCount],
+  allSeasons:   Seq[domains.editorial.models.EditorialSeason]
+)(implicit request: RequestHeader)
 
 @import java.util.Locale
 @import java.time.format.DateTimeFormatter
+@import java.time.ZoneId
 
-@dateFmt = @{ DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "AR")) }
+@dateFmt    = @{ DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es-AR")) }
+@shortFmt   = @{ DateTimeFormatter.ofPattern("d MMM yyyy",            Locale.forLanguageTag("es-AR")) }
 @dateLabel(d: Option[java.time.LocalDate], fallback: String) = @{ d.map(_.format(dateFmt)).getOrElse(fallback) }
+
+@* ── Evento helpers ─────────────────────────────────────────────── *@
+@eventDateLabel(ev: domains.events.models.CommunityEvent) = @{
+  val ld = ev.localStart.toLocalDate
+  ld.format(shortFmt)
+}
+@modalityLabel(m: String) = @{ m match {
+  case "online"   => "En línea"
+  case "in_person" => "Presencial"
+  case "hybrid"   => "Híbrido"
+  case other      => other
+}}
+@eventTypeLabel(t: String) = @{ t match {
+  case "talk"      => "Charla"
+  case "workshop"  => "Workshop"
+  case "webinar"   => "Webinar"
+  case "meetup"    => "Meetup"
+  case "panel"     => "Panel"
+  case other       => other
+}}
+
+@* ── Navegación prev / next entre temporadas ─────────────────────── *@
+@defining(allSeasons.sortBy(s => s.startsOn.map(_.toEpochDay).getOrElse(0L))) { sorted =>
+@defining(sorted.indexWhere(_.code == season.code)) { idx =>
+@defining(if (idx > 0) Some(sorted(idx - 1)) else None) { prevSeason =>
+@defining(if (idx < sorted.size - 1) Some(sorted(idx + 1)) else None) { nextSeason =>
 
 @main(season.name, fullBleed = false) {
   <section class="ed-season-hero">
@@ -38,6 +72,14 @@
         <dd>@{"%02d".format(publications.size)}</dd>
       </div>
       <div>
+        <dt>Eventos</dt>
+        <dd>@{"%02d".format(events.size)}</dd>
+      </div>
+      <div>
+        <dt>Colecciones</dt>
+        <dd>@{"%02d".format(collections.size)}</dd>
+      </div>
+      <div>
         <dt>Estado</dt>
         <dd>@if(season.isCurrent){En curso} else {Cerrada}</dd>
       </div>
@@ -58,19 +100,96 @@
     </section>
   }
 
-  <section class="ed-section">
-    <h2 class="ed-season-block__label">Índice de piezas asociadas (@publications.size)</h2>
+  @* ── Eventos de la temporada ─────────────────────────────────── *@
+  @if(events.nonEmpty) {
+    <section class="ed-section ed-season-block ed-season-events">
+      <h2 class="ed-season-block__label">Eventos de la temporada (@events.size)</h2>
+      <div class="ed-season-events__grid">
+        @for(ev <- events) {
+          <a href="@controllers.web.routes.EventController.detail(ev.slug)"
+             class="ed-season-event-card @if(ev.isLive){is-live} @if(ev.isPast){is-past}">
+            <div class="ed-season-event-card__head">
+              <span class="ed-season-event-card__type">@eventTypeLabel(ev.eventType)</span>
+              <span class="ed-season-event-card__modality">@modalityLabel(ev.modality)</span>
+            </div>
+            <p class="ed-season-event-card__title">@ev.title</p>
+            @ev.summary.map { s => <p class="ed-season-event-card__summary">@s</p> }
+            <div class="ed-season-event-card__foot">
+              <time class="ed-season-event-card__date">@eventDateLabel(ev)</time>
+              @if(ev.isLive) { <span class="ed-season-event-card__live-badge">EN VIVO</span> }
+              @if(ev.isUpcoming) { <span class="ed-season-event-card__upcoming-badge">PRÓXIMO</span> }
+            </div>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  @* ── Colecciones editoriales ─────────────────────────────────── *@
+  @if(collections.nonEmpty) {
+    <section class="ed-section ed-season-block ed-season-collections">
+      <h2 class="ed-season-block__label">Colecciones editoriales</h2>
+      <div class="ed-season-collections__grid">
+        @for(wc <- collections) {
+          @defining(wc.collection) { col =>
+            <a href="@controllers.web.routes.HomeController.collectionDetail(col.slug)"
+               class="ed-season-col-card" data-accent="@col.accent">
+              <p class="ed-season-col-card__label">@col.coverLabel</p>
+              <p class="ed-season-col-card__name">@col.name</p>
+              @col.description.map { d => <p class="ed-season-col-card__desc">@d</p> }
+              <span class="ed-season-col-card__count">@wc.itemCount @if(wc.itemCount == 1){pieza}else{piezas}</span>
+            </a>
+          }
+        }
+      </div>
+    </section>
+  }
+
+  @* ── Índice de piezas ─────────────────────────────────────────── *@
+  <section class="ed-section ed-season-block">
+    <h2 class="ed-season-block__label">Índice de piezas (@publications.size)</h2>
     @if(publications.isEmpty) {
-      <p>Esta temporada todavía no tiene publicaciones asociadas.</p>
+      <p class="ed-season-block__body">Esta temporada todavía no tiene publicaciones asociadas.</p>
     } else {
       <ol class="ed-season-index">
         @for(item <- publications) {
           <li>
             <a href="@controllers.web.routes.HomeController.publicacion(item.publication.slug)">@item.publication.title</a>
-            <span class="ed-season-index__author"> · @item.authorFullName</span>
+            <span class="ed-season-index__meta">
+              <span class="ed-season-index__author">@item.authorFullName</span>
+              @item.publication.category.map { cat => <span class="ed-season-index__cat">@cat</span> }
+            </span>
           </li>
         }
       </ol>
     }
   </section>
+
+  @* ── Navegación entre temporadas ─────────────────────────────── *@
+  @if(prevSeason.isDefined || nextSeason.isDefined) {
+    <nav class="ed-season-nav" aria-label="Navegar entre temporadas">
+      <div class="ed-season-nav__inner">
+        @prevSeason.map { prev =>
+          <a href="@controllers.web.routes.HomeController.temporada(prev.code)"
+             class="ed-season-nav__item ed-season-nav__item--prev">
+            <span class="ed-season-nav__direction">← Anterior</span>
+            <span class="ed-season-nav__name">@prev.name</span>
+            <code class="ed-season-nav__code">@prev.code</code>
+          </a>
+        }.getOrElse(<span class="ed-season-nav__item ed-season-nav__item--empty"></span>)
+        @nextSeason.map { next =>
+          <a href="@controllers.web.routes.HomeController.temporada(next.code)"
+             class="ed-season-nav__item ed-season-nav__item--next">
+            <span class="ed-season-nav__direction">Siguiente →</span>
+            <span class="ed-season-nav__name">@next.name</span>
+            <code class="ed-season-nav__code">@next.code</code>
+          </a>
+        }.getOrElse(<span class="ed-season-nav__item ed-season-nav__item--empty"></span>)
+      </div>
+    </nav>
+  }
 }
+} @* end nextSeason *@
+} @* end prevSeason *@
+} @* end idx *@
+} @* end sorted *@
